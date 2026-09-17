@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Web Games — Free Online Games, No Install, No Signup</title>
-<meta name="description" content="A collection of free online games you can play instantly in your browser. No install, no signup, no downloads. HTML5 arcade games that work on mobile and desktop.">
-<meta name="keywords" content="free online games,web games,browser games,no install games,html5 games,arcade games,snake game,minesweeper,breakout,flappy bird">
+<meta name="description" content="A collection of free online games you can play instantly in your browser. Arcade, puzzle and classic games — no install, no signup, no downloads. Works on mobile and desktop.">
+<meta name="keywords" content="free online games,web games,browser games,no install games,html5 games,arcade games,puzzle games,2048,snake,minesweeper,breakout,tetris,pong,space shooter,doodle jump">
 <meta name="author" content="mashukui">
 <meta property="og:title" content="Web Games — Free Online Games, No Install, No Signup">
-<meta property="og:description" content="Instant-play HTML5 arcade games. Open a card, start playing. Works on mobile & desktop.">
+<meta property="og:description" content="Instant-play HTML5 arcade, puzzle and classic games. Open a card, start playing. Works on mobile & desktop.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 <style>
@@ -20,7 +20,7 @@
     display: flex; flex-direction: column; align-items: center;
     padding: 40px 16px 32px; user-select: none;
   }
-  .hero { text-align: center; max-width: 640px; }
+  .hero { text-align: center; max-width: 660px; }
   .hero h1 {
     font-size: clamp(32px, 6vw, 46px); font-weight: 800; letter-spacing: 1px;
     text-shadow: 0 3px 0 rgba(0,0,0,.3);
@@ -35,12 +35,24 @@
     padding: 5px 16px; border-radius: 999px; letter-spacing: 1px;
   }
   h2 {
-    width: 100%; max-width: 900px; margin: 44px 0 18px;
+    width: 100%; max-width: 900px; margin: 44px 0 14px;
     font-size: 18px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,.65);
     text-transform: uppercase;
   }
   h2::after { content: ""; display: block; height: 2px; margin-top: 8px;
     background: linear-gradient(90deg, #ffd76e 0%, rgba(255,215,110,0) 60%); }
+  .filters {
+    width: 100%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+  }
+  .chip {
+    border: none; border-radius: 999px; padding: 8px 18px; cursor: pointer;
+    background: rgba(255,255,255,.1); color: rgba(255,255,255,.75);
+    font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .5px;
+    transition: background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .chip:hover { background: rgba(255,255,255,.18); transform: translateY(-1px); }
+  .chip.active { background: #ff9f1c; color: #fff; }
+  .chip .num { opacity: .6; font-weight: 600; margin-left: 4px; }
   .grid {
     width: 100%; max-width: 900px;
     display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -51,7 +63,7 @@
     border: 1px solid rgba(255,255,255,.1);
     border-radius: 16px; padding: 26px 20px 22px;
     display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
-    text-decoration: none; color: #fff;
+    text-decoration: none; color: #fff; position: relative;
     transition: transform .15s ease, background .15s ease, border-color .15s ease;
   }
   .card:hover, .card:focus-visible {
@@ -60,25 +72,29 @@
     border-color: rgba(255,215,110,.5);
     outline: none;
   }
+  .card.hidden { display: none; }
+  .card .badge {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    background: rgba(255,255,255,.12); color: rgba(255,255,255,.7);
+    padding: 3px 9px; border-radius: 999px;
+  }
   .card .icon { font-size: 52px; line-height: 1; }
   .card .name { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
   .card .desc { font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.5; min-height: 40px; }
-  .card .play {
-    margin-top: 6px; font-size: 13px; font-weight: 800; letter-spacing: 1px;
-    color: #ffd76e;
-  }
+  .card .play { margin-top: 6px; font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #ffd76e; }
   .card .play::after { content: " →"; }
-  .about {
+  .empty {
+    width: 100%; max-width: 900px; text-align: center; padding: 40px;
+    color: rgba(255,255,255,.5); font-size: 14px;
+  }
+  .about, .contribute {
     width: 100%; max-width: 900px; margin-top: 44px;
     background: rgba(255,255,255,.05); border-radius: 16px; padding: 24px;
     font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.8;
   }
-  .about b { color: #fff; }
-  .contribute {
-    width: 100%; max-width: 900px; margin-top: 16px;
-    border: 1px dashed rgba(255,215,110,.4); border-radius: 16px; padding: 24px;
-    font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.8;
-  }
+  .contribute { margin-top: 16px; background: none; border: 1px dashed rgba(255,215,110,.4); }
+  .about b, .contribute b { color: #fff; }
   .contribute a { color: #ffd76e; }
   .footer {
     margin-top: 44px; color: rgba(255,255,255,.5); font-size: 12px;
@@ -100,7 +116,9 @@
 </div>
 
 <h2>Games</h2>
+<div class="filters" id="filters"></div>
 <div class="grid" id="games-grid"></div>
+<div class="empty hidden" id="empty">No games in this category yet.</div>
 
 <div class="about">
   <b>About this collection.</b>
@@ -130,50 +148,118 @@
   // ===== Game registry (single source of truth — add one entry per game) =====
   var GAMES = [
     {
-      id: 'ant-flap',
-      icon: '🐜',
-      name: 'Ant Flap',
-      desc: 'A tiny flying ant adventure. Tap to flap, squeeze through the branches.',
-      tag: 'Arcade'
+      id: 'ant-flap', icon: '🐜', name: 'Ant Flap', category: 'Arcade',
+      desc: 'A tiny flying ant adventure. Tap to flap, squeeze through the branches.'
     },
     {
-      id: 'snake',
-      icon: '🐍',
-      name: 'Snake',
-      desc: 'The all-time classic. Eat, grow, speed up — just don\u2019t bite yourself.',
-      tag: 'Classic'
+      id: 'ant-jump', icon: '🦗', name: 'Ant Jump', category: 'Arcade',
+      desc: 'Bounce the ant up endless platforms. Moving, fragile and springy ones ahead.'
     },
     {
-      id: 'minesweeper',
-      icon: '💣',
-      name: 'Minesweeper',
-      desc: 'Three difficulties, first-click-safe. Flag the mines, clear the field.',
-      tag: 'Puzzle'
+      id: 'block-drop', icon: '🧊', name: 'Block Drop', category: 'Arcade',
+      desc: 'Falling blocks, perfect clears. Speed up, survive, stack them high.'
     },
     {
-      id: 'breakout',
-      icon: '🧱',
-      name: 'Breakout',
-      desc: 'Smash every brick with angle-perfect paddle physics. Three lives, endless levels.',
-      tag: 'Arcade'
+      id: 'breakout', icon: '🧱', name: 'Breakout', category: 'Arcade',
+      desc: 'Smash every brick with angle-perfect paddle physics. Three lives, endless levels.'
+    },
+    {
+      id: 'paddle-duel', icon: '🏓', name: 'Paddle Duel', category: 'Arcade',
+      desc: 'Pong-style paddle duel vs AI in three difficulties. First to 7 wins.'
+    },
+    {
+      id: 'snake', icon: '🐍', name: 'Snake', category: 'Classic',
+      desc: 'The all-time classic. Eat, grow, speed up — just don\u2019t bite yourself.'
+    },
+    {
+      id: '2048', icon: '🔢', name: '2048', category: 'Puzzle',
+      desc: 'Swipe and merge the tiles. Reach 2048, then keep going.'
+    },
+    {
+      id: 'minesweeper', icon: '💣', name: 'Minesweeper', category: 'Puzzle',
+      desc: 'Three difficulties, first-click-safe. Flag the mines, clear the field.'
+    },
+    {
+      id: 'star-defender', icon: '🚀', name: 'Star Defender', category: 'Action',
+      desc: 'Wave after wave of enemies. Shoot, dodge, survive as long as you can.'
     }
   ];
 
+  var CATEGORIES = ['All', 'Arcade', 'Classic', 'Puzzle', 'Action'];
+
   var grid = document.getElementById('games-grid');
-  for (var i = 0; i < GAMES.length; i++) {
-    var g = GAMES[i];
+  var filtersEl = document.getElementById('filters');
+  var emptyEl = document.getElementById('empty');
+  var activeCat = 'All';
+
+  // ---- build cards ----
+  GAMES.forEach(function (g) {
     var a = document.createElement('a');
     a.className = 'card';
     a.href = g.id + '/';
+    a.dataset.cat = g.category;
     a.innerHTML =
+      '<span class="badge">' + g.category.toUpperCase() + '</span>' +
       '<div class="icon" aria-hidden="true">' + g.icon + '</div>' +
       '<div class="name">' + g.name + '</div>' +
       '<div class="desc">' + g.desc + '</div>' +
-      '<div class="play">PLAY ' + g.tag.toUpperCase() + '</div>';
+      '<div class="play">PLAY</div>';
     grid.appendChild(a);
+  });
+
+  // ---- build filter chips ----
+  CATEGORIES.forEach(function (cat) {
+    var count = cat === 'All' ? GAMES.length : GAMES.filter(function (g) { return g.category === cat; }).length;
+    if (count === 0) return;
+    var b = document.createElement('button');
+    b.className = 'chip';
+    b.dataset.cat = cat;
+    b.innerHTML = cat + '<span class="num">' + count + '</span>';
+    b.addEventListener('click', function () { applyFilter(cat, true); });
+    filtersEl.appendChild(b);
+  });
+
+  // ---- filtering with deep links (?cat=puzzle or #puzzle) ----
+  function normalize(s) {
+    if (!s) return 'All';
+    var m = { all: 'All', arcade: 'Arcade', classic: 'Classic', puzzle: 'Puzzle', action: 'Action' };
+    return m[String(s).toLowerCase()] || 'All';
   }
 
-  document.getElementById('games-count').textContent = GAMES.length + ' GAMES · ALL FREE · ZERO INSTALL';
+  function applyFilter(cat, updateUrl) {
+    activeCat = cat;
+    var cards = grid.querySelectorAll('.card');
+    var shown = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var match = (cat === 'All' || cards[i].dataset.cat === cat);
+      cards[i].classList.toggle('hidden', !match);
+      if (match) shown++;
+    }
+    emptyEl.classList.toggle('hidden', shown > 0);
+    var chips = filtersEl.querySelectorAll('.chip');
+    for (var c = 0; c < chips.length; c++) {
+      chips[c].classList.toggle('active', chips[c].dataset.cat === cat);
+    }
+    document.title = (cat === 'All' ? 'Web Games — Free Online Games, No Install, No Signup'
+      : cat + ' Games — Free Online Games, No Install');
+    if (updateUrl && window.history && history.replaceState) {
+      var q = cat === 'All' ? location.pathname : location.pathname + '?cat=' + cat.toLowerCase();
+      history.replaceState(null, '', q);
+    }
+  }
+
+  function initialCat() {
+    var fromQuery = /[?&]cat=([^&]+)/.exec(location.search);
+    if (fromQuery) return normalize(decodeURIComponent(fromQuery[1]));
+    if (location.hash) return normalize(location.hash.slice(1));
+    return 'All';
+  }
+
+  applyFilter(initialCat(), false);
+  window.addEventListener('hashchange', function () { applyFilter(normalize(location.hash.slice(1)), false); });
+
+  document.getElementById('games-count').textContent =
+    GAMES.length + ' GAMES · ALL FREE · ZERO INSTALL';
 
   // ===== JSON-LD ItemList for SEO =====
   var ld = {
