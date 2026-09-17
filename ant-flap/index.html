@@ -101,7 +101,7 @@
     <div class="title">ANT FLAP<span class="en">A&nbsp;TINY&nbsp;FLYING&nbsp;ANT&nbsp;ADVENTURE</span></div>
     <div class="tip">Tap the screen or press <b>SPACE</b> to flap<br>Squeeze through the branches — don't crash!</div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">PLAY</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
@@ -141,6 +141,20 @@
   }
   fitDPR();
   window.addEventListener('resize', fitDPR);
+
+  // roundRect polyfill (older browsers)
+  if (!ctx.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      this.moveTo(x + r, y);
+      this.arcTo(x + w, y, x + w, y + h, r);
+      this.arcTo(x + w, y + h, x, y + h, r);
+      this.arcTo(x, y + h, x, y, r);
+      this.arcTo(x, y, x + w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
 
   // ===== Sound (WebAudio, no external files) =====
   var audioCtx = null, muted = false;

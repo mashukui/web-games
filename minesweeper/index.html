@@ -27,6 +27,7 @@
     border-radius: 16px; padding: 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,.45);
   }
+  .hidden { display: none !important; }
   .topbar {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 12px; gap: 8px; flex-wrap: wrap;
@@ -78,13 +79,20 @@
   .msg.win { color: #7cb342; } .msg.lose { color: #e57373; }
   .hint { margin-top: 4px; text-align: center; color: rgba(255,255,255,.45); font-size: 11px; }
   .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-  button.big {
-    border: none; border-radius: 12px; padding: 10px 22px; cursor: pointer;
-    font-size: 14px; font-weight: 800; font-family: inherit;
-    background: #ff9f1c; color: #fff; box-shadow: 0 4px 0 #c47a0e; transition: transform .1s;
+  .btn-primary {
+    border: none; border-radius: 12px; padding: 12px 24px; cursor: pointer;
+    font-size: 15px; font-weight: 800; font-family: inherit;
+    background: #ff9f1c; color: #fff; box-shadow: 0 5px 0 #c47a0e;
+    transition: transform .12s ease, box-shadow .12s ease;
   }
-  button.big:active { transform: scale(.95); }
-  button.ghost { background: rgba(255,255,255,.15); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .btn-primary:active { transform: scale(.95); box-shadow: 0 2px 0 #c47a0e; }
+  .btn-ghost {
+    border: none; border-radius: 12px; padding: 12px 24px; cursor: pointer;
+    font-size: 15px; font-weight: 800; font-family: inherit;
+    background: rgba(255,255,255,.15); color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.25);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-ghost:active { transform: scale(.95); box-shadow: 0 2px 0 rgba(0,0,0,.25); }
   .footer {
     margin-top: 16px; color: rgba(255,255,255,.55); font-size: 12px;
     text-align: center; line-height: 1.8;
@@ -111,15 +119,16 @@
   <div class="msg" id="msg"></div>
   <div class="hint">Left click / tap to reveal · Right click / long-press to flag 🚩</div>
   <div class="btn-row hidden" id="share-row">
-    <button class="big" id="btn-retry">PLAY AGAIN</button>
-    <button class="big ghost" id="btn-share">SHARE RESULT</button>
+    <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
+    <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
   </div>
 </div>
 
 <div class="footer">
   Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
   <a href="../">🎮 More games</a> ·
-  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a>
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
 </div>
 
 <script>
