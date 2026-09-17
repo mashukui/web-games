@@ -1726,13 +1726,27 @@
 
   function current() { return lang; }
 
+  /* Once the user picks a language by hand, ?lang= must stop overriding it —
+     otherwise the next reload snaps back to the shared link's language.
+     Drop only the lang param; leave the hub's own ?cat= untouched. */
+  function dropLangParam() {
+    try {
+      var loc = global.location;
+      if (!loc || !loc.search || !/[?&]lang=/.test(loc.search)) return;
+      var parts = loc.search.replace(/^\?/, '').split('&').filter(function (p) {
+        return p && !/^lang=/.test(p);
+      });
+      var url = loc.pathname + (parts.length ? '?' + parts.join('&') : '') + (loc.hash || '');
+      if (global.history && global.history.replaceState) global.history.replaceState(null, '', url);
+    } catch (e) { /* older browsers: silently keep the param */ }
+  }
+
   function setLang(code, opts) {
     var next = normalize(code);
     if (!next || next === lang) return false;
     lang = next;
     try { global.localStorage.setItem(STORE_KEY, next); } catch (e) {}
-    /* Note: we deliberately do not write ?lang= back into the URL — the hub
-       owns its own query string (?cat=). ?lang= is read-only, for sharing. */
+    dropLangParam();
     apply();
     renderSwitcher();
     for (var i = 0; i < listeners.length; i++) {
@@ -1812,7 +1826,8 @@
     box.id = 'wg-lang';
 
     var html = '<button type="button" class="wg-lang-btn" aria-haspopup="true" aria-expanded="false" ' +
-      'title="' + t('common.toggleSound').replace(/"/g, '&quot;') + '">' +
+      'aria-label="' + t('common.language').replace(/"/g, '&quot;') + '" ' +
+      'title="' + t('common.language').replace(/"/g, '&quot;') + '">' +
       '<span class="wg-lang-globe" aria-hidden="true">🌐</span>' +
       '<span class="wg-lang-code">' + currentLang().short + '</span></button>' +
       '<span class="wg-lang-menu" role="menu">';
