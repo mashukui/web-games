@@ -78,7 +78,7 @@
       'hub.catAction': 'Action',
       'hub.playCard': 'PLAY',
       'hub.ldName': 'Web Games — Free Online Games',
-      'hub.openSource': 'Free &amp; open source on',
+      'hub.openSource': 'Free & open source on',
       'hub.alsoTry': 'Also try',
 
       /* ---- game names ---- */
