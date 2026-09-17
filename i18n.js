@@ -1768,10 +1768,16 @@
     '.wg-lang-btn:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.4);}' +
     '.wg-lang-btn:active{transform:scale(.96);}' +
     '.wg-lang-globe{font-size:13px;line-height:1;}' +
-    '.wg-lang-menu{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);' +
+    /* 方向由 placeMenu() 量过可用空间后决定,两个方向各留一条规则。
+       原本写死 bottom:100% —— 按钮贴在页面顶部时面板整个弹到视口外,
+       被浏览器裁掉(实测 hub 页:按钮 top=40、面板高 292 → 顶边 -260)。 */
+    '.wg-lang-menu{position:absolute;left:50%;transform:translateX(-50%);' +
       'background:#132432;border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:6px;' +
-      'min-width:168px;box-shadow:0 16px 44px rgba(0,0,0,.55);z-index:99999;display:none;text-align:left;}' +
+      'min-width:168px;box-shadow:0 16px 44px rgba(0,0,0,.55);z-index:99999;display:none;text-align:left;' +
+      'overflow-y:auto;overscroll-behavior:contain;}' +
     '.wg-lang-menu.open{display:block;}' +
+    '.wg-lang-menu.up{bottom:calc(100% + 8px);}' +
+    '.wg-lang-menu.down{top:calc(100% + 8px);}' +
     '.wg-lang-menu button{display:block;width:100%;text-align:left;font:500 13px/1.4 inherit;font-family:inherit;' +
       'color:rgba(255,255,255,.88);background:none;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;' +
       'white-space:nowrap;margin:0;box-shadow:none;}' +
@@ -1851,11 +1857,94 @@
     var trigger = box.querySelector('.wg-lang-btn');
     var menu = box.querySelector('.wg-lang-menu');
 
+    /* ------------------------------------------------------------------ */
+    /* Panel placement — pick the direction that actually fits             */
+    /*                                                                     */
+    /* A menu pinned to `bottom:100%` vanishes the moment the button sits   */
+    /* near the top of the viewport: measure the room on both sides, open   */
+    /* on the roomier one, and clamp max-height into that room so a short   */
+    /* window scrolls the list instead of clipping it.                      */
+    /* ------------------------------------------------------------------ */
+    var GAP = 8;      /* button ↔ panel gap */
+    var EDGE = 8;     /* keep this much away from every viewport edge */
+    var MIN_H = 120;  /* never squeeze the panel below this (then it scrolls) */
+
+    function placeMenu() {
+      try {
+        var vw = global.innerWidth || (doc.documentElement && doc.documentElement.clientWidth) || 1024;
+        var vh = global.innerHeight || (doc.documentElement && doc.documentElement.clientHeight) || 768;
+        if (!trigger.getBoundingClientRect) { menu.classList.add('open', 'down'); return; }
+        var br = trigger.getBoundingClientRect();
+        if (!br.height && !br.top && !br.bottom) { menu.classList.add('open', 'down'); return; }
+
+        /* Reset last round's constraints first — a stale max-height would
+           make every re-measure report a shorter panel than it really is. */
+        menu.style.visibility = 'hidden';
+        menu.style.maxHeight = 'none';
+        menu.style.marginLeft = '';
+        menu.classList.remove('up', 'down');
+        menu.classList.add('open', 'down');
+        var mh = menu.offsetHeight;
+
+        var above = br.top - EDGE;
+        var below = vh - br.bottom - EDGE;
+        var dir;
+        if (below >= mh + GAP) dir = 'down';
+        else if (above >= mh + GAP) dir = 'up';
+        else dir = below >= above ? 'down' : 'up';  /* fits nowhere: roomier side + scroll */
+        menu.classList.toggle('down', dir === 'down');
+        menu.classList.toggle('up', dir === 'up');
+
+        var room = (dir === 'down' ? below : above) - GAP;
+        if (room < mh) menu.style.maxHeight = Math.max(MIN_H, room) + 'px';
+
+        /* The panel is centred on the button, so a button hugging either
+           side of the screen pushes it out horizontally too. */
+        var mr = menu.getBoundingClientRect();
+        var dx = mr.left < EDGE ? EDGE - mr.left
+          : mr.right > vw - EDGE ? (vw - EDGE) - mr.right : 0;
+        if (dx) menu.style.marginLeft = Math.round(dx) + 'px';
+
+        menu.style.visibility = '';
+      } catch (e) {
+        /* never let placement break the picker — fall back to opening down */
+        menu.style.visibility = '';
+        menu.classList.add('open', 'down');
+      }
+    }
+
+    function openMenu() {
+      placeMenu();
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeMenu() {
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    /* Scrolling or resizing changes the button's position relative to the
+       viewport — recompute, so the panel never stays stranded outside it. */
+    var reflowPending = false;
+    function queueReflow() {
+      if (reflowPending) return;
+      reflowPending = true;
+      var run = function () {
+        reflowPending = false;
+        if (menu.classList.contains('open')) placeMenu();
+      };
+      if (global.requestAnimationFrame) global.requestAnimationFrame(run);
+      else global.setTimeout(run, 16);
+    }
+    if (global.addEventListener) {
+      global.addEventListener('scroll', queueReflow, true);
+      global.addEventListener('resize', queueReflow);
+    }
+
     trigger.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      var open = menu.classList.toggle('open');
-      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (menu.classList.contains('open')) closeMenu(); else openMenu();
     });
 
     menu.addEventListener('click', function (e) {
@@ -1864,22 +1953,15 @@
       e.preventDefault();
       e.stopPropagation();
       setLang(b.getAttribute('data-lang'));
-      menu.classList.remove('open');
-      trigger.setAttribute('aria-expanded', 'false');
+      closeMenu();
     });
 
     doc.addEventListener('click', function () {
-      if (menu.classList.contains('open')) {
-        menu.classList.remove('open');
-        trigger.setAttribute('aria-expanded', 'false');
-      }
+      if (menu.classList.contains('open')) closeMenu();
     });
 
     doc.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && menu.classList.contains('open')) {
-        menu.classList.remove('open');
-        trigger.setAttribute('aria-expanded', 'false');
-      }
+      if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
     });
 
     renderSwitcher();
