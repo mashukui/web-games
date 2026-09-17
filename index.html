@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Games — Free Online Games, No Install, No Signup</title>
+<meta name="description" content="A collection of free online games you can play instantly in your browser. No install, no signup, no downloads. HTML5 arcade games that work on mobile and desktop.">
+<meta name="keywords" content="free online games,web games,browser games,no install games,html5 games,arcade games,snake game,minesweeper,breakout,flappy bird">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Web Games — Free Online Games, No Install, No Signup">
+<meta property="og:description" content="Instant-play HTML5 arcade games. Open a card, start playing. Works on mobile & desktop.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #1a2a3a 0%, #2d4a5e 100%);
+    min-height: 100vh; color: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 16px 32px; user-select: none;
+  }
+  .hero { text-align: center; max-width: 640px; }
+  .hero h1 {
+    font-size: clamp(32px, 6vw, 46px); font-weight: 800; letter-spacing: 1px;
+    text-shadow: 0 3px 0 rgba(0,0,0,.3);
+  }
+  .hero .sub {
+    margin-top: 10px; font-size: 16px; color: rgba(255,255,255,.75); line-height: 1.6;
+  }
+  .hero .sub b { color: #ffd76e; }
+  .games-count {
+    display: inline-block; margin-top: 16px; font-size: 12px; font-weight: 700;
+    background: rgba(255,215,110,.15); color: #ffd76e;
+    padding: 5px 16px; border-radius: 999px; letter-spacing: 1px;
+  }
+  h2 {
+    width: 100%; max-width: 900px; margin: 44px 0 18px;
+    font-size: 18px; font-weight: 700; letter-spacing: 2px; color: rgba(255,255,255,.65);
+    text-transform: uppercase;
+  }
+  h2::after { content: ""; display: block; height: 2px; margin-top: 8px;
+    background: linear-gradient(90deg, #ffd76e 0%, rgba(255,215,110,0) 60%); }
+  .grid {
+    width: 100%; max-width: 900px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px; padding: 26px 20px 22px;
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+    text-decoration: none; color: #fff;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .card:hover, .card:focus-visible {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,.1);
+    border-color: rgba(255,215,110,.5);
+    outline: none;
+  }
+  .card .icon { font-size: 52px; line-height: 1; }
+  .card .name { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
+  .card .desc { font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.5; min-height: 40px; }
+  .card .play {
+    margin-top: 6px; font-size: 13px; font-weight: 800; letter-spacing: 1px;
+    color: #ffd76e;
+  }
+  .card .play::after { content: " →"; }
+  .about {
+    width: 100%; max-width: 900px; margin-top: 44px;
+    background: rgba(255,255,255,.05); border-radius: 16px; padding: 24px;
+    font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.8;
+  }
+  .about b { color: #fff; }
+  .contribute {
+    width: 100%; max-width: 900px; margin-top: 16px;
+    border: 1px dashed rgba(255,215,110,.4); border-radius: 16px; padding: 24px;
+    font-size: 14px; color: rgba(255,255,255,.75); line-height: 1.8;
+  }
+  .contribute a { color: #ffd76e; }
+  .footer {
+    margin-top: 44px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9;
+  }
+  .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
+  .footer a:hover { color: #ffd76e; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🎮 Web Games</h1>
+  <div class="sub">
+    Free online games you can play <b>instantly</b> — no install, no signup, no downloads.<br>
+    Pure HTML5. Works on your phone, tablet, and desktop.
+  </div>
+  <div class="games-count" id="games-count"></div>
+</div>
+
+<h2>Games</h2>
+<div class="grid" id="games-grid"></div>
+
+<div class="about">
+  <b>About this collection.</b>
+  Every game here is a single self-contained HTML file — no frameworks, no build tools, no tracking,
+  no external assets. Open a card and you're playing in under a second. Best scores are saved locally
+  in your browser. Free and open source under the MIT license.
+</div>
+
+<div class="contribute">
+  🛠️ <b>Want to add a game?</b> This is an open collection —
+  build a single-file, zero-dependency HTML5 game, add it to the registry, and
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">open a pull request</a>.
+  See the <a href="https://github.com/mashukui/web-games#add-a-game" target="_blank" rel="noopener">contributing guide</a> in the README.
+</div>
+
+<div class="footer">
+  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  Free &amp; open source on <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a><br>
+  Also try <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+</div>
+
+<script type="application/ld+json" id="ld-json"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ===== Game registry (single source of truth — add one entry per game) =====
+  var GAMES = [
+    {
+      id: 'ant-flap',
+      icon: '🐜',
+      name: 'Ant Flap',
+      desc: 'A tiny flying ant adventure. Tap to flap, squeeze through the branches.',
+      tag: 'Arcade'
+    },
+    {
+      id: 'snake',
+      icon: '🐍',
+      name: 'Snake',
+      desc: 'The all-time classic. Eat, grow, speed up — just don\u2019t bite yourself.',
+      tag: 'Classic'
+    },
+    {
+      id: 'minesweeper',
+      icon: '💣',
+      name: 'Minesweeper',
+      desc: 'Three difficulties, first-click-safe. Flag the mines, clear the field.',
+      tag: 'Puzzle'
+    },
+    {
+      id: 'breakout',
+      icon: '🧱',
+      name: 'Breakout',
+      desc: 'Smash every brick with angle-perfect paddle physics. Three lives, endless levels.',
+      tag: 'Arcade'
+    }
+  ];
+
+  var grid = document.getElementById('games-grid');
+  for (var i = 0; i < GAMES.length; i++) {
+    var g = GAMES[i];
+    var a = document.createElement('a');
+    a.className = 'card';
+    a.href = g.id + '/';
+    a.innerHTML =
+      '<div class="icon" aria-hidden="true">' + g.icon + '</div>' +
+      '<div class="name">' + g.name + '</div>' +
+      '<div class="desc">' + g.desc + '</div>' +
+      '<div class="play">PLAY ' + g.tag.toUpperCase() + '</div>';
+    grid.appendChild(a);
+  }
+
+  document.getElementById('games-count').textContent = GAMES.length + ' GAMES · ALL FREE · ZERO INSTALL';
+
+  // ===== JSON-LD ItemList for SEO =====
+  var ld = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    'name': 'Web Games — Free Online Games',
+    'itemListElement': GAMES.map(function (g, i) {
+      return {
+        '@type': 'ListItem',
+        'position': i + 1,
+        'name': g.name,
+        'url': (location.origin + location.pathname.replace(/\/[^/]*$/, '/') + g.id + '/')
+      };
+    })
+  };
+  document.getElementById('ld-json').textContent = JSON.stringify(ld);
+})();
+</script>
+</body>
+</html>
