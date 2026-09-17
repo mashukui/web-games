@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="hub.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +25,7 @@
     font-size: clamp(32px, 6vw, 46px); font-weight: 800; letter-spacing: 1px;
     text-shadow: 0 3px 0 rgba(0,0,0,.3);
   }
+  .lang-slot { text-align: center; margin-bottom: 16px; }
   .hero .sub {
     margin-top: 10px; font-size: 16px; color: rgba(255,255,255,.75); line-height: 1.6;
   }
@@ -72,7 +73,7 @@
     border-color: rgba(255,215,110,.5);
     outline: none;
   }
-  .card.hidden { display: none; }
+  .hidden { display: none !important; }
   .card .badge {
     position: absolute; top: 12px; right: 12px;
     font-size: 10px; font-weight: 800; letter-spacing: 1px;
@@ -103,31 +104,33 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="i18n.js"></script>
 </head>
 <body>
 
 <div class="hero">
-  <h1>🎮 Web Games</h1>
-  <div class="sub">
+  <div class="lang-slot" data-lang-switcher></div>
+  <h1 data-i18n="hub.title">🎮 Web Games</h1>
+  <div class="sub" data-i18n-html="hub.tagline">
     Free online games you can play <b>instantly</b> — no install, no signup, no downloads.<br>
     Pure HTML5. Works on your phone, tablet, and desktop.
   </div>
   <div class="games-count" id="games-count"></div>
 </div>
 
-<h2>Games</h2>
+<h2 data-i18n="hub.heading">Games</h2>
 <div class="filters" id="filters"></div>
 <div class="grid" id="games-grid"></div>
-<div class="empty hidden" id="empty">No games in this category yet.</div>
+<div class="empty hidden" id="empty" data-i18n="hub.empty">No games in this category yet.</div>
 
-<div class="about">
+<div class="about" data-i18n-html="hub.about">
   <b>About this collection.</b>
   Every game here is a single self-contained HTML file — no frameworks, no build tools, no tracking,
   no external assets. Open a card and you're playing in under a second. Best scores are saved locally
   in your browser. Free and open source under the MIT license.
 </div>
 
-<div class="contribute">
+<div class="contribute" data-i18n-html="hub.contribute">
   🛠️ <b>Want to add a game?</b> This is an open collection —
   build a single-file, zero-dependency HTML5 game, add it to the registry, and
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">open a pull request</a>.
@@ -135,9 +138,9 @@
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  Free &amp; open source on <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a><br>
-  Also try <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <span data-i18n="hub.openSource">Free &amp; open source on</span> <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a><br>
+  <span data-i18n="hub.alsoTry">Also try</span> <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script type="application/ld+json" id="ld-json"></script>
@@ -147,77 +150,58 @@
 
   // ===== Game registry (single source of truth — add one entry per game) =====
   var GAMES = [
-    {
-      id: 'ant-flap', icon: '🐜', name: 'Ant Flap', category: 'Arcade',
-      desc: 'A tiny flying ant adventure. Tap to flap, squeeze through the branches.'
-    },
-    {
-      id: 'ant-jump', icon: '🦗', name: 'Ant Jump', category: 'Arcade',
-      desc: 'Bounce the ant up endless platforms. Moving, fragile and springy ones ahead.'
-    },
-    {
-      id: 'block-drop', icon: '🧊', name: 'Block Drop', category: 'Arcade',
-      desc: 'Falling blocks, perfect clears. Speed up, survive, stack them high.'
-    },
-    {
-      id: 'breakout', icon: '🧱', name: 'Breakout', category: 'Arcade',
-      desc: 'Smash every brick with angle-perfect paddle physics. Three lives, endless levels.'
-    },
-    {
-      id: 'paddle-duel', icon: '🏓', name: 'Paddle Duel', category: 'Arcade',
-      desc: 'Pong-style paddle duel vs AI in three difficulties. First to 7 wins.'
-    },
-    {
-      id: 'snake', icon: '🐍', name: 'Snake', category: 'Classic',
-      desc: 'The all-time classic. Eat, grow, speed up — just don\u2019t bite yourself.'
-    },
-    {
-      id: '2048', icon: '🔢', name: '2048', category: 'Puzzle',
-      desc: 'Swipe and merge the tiles. Reach 2048, then keep going.'
-    },
-    {
-      id: 'minesweeper', icon: '💣', name: 'Minesweeper', category: 'Puzzle',
-      desc: 'Three difficulties, first-click-safe. Flag the mines, clear the field.'
-    },
-    {
-      id: 'star-defender', icon: '🚀', name: 'Star Defender', category: 'Action',
-      desc: 'Wave after wave of enemies. Shoot, dodge, survive as long as you can.'
-    }
+    { id: 'ant-flap',      icon: '🐜', nameKey: 'game.ant-flap',      descKey: 'hub.desc.ant-flap',      category: 'Arcade' },
+    { id: 'ant-jump',      icon: '🦗', nameKey: 'game.ant-jump',      descKey: 'hub.desc.ant-jump',      category: 'Arcade' },
+    { id: 'block-drop',    icon: '🧊', nameKey: 'game.block-drop',    descKey: 'hub.desc.block-drop',    category: 'Arcade' },
+    { id: 'breakout',      icon: '🧱', nameKey: 'game.breakout',      descKey: 'hub.desc.breakout',      category: 'Arcade' },
+    { id: 'paddle-duel',   icon: '🏓', nameKey: 'game.paddle-duel',   descKey: 'hub.desc.paddle-duel',   category: 'Arcade' },
+    { id: 'snake',         icon: '🐍', nameKey: 'game.snake',         descKey: 'hub.desc.snake',         category: 'Classic' },
+    { id: '2048',          icon: '🔢', nameKey: 'game.2048',          descKey: 'hub.desc.2048',          category: 'Puzzle' },
+    { id: 'minesweeper',   icon: '💣', nameKey: 'game.minesweeper',   descKey: 'hub.desc.minesweeper',   category: 'Puzzle' },
+    { id: 'star-defender', icon: '🚀', nameKey: 'game.star-defender', descKey: 'hub.desc.star-defender', category: 'Action' }
   ];
 
   var CATEGORIES = ['All', 'Arcade', 'Classic', 'Puzzle', 'Action'];
+  var CAT_KEYS = { 'All': 'hub.catAll', 'Arcade': 'hub.catArcade', 'Classic': 'hub.catClassic', 'Puzzle': 'hub.catPuzzle', 'Action': 'hub.catAction' };
+  function catLabel(cat) { return t(CAT_KEYS[cat] || cat); }
 
   var grid = document.getElementById('games-grid');
   var filtersEl = document.getElementById('filters');
   var emptyEl = document.getElementById('empty');
   var activeCat = 'All';
 
-  // ---- build cards ----
-  GAMES.forEach(function (g) {
-    var a = document.createElement('a');
-    a.className = 'card';
-    a.href = g.id + '/';
-    a.dataset.cat = g.category;
-    a.innerHTML =
-      '<span class="badge">' + g.category.toUpperCase() + '</span>' +
-      '<div class="icon" aria-hidden="true">' + g.icon + '</div>' +
-      '<div class="name">' + g.name + '</div>' +
-      '<div class="desc">' + g.desc + '</div>' +
-      '<div class="play">PLAY</div>';
-    grid.appendChild(a);
-  });
+  // ---- build cards (re-run on every language change) ----
+  function renderCards() {
+    grid.innerHTML = '';
+    GAMES.forEach(function (g) {
+      var a = document.createElement('a');
+      a.className = 'card';
+      a.href = g.id + '/';
+      a.dataset.cat = g.category;
+      a.innerHTML =
+        '<span class="badge">' + catLabel(g.category).toUpperCase() + '</span>' +
+        '<div class="icon" aria-hidden="true">' + g.icon + '</div>' +
+        '<div class="name">' + t(g.nameKey) + '</div>' +
+        '<div class="desc">' + t(g.descKey) + '</div>' +
+        '<div class="play">' + t('hub.playCard') + '</div>';
+      grid.appendChild(a);
+    });
+  }
 
-  // ---- build filter chips ----
-  CATEGORIES.forEach(function (cat) {
-    var count = cat === 'All' ? GAMES.length : GAMES.filter(function (g) { return g.category === cat; }).length;
-    if (count === 0) return;
-    var b = document.createElement('button');
-    b.className = 'chip';
-    b.dataset.cat = cat;
-    b.innerHTML = cat + '<span class="num">' + count + '</span>';
-    b.addEventListener('click', function () { applyFilter(cat, true); });
-    filtersEl.appendChild(b);
-  });
+  // ---- build filter chips (re-run on every language change) ----
+  function renderChips() {
+    filtersEl.innerHTML = '';
+    CATEGORIES.forEach(function (cat) {
+      var count = cat === 'All' ? GAMES.length : GAMES.filter(function (g) { return g.category === cat; }).length;
+      if (count === 0) return;
+      var b = document.createElement('button');
+      b.className = 'chip';
+      b.dataset.cat = cat;
+      b.innerHTML = catLabel(cat) + '<span class="num">' + count + '</span>';
+      b.addEventListener('click', function () { applyFilter(cat, true); });
+      filtersEl.appendChild(b);
+    });
+  }
 
   // ---- filtering with deep links (?cat=puzzle or #puzzle) ----
   function normalize(s) {
@@ -240,8 +224,7 @@
     for (var c = 0; c < chips.length; c++) {
       chips[c].classList.toggle('active', chips[c].dataset.cat === cat);
     }
-    document.title = (cat === 'All' ? 'Web Games — Free Online Games, No Install, No Signup'
-      : cat + ' Games — Free Online Games, No Install');
+    document.title = (cat === 'All' ? t('hub.docTitle') : t('hub.docTitleCat', { cat: catLabel(cat) }));
     if (updateUrl && window.history && history.replaceState) {
       var q = cat === 'All' ? location.pathname : location.pathname + '?cat=' + cat.toLowerCase();
       history.replaceState(null, '', q);
@@ -255,27 +238,36 @@
     return 'All';
   }
 
+  // ===== JSON-LD ItemList for SEO =====
+  function buildLD() {
+    var ld = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      'name': t('hub.ldName'),
+      'itemListElement': GAMES.map(function (g, i) {
+        return {
+          '@type': 'ListItem',
+          'position': i + 1,
+          'name': t(g.nameKey),
+          'url': (location.origin + location.pathname.replace(/\/[^/]*$/, '/') + g.id + '/')
+        };
+      })
+    };
+    document.getElementById('ld-json').textContent = JSON.stringify(ld);
+  }
+
+  function renderAll() {
+    renderCards();
+    renderChips();
+    document.getElementById('games-count').textContent = t('hub.count', { n: GAMES.length });
+    buildLD();
+    applyFilter(activeCat, false);
+  }
+
+  renderAll();
   applyFilter(initialCat(), false);
   window.addEventListener('hashchange', function () { applyFilter(normalize(location.hash.slice(1)), false); });
-
-  document.getElementById('games-count').textContent =
-    GAMES.length + ' GAMES · ALL FREE · ZERO INSTALL';
-
-  // ===== JSON-LD ItemList for SEO =====
-  var ld = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    'name': 'Web Games — Free Online Games',
-    'itemListElement': GAMES.map(function (g, i) {
-      return {
-        '@type': 'ListItem',
-        'position': i + 1,
-        'name': g.name,
-        'url': (location.origin + location.pathname.replace(/\/[^/]*$/, '/') + g.id + '/')
-      };
-    })
-  };
-  document.getElementById('ld-json').textContent = JSON.stringify(ld);
+  WG.onChange(renderAll);
 })();
 </script>
 </body>

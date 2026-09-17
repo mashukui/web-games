@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="paddleDuel.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -93,48 +93,49 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap" id="wrap">
   <canvas id="game" width="520" height="620"></canvas>
   <div class="hud">
-    <div class="hud-item"><small>YOU</small><span id="hud-you">0</span></div>
-    <div class="hud-item accent"><small>LONGEST RALLY</small><span id="hud-rally">0</span></div>
-    <div class="hud-item"><small>AI · <span id="hud-diff">MEDIUM</span></small><span id="hud-ai">0</span></div>
+    <div class="hud-item"><small data-i18n="paddleDuel.hudYou">YOU</small><span id="hud-you">0</span></div>
+    <div class="hud-item accent"><small data-i18n="paddleDuel.hudLongest">LONGEST RALLY</small><span id="hud-rally">0</span></div>
+    <div class="hud-item"><small><span data-i18n="paddleDuel.hudAi">AI</span> · <span id="hud-diff">MEDIUM</span></small><span id="hud-ai">0</span></div>
   </div>
-  <button id="mute-btn" title="Toggle sound">🔊</button>
+  <button id="mute-btn" title="Toggle sound" data-i18n-title="common.toggleSound">🔊</button>
 
   <div class="overlay" id="start-overlay">
     <div class="icon-big">🏓</div>
-    <div class="title">PADDLE DUEL<span class="sub">FIRST&nbsp;TO&nbsp;7&nbsp;WINS</span></div>
-    <div class="tip">Move your paddle with <b>mouse</b>, <b>touch</b>, or <b>↑ ↓</b><br>Hit the ball off-center to angle your shot</div>
+    <div class="title"><span data-i18n="paddleDuel.title">PADDLE DUEL</span><span class="sub" data-i18n="paddleDuel.subtitle">FIRST TO 7 WINS</span></div>
+    <div class="tip" data-i18n-html="paddleDuel.tip">Move your paddle with <b>mouse</b>, <b>touch</b>, or <b>↑ ↓</b><br>Hit the ball off-center to angle your shot</div>
     <div class="diff-row">
-      <button class="chip" data-diff="easy">EASY</button>
-      <button class="chip active" data-diff="medium">MEDIUM</button>
-      <button class="chip" data-diff="hard">HARD</button>
+      <button class="chip" data-diff="easy" data-i18n="paddleDuel.diffEasy">EASY</button>
+      <button class="chip active" data-diff="medium" data-i18n="paddleDuel.diffMedium">MEDIUM</button>
+      <button class="chip" data-diff="hard" data-i18n="paddleDuel.diffHard">HARD</button>
     </div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
     <div class="medal" id="medal">🏓</div>
     <div class="score-final" id="final-score">0 : 0</div>
-    <div class="new-record hidden" id="new-record">🏆 NEW RECORD RALLY!</div>
+    <div class="new-record hidden" id="new-record" data-i18n="paddleDuel.newRecord">🏆 NEW RECORD RALLY!</div>
     <div class="best" id="over-best"></div>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -204,9 +205,9 @@
   var TARGET = 7;
 
   var DIFFS = {
-    easy:   { label: 'EASY',   aiSpeed: 4.0, err: 0.18, ball: 4.6 },
-    medium: { label: 'MEDIUM', aiSpeed: 6.0, err: 0.08, ball: 5.4 },
-    hard:   { label: 'HARD',   aiSpeed: 9.0, err: 0.02, ball: 6.2 }
+    easy:   { label: 'EASY',   key: 'paddleDuel.diffEasy',   aiSpeed: 4.0, err: 0.18, ball: 4.6 },
+    medium: { label: 'MEDIUM', key: 'paddleDuel.diffMedium', aiSpeed: 6.0, err: 0.08, ball: 5.4 },
+    hard:   { label: 'HARD',   key: 'paddleDuel.diffHard',   aiSpeed: 9.0, err: 0.02, ball: 6.2 }
   };
   var diff = 'medium';
 
@@ -230,14 +231,16 @@
     document.getElementById('hud-you').textContent = you;
     document.getElementById('hud-ai').textContent = cpu;
     document.getElementById('hud-rally').textContent = longest;
-    document.getElementById('hud-diff').textContent = DIFFS[diff].label;
+    document.getElementById('hud-diff').textContent = t(DIFFS[diff].key);
   }
   function refreshBest() {
     document.getElementById('start-best').textContent =
-      best > 0 ? '🏅 Best: longest rally ' + best + ' hits' : 'First duel — good luck!';
-    document.getElementById('over-best').textContent = 'Best rally: ' + best + ' hits';
+      best > 0 ? t('paddleDuel.bestRally', { n: best }) : t('paddleDuel.first');
+    document.getElementById('over-best').textContent = t('paddleDuel.bestRallyLabel', { n: best });
+    document.getElementById('hud-diff').textContent = t(DIFFS[diff].key);
   }
   refreshBest();
+  WG.onChange(refreshBest);
 
   function serve(dir) {
     state = STATE.SERVE;
@@ -313,12 +316,13 @@
 
   document.getElementById('btn-share').addEventListener('click', function () {
     var wonGame = you > cpu;
-    var full = (wonGame ? 'I beat the AI ' + you + ':' + cpu : 'The AI beat me ' + cpu + ':' + you) +
-      ' in Paddle Duel 🏓 My longest rally: ' + longest + ' hits. Play here: ' + location.href;
+    var full = wonGame
+      ? t('paddleDuel.shareWin', { you: you, cpu: cpu, rally: longest, url: location.href })
+      : t('paddleDuel.shareLose', { you: you, cpu: cpu, rally: longest, url: location.href });
     function done() {
-      var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      var b = document.getElementById('btn-share');
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
@@ -481,7 +485,7 @@
     if (state === STATE.PLAYING && rally > 0) {
       ctx.font = '700 13px -apple-system, sans-serif';
       ctx.fillStyle = 'rgba(255,215,110,.85)';
-      ctx.fillText('RALLY ' + rally, W / 2, PLAY_B - 16);
+      ctx.fillText(t('paddleDuel.canvasRally', { n: rally }), W / 2, PLAY_B - 16);
     }
 
     // trail
@@ -527,7 +531,7 @@
       ctx.font = '600 13px -apple-system, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,.75)';
       ctx.textAlign = 'center';
-      ctx.fillText('Click or press SPACE to serve', W / 2, (PLAY_T + PLAY_B) / 2 + 60);
+      ctx.fillText(t('paddleDuel.serve'), W / 2, (PLAY_T + PLAY_B) / 2 + 60);
     }
   }
 

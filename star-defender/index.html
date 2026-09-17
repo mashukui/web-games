@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="starDefender.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -86,43 +86,44 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap" id="wrap">
   <canvas id="game" width="460" height="640"></canvas>
   <div class="hud">
-    <div class="hud-item"><small>SCORE</small><span id="hud-score">0</span></div>
-    <div class="hud-item"><small>WAVE</small><span id="hud-wave">1</span></div>
-    <div class="hud-item"><small>LIVES</small><span id="hud-lives">❤❤❤</span></div>
+    <div class="hud-item"><small data-i18n="starDefender.hudScore">SCORE</small><span id="hud-score">0</span></div>
+    <div class="hud-item"><small data-i18n="starDefender.hudWave">WAVE</small><span id="hud-wave">1</span></div>
+    <div class="hud-item"><small data-i18n="starDefender.hudLives">LIVES</small><span id="hud-lives">❤❤❤</span></div>
   </div>
-  <button id="mute-btn" title="Toggle sound">🔊</button>
+  <button id="mute-btn" title="Toggle sound" data-i18n-title="common.toggleSound">🔊</button>
 
   <div class="overlay" id="start-overlay">
     <div class="icon-big">🚀</div>
-    <div class="title">STAR DEFENDER<span class="sub">SURVIVE&nbsp;THE&nbsp;WAVES</span></div>
-    <div class="tip">Move with <b>mouse</b> / <b>touch</b> / <b>← →</b><br>Your ship <b>fires automatically</b> — just dodge and aim by moving</div>
+    <div class="title"><span data-i18n="starDefender.title">STAR DEFENDER</span><span class="sub" data-i18n="starDefender.subtitle">SURVIVE THE WAVES</span></div>
+    <div class="tip" data-i18n-html="starDefender.tip">Move with <b>mouse</b> / <b>touch</b> / <b>← →</b><br>Your ship <b>fires automatically</b> — just dodge and aim by moving</div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
     <div class="medal" id="medal">🚀</div>
-    <div class="score-final"><span id="final-score">0</span><small>FINAL SCORE</small></div>
-    <div class="new-record hidden" id="new-record">🏆 NEW RECORD!</div>
+    <div class="score-final"><span id="final-score">0</span><small data-i18n="starDefender.finalLabel">FINAL SCORE</small></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
     <div class="best" id="over-best"></div>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -199,10 +200,11 @@
     document.getElementById('hud-lives').textContent = '❤'.repeat(Math.max(0, lives));
   }
   function refreshBest() {
-    document.getElementById('start-best').textContent = best > 0 ? '🏅 Best score: ' + best : 'First flight, pilot!';
-    document.getElementById('over-best').textContent = 'Best: ' + best;
+    document.getElementById('start-best').textContent = best > 0 ? t('common.bestScore', { n: best }) : t('starDefender.first');
+    document.getElementById('over-best').textContent = t('common.bestLabel', { n: best });
   }
   refreshBest();
+  WG.onChange(refreshBest);
 
   // ===== Waves =====
   function enemySpeed() { return 1 + wave * 0.15; }
@@ -277,11 +279,11 @@
   document.getElementById('btn-retry').addEventListener('click', retry);
 
   document.getElementById('btn-share').addEventListener('click', function () {
-    var full = 'I scored ' + score + ' points in Star Defender 🚀 (wave ' + wave + '). Can you beat me? Play here: ' + location.href;
+    var full = t('starDefender.share', { n: score, w: wave, url: location.href });
     function done() {
-      var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      var b = document.getElementById('btn-share');
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
@@ -579,7 +581,7 @@
       ctx.fillStyle = '#fff';
       ctx.font = '800 30px -apple-system, "Segoe UI", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('WAVE ' + wave, W / 2, H / 2);
+      ctx.fillText(t('starDefender.canvasWave', { n: wave }), W / 2, H / 2);
       ctx.globalAlpha = 1;
     }
 

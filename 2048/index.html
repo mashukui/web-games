@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="g2048.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -113,57 +113,58 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap">
   <div class="topbar">
-    <div class="counter"><small>SCORE</small><span id="score">0</span></div>
-    <div class="counter accent"><small>BEST</small><span id="best">0</span></div>
+    <div class="counter"><small data-i18n="g2048.hudScore">SCORE</small><span id="score">0</span></div>
+    <div class="counter accent"><small data-i18n="g2048.hudBest">BEST</small><span id="best">0</span></div>
     <div class="tools">
-      <button class="icon-btn" id="undo-btn" title="Undo last move" disabled>↩</button>
-      <button class="icon-btn" id="mute-btn" title="Toggle sound">🔊</button>
+      <button class="icon-btn" id="undo-btn" data-i18n-title="g2048.undoTitle" title="Undo last move" disabled>↩</button>
+      <button class="icon-btn" id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
     </div>
   </div>
   <div id="board"></div>
 
-  <div class="hint">
+  <div class="hint" data-i18n-html="g2048.hint">
     <b>Swipe</b> or use <b>arrow keys</b> / <b>WASD</b> to move tiles · <b>U</b> to undo
   </div>
 
   <div class="overlay" id="start-overlay">
     <div class="big">🔢</div>
     <h3>2048</h3>
-    <p>Merge matching tiles to reach <b>2048</b>.<br>Every move adds a new tile — plan ahead!</p>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <p data-i18n-html="g2048.intro">Merge matching tiles to reach <b>2048</b>.<br>Every move adds a new tile — plan ahead!</p>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="win-overlay">
     <div class="big">🏆</div>
-    <h3>YOU MADE 2048!</h3>
-    <p>Score: <b id="win-score">0</b></p>
+    <h3 data-i18n="g2048.winTitle">YOU MADE 2048!</h3>
+    <p><span data-i18n="g2048.scoreLabel">Score</span>: <b id="win-score">0</b></p>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-continue">KEEP GOING</button>
-      <button class="btn-ghost" id="btn-win-new">NEW GAME</button>
+      <button class="btn-primary" id="btn-continue" data-i18n="g2048.keepGoing">KEEP GOING</button>
+      <button class="btn-ghost" id="btn-win-new" data-i18n="g2048.newGame">NEW GAME</button>
     </div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
     <div class="big" id="over-icon">🧩</div>
     <h3 id="over-title">NO MOVES LEFT</h3>
-    <p>Score: <b id="final-score">0</b><br><span id="over-best"></span></p>
+    <p><span data-i18n="g2048.scoreLabel">Score</span>: <b id="final-score">0</b><br><span id="over-best"></span></p>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -344,10 +345,10 @@
     over = true;
     sfx.over();
     document.getElementById('final-score').textContent = score;
-    document.getElementById('over-best').textContent = 'Best: ' + best;
+    document.getElementById('over-best').textContent = t('common.bestLabel', { n: best });
     document.getElementById('over-icon').textContent = score >= 2048 ? '👑' : score >= 1000 ? '🥇' : score >= 500 ? '🥈' : '🧩';
     var isRecord = score >= best && score > 0;
-    document.getElementById('over-title').textContent = isRecord && score > 0 ? 'NEW RECORD!' : 'NO MOVES LEFT';
+    document.getElementById('over-title').textContent = isRecord && score > 0 ? t('common.newRecord') : t('g2048.noMoves');
     document.getElementById('over-overlay').classList.remove('hidden');
   }
 
@@ -408,11 +409,11 @@
   });
 
   document.getElementById('btn-share').addEventListener('click', function () {
-    var full = 'I scored ' + score + ' points in 2048 🔢 Can you beat me? Play here: ' + location.href;
+    var full = t('g2048.share', { n: score, url: location.href });
     function done() {
-      var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      var b = document.getElementById('btn-share');
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
@@ -425,6 +426,15 @@
     try { document.execCommand('copy'); done(); } catch (e) {}
     document.body.removeChild(ta);
   }
+
+  // ===== i18n: keep JS-rendered game-over text in the current language =====
+  function refreshOverText() {
+    if (!over) return;
+    var isRecord = score >= best && score > 0;
+    document.getElementById('over-title').textContent = isRecord ? t('common.newRecord') : t('g2048.noMoves');
+    document.getElementById('over-best').textContent = t('common.bestLabel', { n: best });
+  }
+  WG.onChange(refreshOverText);
 
   // ===== boot =====
   buildBoard();

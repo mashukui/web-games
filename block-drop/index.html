@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="blockDrop.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -100,57 +100,58 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap" id="wrap">
   <canvas id="game" width="480" height="640"></canvas>
 
-  <button id="mute-btn" title="Toggle sound">🔊</button>
+  <button id="mute-btn" title="Toggle sound" data-i18n-title="common.toggleSound">🔊</button>
   <div class="sidenote">
-    <div class="panel"><small>SCORE</small><span id="hud-score">0</span></div>
-    <div class="panel"><small>LEVEL</small><span id="hud-level">1</span></div>
-    <div class="panel"><small>LINES</small><span id="hud-lines">0</span></div>
-    <div class="panel accent"><small>BEST</small><span id="hud-best">0</span></div>
+    <div class="panel"><small data-i18n="blockDrop.hudScore">SCORE</small><span id="hud-score">0</span></div>
+    <div class="panel"><small data-i18n="blockDrop.hudLevel">LEVEL</small><span id="hud-level">1</span></div>
+    <div class="panel"><small data-i18n="blockDrop.hudLines">LINES</small><span id="hud-lines">0</span></div>
+    <div class="panel accent"><small data-i18n="blockDrop.hudBest">BEST</small><span id="hud-best">0</span></div>
   </div>
 
   <div class="touch-pad">
-    <button data-act="left" aria-label="Move left">◀</button>
-    <button data-act="rotate" aria-label="Rotate">⟳</button>
-    <button data-act="right" aria-label="Move right">▶</button>
-    <button data-act="soft" aria-label="Soft drop">▼</button>
-    <button data-act="hard" aria-label="Hard drop">⤓</button>
+    <button data-act="left" aria-label="Move left" data-i18n-aria="blockDrop.ariaLeft">◀</button>
+    <button data-act="rotate" aria-label="Rotate" data-i18n-aria="blockDrop.ariaRotate">⟳</button>
+    <button data-act="right" aria-label="Move right" data-i18n-aria="blockDrop.ariaRight">▶</button>
+    <button data-act="soft" aria-label="Soft drop" data-i18n-aria="blockDrop.ariaSoft">▼</button>
+    <button data-act="hard" aria-label="Hard drop" data-i18n-aria="blockDrop.ariaHard">⤓</button>
   </div>
 
   <div class="overlay" id="start-overlay">
     <div class="icon-big">🧊</div>
-    <div class="title">BLOCK DROP<span class="sub">STACK&nbsp;·&nbsp;CLEAR&nbsp;·&nbsp;SURVIVE</span></div>
-    <div class="tip">
+    <div class="title"><span data-i18n="blockDrop.title">BLOCK DROP</span><span class="sub" data-i18n="blockDrop.subtitle">STACK · CLEAR · SURVIVE</span></div>
+    <div class="tip" data-i18n-html="blockDrop.tip">
       <b>← →</b> move · <b>↑</b> rotate · <b>↓</b> soft drop · <b>SPACE</b> hard drop · <b>C</b> hold<br>
       On mobile: use the buttons at the bottom
     </div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
     <div class="medal" id="medal">🧊</div>
-    <div class="score-final"><span id="final-score">0</span><small>FINAL SCORE</small></div>
-    <div class="new-record hidden" id="new-record">🏆 NEW RECORD!</div>
+    <div class="score-final"><span id="final-score">0</span><small data-i18n="blockDrop.finalLabel">FINAL SCORE</small></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
     <div class="stats" id="over-stats"></div>
     <div class="best" id="over-best"></div>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -418,10 +419,17 @@
     document.getElementById('hud-best').textContent = best;
   }
   function refreshBest() {
-    document.getElementById('start-best').textContent = best > 0 ? '🏅 Best score: ' + best : 'First stack — good luck!';
-    document.getElementById('over-best').textContent = 'Best: ' + best;
+    document.getElementById('start-best').textContent = best > 0 ? t('common.bestScore', { n: best }) : t('blockDrop.first');
+    document.getElementById('over-best').textContent = t('common.bestLabel', { n: best });
+  }
+  function renderOverStats() {
+    document.getElementById('over-stats').innerHTML =
+      t('blockDrop.finalLevel', { n: level }) + ' · ' + t('blockDrop.linesCleared', { n: lines }) + '<br>' +
+      (lineCounts[4] ? '🧊 ' + t('blockDrop.fourLineClear', { n: lineCounts[4] }) : '&nbsp;');
   }
   refreshBest();
+  WG.onChange(refreshBest);
+  WG.onChange(renderOverStats);
 
   function reset() {
     board = newBoard();
@@ -446,9 +454,7 @@
     if (isRecord) { best = score; localStorage.setItem(BEST_KEY, String(best)); }
     document.getElementById('final-score').textContent = score;
     document.getElementById('new-record').classList.toggle('hidden', !isRecord);
-    document.getElementById('over-stats').innerHTML =
-      level + ' levels · ' + lines + ' lines<br>' +
-      (lineCounts[4] ? '🧊 ' + lineCounts[4] + ' × four-line clear' : '&nbsp;');
+    renderOverStats();
     refreshBest();
     document.getElementById('medal').textContent = score >= 8000 ? '👑' : score >= 4000 ? '🥇' : score >= 1500 ? '🥈' : score >= 500 ? '🥉' : '🧊';
     document.getElementById('over-overlay').classList.remove('hidden');
@@ -503,11 +509,11 @@
   document.getElementById('btn-start').addEventListener('click', startGame);
   document.getElementById('btn-retry').addEventListener('click', retry);
   document.getElementById('btn-share').addEventListener('click', function () {
-    var full = 'I scored ' + score + ' in Block Drop 🧊 (' + lines + ' lines, level ' + level + '). Can you beat me? Play here: ' + location.href;
+    var full = t('blockDrop.share', { n: score, lines: lines, level: level, url: location.href });
     function done() {
       var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
@@ -642,7 +648,7 @@
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '700 11px -apple-system, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('NEXT', panelX + 12, BY + 138);
+    ctx.fillText(t('blockDrop.canvasNext'), panelX + 12, BY + 138);
     drawMini(panelX + 22, BY + 150, nextKey, 18);
 
     ctx.fillStyle = 'rgba(255,255,255,.05)';
@@ -650,7 +656,7 @@
     ctx.roundRect(panelX, BY + 222, 104, 92, 10);
     ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,.6)';
-    ctx.fillText('HOLD', panelX + 12, BY + 242);
+    ctx.fillText(t('blockDrop.canvasHold'), panelX + 12, BY + 242);
     drawMini(panelX + 22, BY + 254, holdKey, 18);
 
     if (state === STATE.PAUSED) {
@@ -659,10 +665,10 @@
       ctx.fillStyle = '#fff';
       ctx.font = '800 26px -apple-system, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('PAUSED', W / 2, H / 2 - 6);
+      ctx.fillText(t('blockDrop.paused'), W / 2, H / 2 - 6);
       ctx.font = '600 13px -apple-system, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,.7)';
-      ctx.fillText('Press P or Esc to resume', W / 2, H / 2 + 22);
+      ctx.fillText(t('blockDrop.resume'), W / 2, H / 2 + 22);
     }
 
     ctx.restore();

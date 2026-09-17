@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="minesweeper.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -100,35 +100,36 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap">
   <div class="topbar">
-    <div class="counter"><small>MINES</small><span id="mine-count">10</span> ⚑</div>
+    <div class="counter"><small data-i18n="minesweeper.hudMines">MINES</small><span id="mine-count">10</span> ⚑</div>
     <div class="diff-row">
       <button class="diff-btn active" data-diff="easy">9×9</button>
       <button class="diff-btn" data-diff="medium">16×16</button>
       <button class="diff-btn" data-diff="hard">30×16</button>
     </div>
-    <div class="counter"><small>TIME</small><span id="time">0</span> s</div>
-    <button class="face-btn" id="face-btn" title="New game">🙂</button>
-    <button id="mute-btn" title="Toggle sound">🔊</button>
+    <div class="counter"><small data-i18n="minesweeper.hudTime">TIME</small><span id="time">0</span> s</div>
+    <button class="face-btn" id="face-btn" data-i18n-title="minesweeper.newGame" title="New game">🙂</button>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
   </div>
   <div id="board"></div>
   <div class="msg" id="msg"></div>
-  <div class="hint">Left click / tap to reveal · Right click / long-press to flag 🚩</div>
+  <div class="hint" data-i18n-html="minesweeper.hint">Left click / tap to reveal · Right click / long-press to flag 🚩</div>
   <div class="btn-row hidden" id="share-row">
-    <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-    <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+    <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+    <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -320,7 +321,7 @@
         el.textContent = '❌';
       }
     }
-    msg.textContent = '💥 BOOM! You hit a mine.';
+    msg.textContent = t('minesweeper.boom');
     msg.className = 'msg lose';
     shareRow.classList.remove('hidden');
     saveBest(false);
@@ -339,7 +340,7 @@
       }
       flags = mines;
       document.getElementById('mine-count').textContent = 0;
-      msg.textContent = '🏆 CLEARED! ' + cols + '×' + rows + ' in ' + seconds + 's';
+      msg.textContent = t('minesweeper.cleared', { cols: cols, rows: rows, sec: seconds });
       msg.className = 'msg win';
       shareRow.classList.remove('hidden');
       saveBest(true);
@@ -441,16 +442,15 @@
     var bestS = parseInt(localStorage.getItem(key) || '0', 10) || 0;
     var txt;
     if (won) {
-      txt = 'I cleared ' + diff.toUpperCase() + ' Minesweeper 💣 in ' + seconds + ' seconds' +
-        (bestS && seconds <= bestS ? ' — a new personal best!' : '') +
-        '. Can you beat me? Play here: ' + location.href;
+      txt = t(bestS && seconds <= bestS ? 'minesweeper.shareWin' : 'minesweeper.shareWinPlain',
+              { diff: diff.toUpperCase(), sec: seconds, url: location.href });
     } else {
-      txt = 'Minesweeper got me 💥 Think you can clear it? Play here: ' + location.href;
+      txt = t('minesweeper.shareLose', { url: location.href });
     }
     function done() {
-      var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      var b = document.getElementById('btn-share');
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt, done); });
@@ -463,6 +463,13 @@
     try { document.execCommand('copy'); done(); } catch (e) {}
     document.body.removeChild(ta);
   }
+
+  // ===== i18n: keep JS-rendered result message in the current language =====
+  function refreshMsg() {
+    if (!over) return;
+    msg.textContent = won ? t('minesweeper.cleared', { cols: cols, rows: rows, sec: seconds }) : t('minesweeper.boom');
+  }
+  WG.onChange(refreshMsg);
 
   newGame();
 })();

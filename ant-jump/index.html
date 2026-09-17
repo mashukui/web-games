@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="antJump.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -87,42 +87,43 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap" id="wrap">
   <canvas id="game" width="420" height="640"></canvas>
   <div class="hud">
-    <div class="hud-item"><small>HEIGHT</small><span id="hud-height">0</span> m</div>
-    <div class="hud-item accent"><small>BEST</small><span id="hud-best">0</span> m</div>
+    <div class="hud-item"><small data-i18n="antJump.hudHeight">HEIGHT</small><span id="hud-height">0</span> m</div>
+    <div class="hud-item accent"><small data-i18n="antJump.hudBest">BEST</small><span id="hud-best">0</span> m</div>
   </div>
-  <button id="mute-btn" title="Toggle sound">🔊</button>
+  <button id="mute-btn" title="Toggle sound" data-i18n-title="common.toggleSound">🔊</button>
 
   <div class="overlay" id="start-overlay">
     <div class="icon-big">🐜</div>
-    <div class="title">ANT JUMP<span class="sub">CLIMB&nbsp;AS&nbsp;HIGH&nbsp;AS&nbsp;YOU&nbsp;CAN</span></div>
-    <div class="tip">The ant bounces <b>automatically</b>.<br>Steer with <b>← →</b> / <b>A D</b>, or <b>touch</b> the left/right side<br>Hold both to slow down. Wrap around the edges!</div>
+    <div class="title"><span data-i18n="antJump.title">ANT JUMP</span><span class="sub" data-i18n="antJump.subtitle">CLIMB AS HIGH AS YOU CAN</span></div>
+    <div class="tip" data-i18n-html="antJump.tip">The ant bounces <b>automatically</b>.<br>Steer with <b>← →</b> / <b>A D</b>, or <b>touch</b> the left/right side<br>Hold both to slow down. Wrap around the edges!</div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="over-overlay overlay hidden" id="over-overlay">
     <div class="medal" id="medal">🐛</div>
-    <div class="score-final"><span id="final-height">0</span> m<small>HEIGHT CLIMBED</small></div>
-    <div class="new-record hidden" id="new-record">🏆 NEW RECORD!</div>
+    <div class="score-final"><span id="final-height">0</span> m<small data-i18n="antJump.finalLabel">HEIGHT CLIMBED</small></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
     <div class="best" id="over-best"></div>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../">🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -252,10 +253,11 @@
     document.getElementById('hud-best').textContent = Math.floor(best / 10);
   }
   function refreshBest() {
-    document.getElementById('start-best').textContent = best > 0 ? '🏅 Best: ' + Math.floor(best / 10) + ' m' : 'First climb — good luck!';
-    document.getElementById('over-best').textContent = 'Best: ' + Math.floor(best / 10) + ' m';
+    document.getElementById('start-best').textContent = best > 0 ? t('antJump.bestH', { n: Math.floor(best / 10) }) : t('antJump.first');
+    document.getElementById('over-best').textContent = t('antJump.bestLabelH', { n: Math.floor(best / 10) });
   }
   refreshBest();
+  WG.onChange(refreshBest);   // keep "best score" line in the current language
 
   // ===== Input =====
   window.addEventListener('keydown', function (e) {
@@ -303,11 +305,11 @@
 
   document.getElementById('btn-share').addEventListener('click', function () {
     var m = Math.floor(maxHeight / 10);
-    var full = 'I climbed ' + m + ' m in Ant Jump 🐜 Can you go higher? Play here: ' + location.href;
+    var full = t('antJump.share', { n: m, url: location.href });
     function done() {
-      var b = document.getElementById('btn-share'); var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      var b = document.getElementById('btn-share');
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
@@ -615,7 +617,7 @@
         ctx.fillStyle = '#ffd76e';
         ctx.font = '700 11px -apple-system, sans-serif';
         ctx.textAlign = 'left';
-        ctx.fillText('BEST ' + Math.floor(best / 10) + ' m', 8, by - 5);
+        ctx.fillText(t('antJump.canvasBest', { n: Math.floor(best / 10) }), 8, by - 5);
       }
     }
   }

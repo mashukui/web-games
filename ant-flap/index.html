@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-title-key="antFlap.docTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -88,39 +88,40 @@
   .footer a { color: rgba(255,255,255,.8); text-decoration: none; }
   .footer a:hover { color: #ffd76e; }
 </style>
+<script src="../i18n.js"></script>
 </head>
 <body>
 
 <div class="wrap" id="wrap">
   <canvas id="game" width="420" height="640"></canvas>
   <div id="hud"><div id="score-display">0</div></div>
-  <button id="mute-btn" title="Toggle sound">🔊</button>
+  <button id="mute-btn" title="Toggle sound" data-i18n-title="common.toggleSound">🔊</button>
 
   <div class="overlay" id="start-overlay">
     <div class="ant-big">🐜</div>
-    <div class="title">ANT FLAP<span class="en">A&nbsp;TINY&nbsp;FLYING&nbsp;ANT&nbsp;ADVENTURE</span></div>
-    <div class="tip">Tap the screen or press <b>SPACE</b> to flap<br>Squeeze through the branches — don't crash!</div>
+    <div class="title"><span data-i18n="antFlap.title">ANT FLAP</span><span class="en" data-i18n="antFlap.subtitle">A TINY FLYING ANT ADVENTURE</span></div>
+    <div class="tip" data-i18n-html="antFlap.tip">Tap the screen or press <b>SPACE</b> to flap<br>Squeeze through the branches — don't crash!</div>
     <div class="best" id="start-best"></div>
-    <div class="btn-row"><button class="btn-primary" id="btn-start">START</button></div>
+    <div class="btn-row"><button class="btn-primary" id="btn-start" data-i18n="common.start">START</button></div>
   </div>
 
   <div class="overlay hidden" id="over-overlay">
     <div class="medal" id="medal">🥉</div>
     <div class="score-final" id="final-score">0</div>
-    <div class="new-record hidden" id="new-record">🏆 NEW RECORD!</div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
     <div class="best" id="over-best"></div>
     <div class="btn-row">
-      <button class="btn-primary" id="btn-retry">PLAY AGAIN</button>
-      <button class="btn-ghost" id="btn-share">SHARE SCORE</button>
+      <button class="btn-primary" id="btn-retry" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Made by <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
-  <a href="../" >🎮 More games</a> ·
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
   <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
-  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> — free online video downloader
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
 </div>
 
 <script>
@@ -224,10 +225,11 @@
   var medal        = document.getElementById('medal');
 
   function refreshBestLabels() {
-    startBest.textContent = best > 0 ? ('🏅 Best score: ' + best) : 'First flight — good luck!';
-    overBest.textContent  = 'Best: ' + best;
+    startBest.textContent = best > 0 ? t('common.bestScore', { n: best }) : t('antFlap.first');
+    overBest.textContent  = t('common.bestLabel', { n: best });
   }
   refreshBestLabels();
+  WG.onChange(refreshBestLabels);   // keep "best score" line in the current language
 
   // ===== Input =====
   function flap() {
@@ -278,14 +280,11 @@
   document.getElementById('btn-retry').addEventListener('click', retry);
 
   document.getElementById('btn-share').addEventListener('click', function () {
-    var text = 'I scored ' + score + ' points in Ant Flap 🐜 Can you beat me? Play here:';
-    var url = location.href;
-    var full = text + ' ' + url;
+    var full = t('antFlap.share', { n: score, url: location.href });
     function done() {
       var b = document.getElementById('btn-share');
-      var old = b.textContent;
-      b.textContent = '✅ Copied!';
-      setTimeout(function () { b.textContent = old; }, 1500);
+      b.textContent = t('common.copied');
+      setTimeout(function () { b.textContent = t('common.shareScore'); }, 1500);
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
