@@ -13,16 +13,21 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏓</text></svg>">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(160deg, #1a2a3a 0%, #2d4a5e 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 12px; user-select: none; touch-action: none;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 12px; user-select: none; touch-action: none;
   }
   .wrap {
     position: relative;
-    width: min(520px, 100%);
+    /* 画布 520×620：宽度必须同时受「可用高度」反推约束，否则窄高视口(手机竖屏/笔记本)里
+       wrap 被 flex 压扁、画布溢出被 overflow:hidden 裁掉，底部玩法区整个掉出屏幕。
+       .839 ≈ 520/620 */
+    width: min(520px, 100%, max(200px, calc((100vh - 130px) * .839)));
+    width: min(520px, 100%, max(200px, calc((100svh - 130px) * .839)));
     border-radius: 16px; overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,.45);
   }

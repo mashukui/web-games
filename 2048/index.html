@@ -13,12 +13,13 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔢</text></svg>">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(160deg, #1a2a3a 0%, #2d4a5e 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 14px; user-select: none; touch-action: none;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 14px; user-select: none; touch-action: none;
   }
   .wrap {
     position: relative;
@@ -48,7 +49,9 @@
     position: relative;
     display: grid; gap: 10px;
     background: rgba(0,0,0,.32); border-radius: 12px; padding: 10px;
-    --cs: min(92px, calc((100vw - 78px) / 4));
+    /* 格子尺寸同时受可用宽/高约束，否则窄高窗口(手机横屏/小笔记本)里棋盘底部会被裁掉 */
+    --cs: min(92px, calc((100vw - 78px) / 4), calc((100vh - 260px) / 4));
+    --cs: min(92px, calc((100vw - 78px) / 4), calc((100svh - 260px) / 4));
     grid-template-columns: repeat(4, var(--cs));
     touch-action: none;
   }

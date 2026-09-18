@@ -13,12 +13,13 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: linear-gradient(160deg, #1a2a3a 0%, #2d4a5e 100%);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 14px; user-select: none; -webkit-user-select: none;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 14px; user-select: none; -webkit-user-select: none;
   }
   .wrap {
     position: relative;
@@ -26,6 +27,8 @@
     background: rgba(15, 30, 40, .55);
     border-radius: 16px; padding: 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    /* 30×16 硬难度在手机上放不下整块棋盘，允许横向滑动查看（.cell 已设 touch-action: manipulation） */
+    overflow-x: auto;
   }
   .hidden { display: none !important; }
   .topbar {
@@ -232,7 +235,13 @@
     board.innerHTML = '';
     cells = [];
     board.style.gridTemplateColumns = 'repeat(' + cols + ', var(--cs))';
-    board.style.setProperty('--cs', DIFFS[diff].cs + 'px');
+    // 格子尺寸同时受可用宽/高约束，否则窄高窗口(手机横屏/小笔记本)里棋盘会被裁掉。
+    // 保底 16px 保证可点击；30×16 这类宽棋盘在手机上放不下时靠 .wrap 的横向滚动查看。
+    var csU = (window.CSS && CSS.supports && CSS.supports('height', '100svh')) ? 'svh' : 'vh';
+    var gapH = 2 * (cols - 1), gapV = 2 * (rows - 1);
+    board.style.setProperty('--cs', 'min(' + DIFFS[diff].cs + 'px, ' +
+      'max(16px, calc((100vw - 100px - ' + gapH + 'px) / ' + cols + ')), ' +
+      'max(16px, calc((100' + csU + ' - 300px - ' + gapV + 'px) / ' + rows + ')))');
     for (var i = 0; i < cols * rows; i++) {
       grid.push({ mine: false, adj: 0, state: 'closed' });
       var el = document.createElement('div');
