@@ -55,6 +55,7 @@
       'common.newRecord': '🏆 NEW RECORD!',
       'common.toggleSound': 'Toggle sound',
       'common.language': 'Language',
+      'common.backHome': 'Back to home',
       'common.madeBy': 'Made by',
       'common.moreGames': '🎮 More games',
       'common.freeVideo': '— free online video downloader',
@@ -254,6 +255,7 @@
       'common.newRecord': '🏆 新纪录！',
       'common.toggleSound': '开关声音',
       'common.language': '语言',
+      'common.backHome': '返回首页',
       'common.madeBy': '作者',
       'common.moreGames': '🎮 更多游戏',
       'common.freeVideo': '— 免费在线视频下载工具',
@@ -451,6 +453,7 @@
       'common.newRecord': '🏆 ¡NUEVO RÉCORD!',
       'common.toggleSound': 'Activar o desactivar el sonido',
       'common.language': 'Idioma',
+      'common.backHome': 'Volver al inicio',
       'common.madeBy': 'Creado por',
       'common.moreGames': '🎮 Más juegos',
       'common.freeVideo': '— descargador de vídeo online gratis',
@@ -648,6 +651,7 @@
       'common.newRecord': '🏆 NOVO RECORDE!',
       'common.toggleSound': 'Ligar ou desligar o som',
       'common.language': 'Idioma',
+      'common.backHome': 'Voltar ao início',
       'common.madeBy': 'Criado por',
       'common.moreGames': '🎮 Mais jogos',
       'common.freeVideo': '— baixador de vídeos online grátis',
@@ -845,6 +849,7 @@
       'common.newRecord': '🏆 NOUVEAU RECORD !',
       'common.toggleSound': 'Activer ou couper le son',
       'common.language': 'Langue',
+      'common.backHome': 'Retour à l\'accueil',
       'common.madeBy': 'Créé par',
       'common.moreGames': '🎮 Plus de jeux',
       'common.freeVideo': '— téléchargeur de vidéos en ligne gratuit',
@@ -1042,6 +1047,7 @@
       'common.newRecord': '🏆 NEUER REKORD!',
       'common.toggleSound': 'Ton ein- oder ausschalten',
       'common.language': 'Sprache',
+      'common.backHome': 'Zurück zur Startseite',
       'common.madeBy': 'Erstellt von',
       'common.moreGames': '🎮 Mehr Spiele',
       'common.freeVideo': '— kostenloser Online-Videodownloader',
@@ -1239,6 +1245,7 @@
       'common.newRecord': '🏆 新記録！',
       'common.toggleSound': 'サウンドのオン／オフ',
       'common.language': '言語',
+      'common.backHome': 'ホームに戻る',
       'common.madeBy': '制作：',
       'common.moreGames': '🎮 他のゲーム',
       'common.freeVideo': '— 無料オンライン動画ダウンローダー',
@@ -1436,6 +1443,7 @@
       'common.newRecord': '🏆 신기록!',
       'common.toggleSound': '소리 켜기/끄기',
       'common.language': '언어',
+      'common.backHome': '홈으로 돌아가기',
       'common.madeBy': '만든 사람',
       'common.moreGames': '🎮 더 많은 게임',
       'common.freeVideo': '— 무료 온라인 동영상 다운로더',
@@ -1749,6 +1757,7 @@
     dropLangParam();
     apply();
     renderSwitcher();
+    renderHome();
     for (var i = 0; i < listeners.length; i++) {
       try { listeners[i](lang); } catch (e) { /* one bad listener must not break the rest */ }
     }
@@ -1968,11 +1977,86 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* Back-to-home button — only on pages opting in via <body data-wg-home>.
+     挂载策略跟着静音键走:
+       · 静音键是绝对/固定定位(7 个 canvas 游戏)→ 同一边、堆叠在它正下方
+       · 静音键是流式布局(2048 / 扫雷的 topbar)→ 插到它旁边
+       · 都没有(或测试桩环境)→ fixed 左上角兜底
+     z-index 给 8:压过 block-drop 的 overlay(z7),开始界面也能返回。      */
+  /* ------------------------------------------------------------------ */
+  var HOME_CSS_ID = 'wg-home-css';
+  var HOME_CSS = '' +
+    '.wg-home-btn{display:block;width:44px;height:44px;border-radius:10px;' +
+      'background:rgba(255,255,255,.2);color:#fff;font-size:20px;line-height:44px;' +
+      'text-align:center;text-decoration:none;cursor:pointer;z-index:8;box-sizing:border-box;' +
+      'transition:background .15s;}' +
+    '.wg-home-btn:hover{background:rgba(255,255,255,.32);}' +
+    '.wg-home-btn:active{transform:scale(.92);}';
+
+  function renderHome() {
+    var doc = global.document;
+    if (!doc || !doc.body || !doc.body.hasAttribute || !doc.body.hasAttribute('data-wg-home')) return;
+    var lbl = t('common.backHome');
+    var existing = doc.querySelector('.wg-home-btn');
+    if (existing) {   /* 语言切换后只刷新文案 */
+      existing.setAttribute('title', lbl);
+      existing.setAttribute('aria-label', lbl);
+      return;
+    }
+    if (!doc.getElementById(HOME_CSS_ID)) {
+      var st = doc.createElement('style');
+      st.id = HOME_CSS_ID;
+      st.appendChild(doc.createTextNode(HOME_CSS));
+      (doc.head || doc.documentElement).appendChild(st);
+    }
+    var a = doc.createElement('a');
+    a.className = 'wg-home-btn';
+    a.href = '../';
+    a.textContent = '🏠';
+    a.setAttribute('title', lbl);
+    a.setAttribute('aria-label', lbl);
+
+    var mute = doc.getElementById('mute-btn');
+    var placed = false;
+    if (mute && global.getComputedStyle) {
+      try {
+        var cs = global.getComputedStyle(mute);
+        if (cs.position === 'absolute' || cs.position === 'fixed') {
+          /* 用 offset* 量真实布局(比读 computed top/right 可靠),同边堆叠 */
+          var parent = mute.offsetParent;
+          if (parent) {
+            var pw = parent.clientWidth;
+            a.style.position = 'absolute';
+            a.style.top = (mute.offsetTop + mute.offsetHeight + 8) + 'px';
+            if (mute.offsetLeft + mute.offsetWidth / 2 > pw / 2) {
+              a.style.right = Math.max(0, pw - mute.offsetLeft - mute.offsetWidth) + 'px';
+            } else {
+              a.style.left = mute.offsetLeft + 'px';
+            }
+            mute.parentNode.insertBefore(a, mute.nextSibling);
+            placed = true;
+          }
+        } else {
+          mute.parentNode.insertBefore(a, mute);
+          placed = true;
+        }
+      } catch (e) { /* 测试桩环境:走兜底 */ }
+    }
+    if (!placed) {
+      a.style.position = 'fixed';
+      a.style.top = '12px';
+      a.style.left = '12px';
+      doc.body.appendChild(a);
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
   /* Boot                                                                */
   /* ------------------------------------------------------------------ */
   function boot() {
     apply();
     buildSwitcher();
+    renderHome();
     /* keep other tabs of the same site in sync */
     if (global.addEventListener) {
       global.addEventListener('storage', function (e) {
@@ -1980,6 +2064,7 @@
           lang = normalize(e.newValue);
           apply();
           renderSwitcher();
+          renderHome();
           for (var i = 0; i < listeners.length; i++) { try { listeners[i](lang); } catch (err) {} }
         }
       });
