@@ -596,11 +596,13 @@
   // ===== Loop =====
   var last = performance.now();
   function loop(t) {
+    // 先排下一帧：即使某帧 update/draw 抛异常，也只是这一帧没画完，
+    // 不会让「下一帧永远排不上」→ 游戏永久冻结（实战踩过：一次 TypeError 冻死整局）
+    requestAnimationFrame(loop);
     var dt = Math.min((t - last) / 16.666, 2.5);
     last = t;
     update(dt);
     draw();
-    requestAnimationFrame(loop);
   }
   reset();
   requestAnimationFrame(loop);
