@@ -328,7 +328,7 @@
     // ---- ship ----
     if (keys.left) ship.targetX -= 8 * dt;
     if (keys.right) ship.targetX += 8 * dt;
-    if (touchX !== null && (keys.left || keys.right) === false) ship.targetX = touchX;
+    if (touchX !== null && !keys.left && !keys.right) ship.targetX = touchX;
     ship.targetX = Math.max(SHIP_W / 2 + 6, Math.min(W - SHIP_W / 2 - 6, ship.targetX));
     ship.x += (ship.targetX - ship.x) * Math.min(1, 0.28 * dt);
 
