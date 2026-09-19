@@ -66,6 +66,8 @@
     background: #4a6b52; cursor: pointer;
     box-shadow: inset 0 2px 0 rgba(255,255,255,.18), inset 0 -2px 0 rgba(0,0,0,.2);
     transition: background .08s ease;
+    /* iOS 长按会弹「拷贝/查找」气泡并打断触摸序列，导致长按插旗失效 */
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   }
   .cell:hover { background: #587d61; }
   .cell.open { background: #22352a; cursor: default; box-shadow: none; }
@@ -379,20 +381,23 @@
 
   // ===== Input (click / right-click / long-press) =====
   var pressTimer = null, longPressed = false, pressIdx = -1;
-  // 长按插旗后，移动端浏览器会在 touchend 后给**同一个格子**补发一整套
-  // mousedown/mouseup/click。这套合成事件必须整体忽略：其中的 mousedown 会重置
-  // longPressed，使 click 里的 long-press 守卫失效；而取消插旗时格子已从 'flag'
-  // 变回 'closed'，handleCell 的旗子守卫也兜不住 → 玩家一"取消插旗"就当场把那格
-  // 翻开(是雷就爆)。只拦截同一格，长按后立刻操作别的格子不受影响。
+  // ★ 触摸设备在同一次长按里会同时触发 touchstart 和(合成的) mousedown。
+  // 若两者各起一个 400ms 计时器,就会先后 toggleFlag 两次 —— 玩家看到的是
+  // "旗子闪一下就没了",也就是手机端「无法插旗」。真机上合成 mousedown 可能落在
+  // touchend **之前**(touchstart 后几十毫秒),也可能落在之后,两种都要防。
+  // 故:触摸期间 + touchend 后短暂窗口内的 mousedown 一律不处理,
+  // 长按逻辑只由 touchstart 那条路径负责。
+  var touchActive = false, touchEndAt = 0;
+  // 长按之后浏览器还会补发 click。取消插旗时格子已从 'flag' 变回 'closed',
+  // handleCell 的旗子守卫兜不住 → 会当场把那格翻开(是雷就爆)。故按"同格 + 时间窗"拦掉。
   var lastFlagAt = 0, lastFlagIdx = -1, SYNTH_MS = 700;
 
   board.addEventListener('mousedown', function (e) {
     if (e.button === 0) {
+      if (touchActive || Date.now() - touchEndAt < SYNTH_MS) return; // 触摸衍生的 mousedown：整体忽略
       var el = e.target.closest('.cell');
       if (!el) return;
-      var i = parseInt(el.dataset.i, 10);
-      if (i === lastFlagIdx && Date.now() - lastFlagAt < SYNTH_MS) return; // 合成 mousedown：不重置 longPressed，也不重启长按计时
-      pressIdx = i;
+      pressIdx = parseInt(el.dataset.i, 10);
       longPressed = false;
       pressTimer = setTimeout(function () {
         longPressed = true;
@@ -425,6 +430,7 @@
   // touch: tap = reveal, long-press = flag (handled via mousedown emulation on mobile browsers);
   // explicit touch fallback for browsers without mouse event emulation:
   board.addEventListener('touchstart', function (e) {
+    touchActive = true; // 必须在任何 return 之前：本次触摸衍生出的 mousedown 都要被忽略
     var el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
     var c = el && el.closest ? el.closest('.cell') : null;
     if (!c) return;
@@ -437,7 +443,13 @@
       toggleFlag(i % cols, Math.floor(i / cols));
     }, 400);
   }, { passive: true });
-  board.addEventListener('touchend', function () { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } });
+
+  function endTouch() {
+    touchActive = false; touchEndAt = Date.now();
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }
+  board.addEventListener('touchend', endTouch);
+  board.addEventListener('touchcancel', endTouch);
 
   // double-click / double-tap = chord
   board.addEventListener('dblclick', function (e) {
