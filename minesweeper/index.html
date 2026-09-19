@@ -379,15 +379,25 @@
 
   // ===== Input (click / right-click / long-press) =====
   var pressTimer = null, longPressed = false, pressIdx = -1;
+  // 长按插旗后，移动端浏览器会在 touchend 后给**同一个格子**补发一整套
+  // mousedown/mouseup/click。这套合成事件必须整体忽略：其中的 mousedown 会重置
+  // longPressed，使 click 里的 long-press 守卫失效；而取消插旗时格子已从 'flag'
+  // 变回 'closed'，handleCell 的旗子守卫也兜不住 → 玩家一"取消插旗"就当场把那格
+  // 翻开(是雷就爆)。只拦截同一格，长按后立刻操作别的格子不受影响。
+  var lastFlagAt = 0, lastFlagIdx = -1, SYNTH_MS = 700;
 
   board.addEventListener('mousedown', function (e) {
     if (e.button === 0) {
       var el = e.target.closest('.cell');
       if (!el) return;
-      pressIdx = parseInt(el.dataset.i, 10);
+      var i = parseInt(el.dataset.i, 10);
+      if (i === lastFlagIdx && Date.now() - lastFlagAt < SYNTH_MS) return; // 合成 mousedown：不重置 longPressed，也不重启长按计时
+      pressIdx = i;
       longPressed = false;
       pressTimer = setTimeout(function () {
         longPressed = true;
+        lastFlagAt = Date.now();
+        lastFlagIdx = pressIdx;
         toggleFlag(pressIdx % cols, Math.floor(pressIdx / cols));
       }, 400);
     }
@@ -398,8 +408,9 @@
   board.addEventListener('click', function (e) {
     var el = e.target.closest('.cell');
     if (!el) return;
-    if (longPressed) return; // long-press already handled as flag
+    if (longPressed) { longPressed = false; return; } // long-press already handled as flag
     var i = parseInt(el.dataset.i, 10);
+    if (i === lastFlagIdx && Date.now() - lastFlagAt < SYNTH_MS) return; // 合成 click：不要连带翻开格子
     handleCell(i % cols, Math.floor(i / cols), false);
   });
 
@@ -421,6 +432,8 @@
     longPressed = false;
     pressTimer = setTimeout(function () {
       longPressed = true;
+      lastFlagAt = Date.now();
+      lastFlagIdx = i;
       toggleFlag(i % cols, Math.floor(i / cols));
     }, 400);
   }, { passive: true });
