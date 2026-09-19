@@ -381,29 +381,46 @@
 
   // ===== Input (click / right-click / long-press) =====
   var pressTimer = null, longPressed = false, pressIdx = -1;
-  // ★ 触摸设备在同一次长按里会同时触发 touchstart 和(合成的) mousedown。
-  // 若两者各起一个 400ms 计时器,就会先后 toggleFlag 两次 —— 玩家看到的是
-  // "旗子闪一下就没了",也就是手机端「无法插旗」。真机上合成 mousedown 可能落在
-  // touchend **之前**(touchstart 后几十毫秒),也可能落在之后,两种都要防。
-  // 故:触摸期间 + touchend 后短暂窗口内的 mousedown 一律不处理,
-  // 长按逻辑只由 touchstart 那条路径负责。
-  var touchActive = false, touchEndAt = 0;
-  // 长按之后浏览器还会补发 click。取消插旗时格子已从 'flag' 变回 'closed',
-  // handleCell 的旗子守卫兜不住 → 会当场把那格翻开(是雷就爆)。故按"同格 + 时间窗"拦掉。
-  var lastFlagAt = 0, lastFlagIdx = -1, SYNTH_MS = 700;
+
+  // ★ 手机上「一次长按」会同时惊动**三个**事件源,任意两个各 toggleFlag 一次就互相抵消:
+  //     ① touchstart 起来的 400ms 长按计时器                        → 插旗 🚩
+  //     ② 浏览器随后补发的合成 mousedown(也会起一个 400ms 计时器)    → 再 toggle = 取消
+  //     ③ 系统在长按约 500ms 时触发的 contextmenu(Android 必发)      → 再 toggle = 取消
+  //   玩家看到的就是「红旗出现后立刻消失」= 无法插旗。PC 只有 ③ 一条路径,所以完全正常。
+  //
+  //   治法分两层:
+  //   [结构化] 插旗收敛成唯一入口 flagAction(),按「同一格 + 300ms」去重 —— 与事件来源、
+  //            到达顺序、触发次数都无关,以后再冒出第 4 个事件源也不会中。
+  //            DEDUP_MS(300) 必须 < 长按阈值(400):玩家「再长按一次取消插旗」两次 toggle
+  //            之间至少隔一个完整长按(400ms+),因此合法操作绝不会被误去重。
+  //   [分派]   contextmenu 只服务鼠标右键(PC),触摸进行中 / 刚抬手的 contextmenu 是长按的
+  //            伴生事件,直接丢弃。注意这里**不能**套 flagAction 的去重窗 —— PC 玩家快速
+  //            连点右键取消插旗(实测 150ms 间隔)是合法操作,去重会把它吃掉。
+  //   另外长按后浏览器补发的 click 会把格子翻开(取消插旗时格子已从 'flag' 变回 'closed',
+  //   handleCell 的旗子守卫兜不住,是雷就爆),故按「同格 + 时间窗」拦掉。
+  var touchActive = false, touchEndAt = 0, SYNTH_MS = 700;
+  var lastToggleAt = 0, lastToggleIdx = -1, DEDUP_MS = 300;
+  var lastFlagAt = 0, lastFlagIdx = -1;
+
+  // 长按路径的唯一插旗入口:同格 300ms 内的重复触发(来自另一个事件源)直接丢弃
+  function flagAction(i) {
+    var now = Date.now();
+    if (i === lastToggleIdx && now - lastToggleAt < DEDUP_MS) return;
+    lastToggleIdx = i; lastToggleAt = now;
+    lastFlagAt = now; lastFlagIdx = i;
+    toggleFlag(i % cols, Math.floor(i / cols));
+  }
 
   board.addEventListener('mousedown', function (e) {
     if (e.button === 0) {
-      if (touchActive || Date.now() - touchEndAt < SYNTH_MS) return; // 触摸衍生的 mousedown：整体忽略
+      if (touchActive || Date.now() - touchEndAt < SYNTH_MS) return; // 触摸衍生的 mousedown:整体忽略
       var el = e.target.closest('.cell');
       if (!el) return;
       pressIdx = parseInt(el.dataset.i, 10);
       longPressed = false;
       pressTimer = setTimeout(function () {
         longPressed = true;
-        lastFlagAt = Date.now();
-        lastFlagIdx = pressIdx;
-        toggleFlag(pressIdx % cols, Math.floor(pressIdx / cols));
+        flagAction(pressIdx);
       }, 400);
     }
   });
@@ -415,22 +432,22 @@
     if (!el) return;
     if (longPressed) { longPressed = false; return; } // long-press already handled as flag
     var i = parseInt(el.dataset.i, 10);
-    if (i === lastFlagIdx && Date.now() - lastFlagAt < SYNTH_MS) return; // 合成 click：不要连带翻开格子
+    if (i === lastFlagIdx && Date.now() - lastFlagAt < SYNTH_MS) return; // 合成 click:不要连带翻开格子
     handleCell(i % cols, Math.floor(i / cols), false);
   });
 
   board.addEventListener('contextmenu', function (e) {
-    e.preventDefault();
+    e.preventDefault();                                                 // 任何来源都不弹系统菜单
+    if (touchActive || Date.now() - touchEndAt < SYNTH_MS) return;      // 长按伴生的 contextmenu:插旗已由 touchstart 计时器完成
     var el = e.target.closest('.cell');
     if (!el) return;
     var i = parseInt(el.dataset.i, 10);
-    toggleFlag(i % cols, Math.floor(i / cols));
+    toggleFlag(i % cols, Math.floor(i / cols));                         // PC 右键:直接 toggle,支持快速连点取消
   });
 
-  // touch: tap = reveal, long-press = flag (handled via mousedown emulation on mobile browsers);
-  // explicit touch fallback for browsers without mouse event emulation:
+  // touch: tap = reveal, long-press = flag
   board.addEventListener('touchstart', function (e) {
-    touchActive = true; // 必须在任何 return 之前：本次触摸衍生出的 mousedown 都要被忽略
+    touchActive = true; // 必须在任何 return 之前:本次触摸衍生出的 mousedown 都要被忽略
     var el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
     var c = el && el.closest ? el.closest('.cell') : null;
     if (!c) return;
@@ -438,9 +455,7 @@
     longPressed = false;
     pressTimer = setTimeout(function () {
       longPressed = true;
-      lastFlagAt = Date.now();
-      lastFlagIdx = i;
-      toggleFlag(i % cols, Math.floor(i / cols));
+      flagAction(i);
     }, 400);
   }, { passive: true });
 
