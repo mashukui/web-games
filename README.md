@@ -4,10 +4,10 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-9-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-15-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
-[![Made with Vanilla JS](https://img.shields.io/badge/Made%20with-Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
+[![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
 
 **🎮 Play the whole collection:** https://mashukui.github.io/web-games/
 
@@ -22,10 +22,16 @@
 | **Block Drop** | 🧊 | Arcade | Falling blocks, perfect clears. Speed up, survive, stack them high | [Play](https://mashukui.github.io/web-games/block-drop/) |
 | **Breakout** | 🧱 | Arcade | Angle-perfect paddle physics, brick-shattering particles, endless levels | [Play](https://mashukui.github.io/web-games/breakout/) |
 | **Paddle Duel** | 🏓 | Arcade | Pong-style paddle duel vs AI in three difficulties. First to 7 wins | [Play](https://mashukui.github.io/web-games/paddle-duel/) |
+| **Stack Tower** | 🏗️ | Arcade | One tap, one block. Line up each layer and build the tallest tower you can | [Play](https://mashukui.github.io/web-games/stack-tower/) |
+| **Whack-a-Mole** | 🔨 | Arcade | 60 seconds of pure reflex. Whack the moles, grab the gold, dodge the bombs | [Play](https://mashukui.github.io/web-games/whack-a-mole/) |
 | **Snake** | 🐍 | Classic | The all-time classic — eat, grow, speed up, don't bite yourself | [Play](https://mashukui.github.io/web-games/snake/) |
+| **Tic Tac Toe** | 🎯 | Classic | Three in a row vs an unbeatable AI — or two players on one device | [Play](https://mashukui.github.io/web-games/tic-tac-toe/) |
+| **Connect Four** | 🔴 | Classic | Drop a disc, line up four. Beat the computer in three difficulties | [Play](https://mashukui.github.io/web-games/connect-four/) |
 | **2048** | 🔢 | Puzzle | Swipe and merge the tiles. Reach 2048, then keep going | [Play](https://mashukui.github.io/web-games/2048/) |
 | **Minesweeper** | 💣 | Puzzle | Three difficulties, first-click-safe, timer & flag counter | [Play](https://mashukui.github.io/web-games/minesweeper/) |
+| **Memory Match** | 🃏 | Puzzle | Flip two cards, remember what you saw, find every pair in three difficulties | [Play](https://mashukui.github.io/web-games/memory-match/) |
 | **Star Defender** | 🚀 | Action | Wave after wave of enemies. Shoot, dodge, survive | [Play](https://mashukui.github.io/web-games/star-defender/) |
+| **Dino Run** | 🦖 | Action | Endless desert dash. Jump the cacti, duck the birds, speed up forever | [Play](https://mashukui.github.io/web-games/dino-run/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -40,6 +46,7 @@ Every game in this collection follows the same engineering spec:
 - **Best scores saved locally** — localStorage, nothing leaves your browser
 - **Share your score** — one tap copies a challenge message to the clipboard
 - **Hand-drawn graphics** — Canvas vectors that render identically on every platform
+- **8 languages** — one shared `i18n.js` layer (EN / 中文 / ES / PT / FR / DE / JA / KO)
 - **SEO ready** — full meta / Open Graph tags on every page
 
 ## 🚀 Run Locally
@@ -58,29 +65,37 @@ python3 -m http.server 8080
 ```
 web-games/
 ├── index.html              # arcade hub — game registry + category filters
+├── i18n.js                 # shared language layer (8 languages, zero deps)
 ├── ant-flap/index.html     # 🐜 flappy-style arcade
 ├── ant-jump/index.html     # 🦗 vertical platform climber
 ├── block-drop/index.html   # 🧊 falling-block puzzle
 ├── breakout/index.html     # 🧱 brick breaker
 ├── paddle-duel/index.html  # 🏓 pong-style duel vs AI
+├── stack-tower/index.html  # 🏗️ one-tap stacking game
+├── whack-a-mole/index.html # 🔨 60-second reflex arcade
 ├── snake/index.html        # 🐍 classic snake
+├── tic-tac-toe/index.html  # 🎯 three-in-a-row vs AI / 2P
+├── connect-four/index.html # 🔴 four-in-a-row vs AI
 ├── 2048/index.html         # 🔢 merge-the-tiles puzzle
 ├── minesweeper/index.html  # 💣 mine-hunting puzzle
+├── memory-match/index.html # 🃏 memory card pairs
 ├── star-defender/index.html# 🚀 wave shooter
+├── dino-run/index.html     # 🦖 endless runner
 ├── README.md
 └── LICENSE                 # MIT
 ```
 
-The hub's game registry lives in the `GAMES` array inside `index.html` — one entry per game (`id`, `icon`, `name`, `category`, `desc`).
+The hub's game registry lives in the `GAMES` array inside `index.html` — one entry per game (`id`, `icon`, `nameKey`, `descKey`, `category`).
 
 ## 🛠️ Add a Game (Contributing)
 
 This is an open collection — PRs adding new games are very welcome! Keep the spec:
 
-1. Create `yourgame/index.html` — a **single self-contained file**: zero dependencies, English UI, responsive controls (touch + keyboard/mouse), best score in localStorage, mute toggle, SEO/OG meta tags, footer linking back to `../`
-2. Add one entry to the `GAMES` array in the root `index.html` (pick an existing category: Arcade / Classic / Puzzle / Action)
-3. Add one row to the games table in this README
-4. Open a pull request 🎉
+1. Create `yourgame/index.html` — a **single self-contained file**: zero dependencies, responsive controls (touch + mouse/keyboard), best score in localStorage, mute toggle, SEO/OG meta tags, footer linking back to `../`
+2. Add the strings to `i18n.js` (`game.<id>`, `hub.desc.<id>`, plus your own `<prefix>.*` keys) for all 8 languages — never hardcode UI text
+3. Add one entry to the `GAMES` array in the root `index.html` (pick an existing category: Arcade / Classic / Puzzle / Action)
+4. Add one row to the games table in this README
+5. Open a pull request 🎉
 
 Quality over quantity — a polished game people replay beats ten rough ones.
 
@@ -99,4 +114,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(9 款),每款游戏均为零依赖的单文件 HTML5 游戏,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(15 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
