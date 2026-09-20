@@ -4,7 +4,7 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-15-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-19-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
 [![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
@@ -32,6 +32,10 @@
 | **Memory Match** | 🃏 | Puzzle | Flip two cards, remember what you saw, find every pair in three difficulties | [Play](https://mashukui.github.io/web-games/memory-match/) |
 | **Star Defender** | 🚀 | Action | Wave after wave of enemies. Shoot, dodge, survive | [Play](https://mashukui.github.io/web-games/star-defender/) |
 | **Dino Run** | 🦖 | Action | Endless desert dash. Jump the cacti, duck the birds, speed up forever | [Play](https://mashukui.github.io/web-games/dino-run/) |
+| **Piano Tap** | 🎹 | Arcade | Smash the lowest black tile before the board rolls past — touch the white and you are out | [Play](https://mashukui.github.io/web-games/piano-tap/) |
+| **Cross Road** | 🐸 | Arcade | Hop one tile at a time, dodge the traffic and ride the logs across the river | [Play](https://mashukui.github.io/web-games/cross-road/) |
+| **Slide Puzzle** | 🧩 | Puzzle | The classic 15 puzzle — slide the tiles back into order in as few moves as you can | [Play](https://mashukui.github.io/web-games/slide-puzzle/) |
+| **Fruit Slice** | 🍉 | Action | Swipe through the fruit, chain combos and keep well clear of the bombs | [Play](https://mashukui.github.io/web-games/fruit-slice/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -81,6 +85,10 @@ web-games/
 ├── memory-match/index.html # 🃏 memory card pairs
 ├── star-defender/index.html# 🚀 wave shooter
 ├── dino-run/index.html     # 🦖 endless runner
+├── piano-tap/index.html    # 🎹 reaction tapping arcade
+├── cross-road/index.html   # 🐸 hopper vs traffic
+├── slide-puzzle/index.html # 🧩 sliding number puzzle
+├── fruit-slice/index.html  # 🍉 swipe-and-slice arcade
 ├── README.md
 └── LICENSE                 # MIT
 ```
@@ -114,4 +122,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(15 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(19 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
