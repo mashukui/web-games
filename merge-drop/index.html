@@ -172,8 +172,12 @@
   var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
 
   var RADII = [14, 18, 23, 29, 36, 44, 54, 65, 78, 93, 110];
-  var COLORS = ['#ff5d6c', '#ff9f45', '#ffd93d', '#8ee36b', '#4ecf8a', '#39c6d6',
-                '#5aa2ff', '#9b7dff', '#e07bff', '#ff6fa5', '#37c76a'];
+  // 11 档果实,小 → 大;最大那颗就是西瓜(游戏名"合成大西瓜"的落点)
+  var FRUITS = ['🍒', '🍓', '🍇', '🍋', '🥝', '🍊', '🍎', '🍑', '🍐', '🍈', '🍉'];
+  var EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  // COLORS 现在只用于合并粒子 / 冲击环,取各档果实的代表色(球体本身画 emoji)
+  var COLORS = ['#e23b4e', '#e8455c', '#8e5cd9', '#f2cf35', '#9bbd3c', '#f58b1f',
+                '#e0392f', '#f2885f', '#b7d24b', '#d7e39a', '#37c76a'];
   var POINTS = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 120];
   var SPAWN_MAX = 4;                       // 只会掉出最小的 5 档
   var G = 0.62, LEFT = 14, RIGHT = W - 14, FLOOR = H - 16;
@@ -362,19 +366,66 @@
   }
 
   // ===== Draw =====
-  function drawBall(x, y, rr, s, alpha) {
+  // ★ 每档画成对应果实。最小档半径只有 14px,手绘果型在这个尺寸会糊成一团,
+  //   而 emoji 字形本身就是按小尺寸辨识度设计的 —— 所以这里用字形而非路径。
+  //   唯一例外是最大档的西瓜:🍉 字形是一片「横宽纵矮」的瓜瓣,套在圆形碰撞体上会
+  //   横向冲出容器、纵向留下缝隙,于是整颗西瓜改为手绘(滚圆 + 深浅绿波浪纹)。
+  function drawWatermelon(x, y, rr, alpha) {
     ctx.save();
     if (alpha != null) ctx.globalAlpha = alpha;
+    var cy = y + rr * 0.12;
+    var sg = ctx.createRadialGradient(x, cy, rr * 0.30, x, cy, rr * 1.08);
+    sg.addColorStop(0, 'rgba(0,0,0,.34)');
+    sg.addColorStop(0.72, 'rgba(0,0,0,.10)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(x, cy, rr * 1.08, 0, 6.2832); ctx.fill();
+    // 瓜皮:浅绿底 + 深绿波浪条纹(直线条纹会像沙滩球,波浪才像真瓜)
+    var rg = ctx.createRadialGradient(x - rr * .34, y - rr * .38, rr * .10, x, y, rr * 1.02);
+    rg.addColorStop(0, '#8fe39a'); rg.addColorStop(0.45, '#4cb862'); rg.addColorStop(1, '#206b32');
     ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832);
-    ctx.fillStyle = COLORS[s]; ctx.fill();
-    ctx.beginPath(); ctx.arc(x - rr * .3, y - rr * .34, rr * .27, 0, 6.2832);
-    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(x, y, rr - 1, 0, 6.2832);
-    ctx.strokeStyle = 'rgba(60,30,5,.34)'; ctx.lineWidth = 2; ctx.stroke();
-    if (rr > 26) {           // 大果子画个小高光弧，别一片死色
-      ctx.beginPath(); ctx.arc(x + rr * .18, y + rr * .3, rr * .34, 0, 6.2832);
-      ctx.fillStyle = 'rgba(255,255,255,.13)'; ctx.fill();
+    ctx.fillStyle = '#3fae57'; ctx.fill();
+    ctx.fillStyle = rg; ctx.fill();
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.clip();
+    ctx.strokeStyle = 'rgba(10,60,24,.55)'; ctx.lineCap = 'round';
+    for (var i = -3; i <= 3; i++) {
+      ctx.lineWidth = rr * (0.085 + (i % 2 ? 0.022 : 0));
+      ctx.beginPath();
+      for (var n = 0; n <= 22; n++) {
+        var vt = -1 + n * (2 / 22);
+        var wob = Math.sin(vt * 3.0 + i * 1.9) * 0.055 + Math.sin(vt * 6.3 + i) * 0.018;
+        var px = x + (i / 3.4 * 0.94 + wob) * rr, py = y + vt * rr;
+        if (n === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
     }
+    ctx.restore();
+    ctx.beginPath();                    // 高光收小,太大就像气球
+    ctx.ellipse(x - rr * .34, y - rr * .38, rr * .22, rr * .13, -0.6, 0, 6.2832);
+    ctx.fillStyle = 'rgba(255,255,255,.34)'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, rr - 1.5, 0, 6.2832);
+    ctx.strokeStyle = 'rgba(0,0,0,.20)'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawBall(x, y, rr, s, alpha) {
+    if (s === RADII.length - 1) return drawWatermelon(x, y, rr, alpha);
+    ctx.save();
+    if (alpha != null) ctx.globalAlpha = alpha;
+    // 柔光落影:给果堆做出前后层次。用径向渐变淡出,不要硬边深色圆盘(那会像黑圈)
+    var cy = y + rr * 0.12;
+    var sg = ctx.createRadialGradient(x, cy, rr * 0.30, x, cy, rr * 1.08);
+    sg.addColorStop(0, 'rgba(0,0,0,.34)');
+    sg.addColorStop(0.72, 'rgba(0,0,0,.10)');
+    sg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sg;
+    ctx.beginPath(); ctx.arc(x, cy, rr * 1.08, 0, 6.2832); ctx.fill();
+    // 果实本体:字号略大于直径,补掉 emoji 字形四周自带的留白,让果径贴合碰撞圆
+    ctx.font = (rr * 2.2).toFixed(1) + 'px ' + EMOJI_FONT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(FRUITS[s], x, y + rr * 0.05);
     ctx.restore();
   }
 
