@@ -35,7 +35,7 @@
 | **Piano Tap** | 🎹 | Arcade | Smash the lowest black tile before the board rolls past — touch the white and you are out | [Play](https://mashukui.github.io/web-games/piano-tap/) |
 | **Cross Road** | 🐸 | Arcade | Hop one tile at a time, dodge the traffic and ride the logs across the river | [Play](https://mashukui.github.io/web-games/cross-road/) |
 | **Slide Puzzle** | 🧩 | Puzzle | The classic 15 puzzle — slide the tiles back into order in as few moves as you can | [Play](https://mashukui.github.io/web-games/slide-puzzle/) |
-| **Fruit Slice** | 🍉 | Action | Swipe through the fruit, chain combos and keep well clear of the bombs | [Play](https://mashukui.github.io/web-games/fruit-slice/) |
+| **Fruit Slice** | 🔪 | Action | Swipe through the fruit, chain combos and keep well clear of the bombs | [Play](https://mashukui.github.io/web-games/fruit-slice/) |
 | **Bubble Shooter** | 🫧 | Arcade | Aim, fire and match three or more bubbles. Cut a cluster loose and everything below falls | [Play](https://mashukui.github.io/web-games/bubble-shooter/) |
 | **Sudoku** | 🔢 | Puzzle | Three difficulties, every puzzle generated with exactly one solution. Tap a cell, then a number | [Play](https://mashukui.github.io/web-games/sudoku/) |
 | **Merge Drop** | 🍉 | Puzzle | Drop the fruit, merge the matching pairs and grow all the way to the giant | [Play](https://mashukui.github.io/web-games/merge-drop/) |
@@ -91,7 +91,7 @@ web-games/
 ├── piano-tap/index.html    # 🎹 reaction tapping arcade
 ├── cross-road/index.html   # 🐸 hopper vs traffic
 ├── slide-puzzle/index.html # 🧩 sliding number puzzle
-├── fruit-slice/index.html  # 🍉 swipe-and-slice arcade
+├── fruit-slice/index.html  # 🔪 swipe-and-slice arcade
 ├── bubble-shooter/index.html # 🫧 hex-grid bubble popper
 ├── sudoku/index.html       # 🔢 9x9 logic puzzle, one-solution generator
 ├── merge-drop/index.html   # 🍉 drop-and-merge physics puzzle
