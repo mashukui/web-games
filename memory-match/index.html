@@ -99,7 +99,15 @@
   }
   .card.matched { cursor: default; }
   .card.matched .face.front { background: #bff0c4; animation: pop .3s ease; }
-  .card.matched .inner { opacity: .78; }
+  /* ★ 压暗只能写在叶子 .face 上,绝不能写 .card.matched .inner{opacity:.78}:
+     opacity<1 会为 .inner 创建分组 → 它的 transform-style:preserve-3d 被强制降级为 flat
+     → 两个 .face 的 3D 层叠立刻失效 → .face.back 不再被判为"背面朝前"而继续可见、
+     .face.front 反被判为背面朝前而隐藏。
+     现象 = 配对成功的那两张牌"又翻回背面"(还是镜像的),而 .matched 类、transform、剩余对数、
+     结算面板全是对的 —— 状态层全绿、画面全错。
+     注意 getComputedStyle().transformStyle 仍返回 'preserve-3d'(声明值),读不出这次降级,
+     判据只能用像素。 */
+  .card.matched .face { opacity: .78; }
   @keyframes pop { 0% { transform: rotateY(180deg) scale(1) } 50% { transform: rotateY(180deg) scale(1.12) } 100% { transform: rotateY(180deg) scale(1) } }
   button.btn {
     border: none; border-radius: 12px; padding: 12px 24px; min-height: 44px;
