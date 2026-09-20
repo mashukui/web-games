@@ -3,3 +3,10 @@ Thumbs.db
 desktop.ini
 *.log
 node_modules/
+
+# 探针脚本的临时产物(探针往页面同目录写 __probe.html 才能解析 ../i18n.js;
+# 清理偶尔会被系统的批量删除保护拦下而残留 —— 绝不能进仓库/上线)
+__probe.html
+__viewport-probe.html
+__press-probe.html
+__d.html

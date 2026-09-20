@@ -3397,16 +3397,71 @@
     }
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Shared tool row — [🔊] [🏠] [🌐] 同排,挂在 .footer 的第一个子节点。   */
+  /*                                                                     */
+  /* 站点级按钮一律不进游戏画面。此前 18 个 canvas 游戏的静音键是绝对定位   */
+  /* 压在画布上、返回键又由 renderHome() 自动堆在它正下方,右边缘两层浮层    */
+  /* 盖住玩法区(BEST 分牌 → 🔊 → 🏠)。统一搬进这一行后,页面上再没有浮在    */
+  /* 游戏上的按钮;4 个把静音键放在 topbar 的游戏也一并统一,不再例外。      */
+  /*                                                                     */
+  /* 权重:`.wg-tools #mute-btn` = (1,1,0) 压过各页自带的 #mute-btn(1,0,0)、  */
+  /* `.face-btn,#mute-btn`(1,0,0)、`.icon-btn`(0,1,0);因此不需要 !important。 */
+  /* `.wg-tools a.wg-home-btn` = (0,2,1) 压过各页 `.footer a`(0,1,1)。       */
+  /* ------------------------------------------------------------------ */
+  var TOOLS_CSS_ID = 'wg-tools-css';
+  var TOOLS_CSS = '' +
+    '.wg-tools{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;}' +
+    '.wg-tools #mute-btn,.wg-tools a.wg-home-btn{' +
+      'position:static;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;' +
+      'width:44px;height:44px;min-width:44px;min-height:44px;padding:0;margin:0;' +
+      'border:none;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;' +
+      'font-family:inherit;font-size:18px;font-weight:700;line-height:1;text-align:center;' +
+      'cursor:pointer;text-decoration:none;box-shadow:none;' +
+      'transition:background .15s,transform .12s;}' +
+    '.wg-tools #mute-btn:hover,.wg-tools a.wg-home-btn:hover{background:rgba(255,255,255,.26);}' +
+    '.wg-tools #mute-btn:active,.wg-tools a.wg-home-btn:active{transform:scale(.94);}' +
+    '.wg-tools .wg-lang{flex:0 0 auto;}';
+
+  function buildTools(doc) {
+    var row = doc.querySelector('.wg-tools');
+    if (row) return row;
+    var footer = doc.querySelector('.footer');
+    if (!footer) return null;            /* 无 footer 的页面:退回旧行为 */
+    if (!doc.getElementById(TOOLS_CSS_ID)) {
+      var st = doc.createElement('style');
+      st.id = TOOLS_CSS_ID;
+      st.appendChild(doc.createTextNode(TOOLS_CSS));
+      (doc.head || doc.documentElement).appendChild(st);
+    }
+    row = doc.createElement('div');
+    row.className = 'wg-tools';
+    footer.insertBefore(row, footer.firstChild);
+    return row;
+  }
+
+  /* 顺序固定 🔊 → 🏠 → 🌐。appendChild 会把已在行内的节点移到末尾,所以按序
+     连续 append 即可;重复调用结果一致(幂等),也顺手把顺序纠正回来。 */
+  function arrangeTools() {
+    var doc = global.document;
+    if (!doc || !doc.querySelector) return;
+    var row = doc.querySelector('.wg-tools');
+    if (!row) return;
+    var seq = [doc.getElementById('mute-btn'),
+               row.querySelector('.wg-home-btn'),
+               row.querySelector('#wg-lang')];
+    for (var i = 0; i < seq.length; i++) if (seq[i]) row.appendChild(seq[i]);
+  }
+
   function buildSwitcher() {
     var doc = global.document;
     if (doc.getElementById('wg-lang')) return;
 
-    /* mount point: [data-lang-switcher] if present, otherwise the footer */
+    /* mount point: [data-lang-switcher] if present, otherwise the shared
+       tool row at the top of the footer (see buildTools) */
     var host = doc.querySelector('[data-lang-switcher]');
-    var inFooter = false;
     if (!host) {
-      host = doc.querySelector('.footer');
-      inFooter = true;
+      host = buildTools(doc);
       if (!host) return;
     }
 
@@ -3428,16 +3483,7 @@
     html += '</span>';
     box.innerHTML = html;
 
-    if (inFooter) {
-      var row = doc.createElement('span');
-      row.className = 'wg-lang-footer';
-      row.style.display = 'block';
-      row.style.marginTop = '10px';
-      row.appendChild(box);
-      host.appendChild(row);
-    } else {
-      host.appendChild(box);
-    }
+    host.appendChild(box);
 
     var trigger = box.querySelector('.wg-lang-btn');
     var menu = box.querySelector('.wg-lang-menu');
@@ -3554,11 +3600,13 @@
 
   /* ------------------------------------------------------------------ */
   /* Back-to-home button — only on pages opting in via <body data-wg-home>.
-     挂载策略跟着静音键走:
-       · 静音键是绝对/固定定位(7 个 canvas 游戏)→ 同一边、堆叠在它正下方
-       · 静音键是流式布局(2048 / 扫雷的 topbar)→ 插到它旁边
+     落点:优先放进 buildTools() 建的 .wg-tools 工具行(与静音键、语言键同排,
+     在 .footer 里,不压游戏画面)。只有当页面没有 .footer 时才退回旧策略:
+       · 静音键是绝对/固定定位 → 同一边、堆叠在它正下方
+       · 静音键是流式布局 → 插到它旁边
        · 都没有(或测试桩环境)→ fixed 左上角兜底
-     z-index 给 8:压过 block-drop 的 overlay(z7),开始界面也能返回。      */
+     退化路径里的 z-index:8 用于压过 block-drop 的 overlay(z7);
+     进入工具行后不再需要抢层,该内联样式不会生效。                     */
   /* ------------------------------------------------------------------ */
   var HOME_CSS_ID = 'wg-home-css';
   var HOME_CSS = '' +
@@ -3591,6 +3639,10 @@
     a.textContent = '🏠';
     a.setAttribute('title', lbl);
     a.setAttribute('aria-label', lbl);
+
+    /* 统一落点:与静音键、语言键同排的工具行(不压游戏画面) */
+    var row = doc.querySelector('.wg-tools');
+    if (row) { row.appendChild(a); return; }
 
     var mute = doc.getElementById('mute-btn');
     var placed = false;
@@ -3633,6 +3685,7 @@
     apply();
     buildSwitcher();
     renderHome();
+    arrangeTools();   /* 静音键搬进工具行 + 拍定 🔊 → 🏠 → 🌐 顺序 */
     /* keep other tabs of the same site in sync */
     if (global.addEventListener) {
       global.addEventListener('storage', function (e) {
