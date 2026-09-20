@@ -218,7 +218,7 @@
   var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
 
   var DW = 36, DH = 42, DUCK_W = 50, DUCK_H = 26;   // dino boxes
-  var GRAV = 0.66, JUMP_V = -11.6;
+  var GRAV = 0.85, JUMP_V = -12.2;                   // 滞空≈29帧(0.48s) 峰值≈88px
 
   var dino, obstacles, clouds, speed, distance, score, spawnT, spawnGap;
   var legT, groundOff, shake, flashT, duckHeld, milestone;
@@ -227,7 +227,7 @@
   function reset() {
     dino = { x: 70, y: GROUND - DH, vy: 0, onGround: true, ducking: false };
     obstacles = []; clouds = [];
-    speed = 5.4; distance = 0; score = 0; spawnT = 0; spawnGap = 74;
+    speed = 5.4; distance = 0; score = 0; spawnT = 0; spawnGap = 230;
     legT = 0; groundOff = 0; shake = 0; flashT = 0; milestone = 0;
     duckHeld = false;
     for (var i = 0; i < 4; i++) {
@@ -340,14 +340,16 @@
 
   // ===== Spawning =====
   function spawnObstacle() {
-    var canBird = score > 140;
+    var canBird = score > 300;
     var kind = (canBird && Math.random() < 0.28) ? 'bird' : 'cactus';
     if (kind === 'bird') {
-      // two flight levels: low = must duck, high = harmless if you stay grounded
+      // 两个飞行高度，靠"蹲"来区分：
+      //   low  —— 站立/跳跃都会撞，必须按住 ↓ 蹲下钻过去
+      //   high —— 站着跑就没事，跳起来反而会撞
       var low = Math.random() < 0.55;
       obstacles.push({
         kind: 'bird', x: W + 20, w: 34, h: 26,
-        y: low ? GROUND - 44 : GROUND - 96,
+        y: low ? GROUND - 58 : GROUND - 96,
         wing: 0
       });
     } else {
@@ -356,8 +358,14 @@
       var oh = big ? 50 : 34, ow = big ? 24 : 16;
       obstacles.push({ kind: 'cactus', x: W + 20, w: ow * n + (n - 1) * 4, h: oh, y: GROUND - oh, n: n, ow: ow, big: big, wing: 0 });
     }
-    // gap shrinks as the speed climbs, but never below what a jump can clear
-    spawnGap = Math.max(48, 96 - speed * 3.2) + Math.random() * 40;
+    // ★ 障碍间距必须按「时间」算，不能按「像素」算。
+    //   跳跃一次滞空约 29 帧，落地后还要留几帧反应 —— 到达间隔低于约 34 帧
+    //   就会落进「落地即撞」的共振区（第二个障碍恰在下坠段/刚落地那几帧通过，
+    //   任何操作都救不回来）。所以均值全程守在安全线上方，只留 ±15% 抖动去探。
+    //   旧写法 Math.max(48, 96 - speed*3.2) 是像素间距 → 速度涨、间距还缩，
+    //   到达间隔随速度平方反比塌到 4 帧（实测机器人 20 局全部死在开局速度 5.4 上）。
+    var T = Math.max(28, 38 - (speed - 5.4) * 1.6);   // 目标到达间隔(帧)
+    spawnGap = speed * T * (0.75 + Math.random() * 0.5);
   }
 
   function dinoBox() {
@@ -415,7 +423,7 @@
     if (milestone > 0) milestone = Math.max(0, milestone - 0.04 * dt);
 
     // speed ramp
-    speed = Math.min(13.2, 5.4 + Math.floor(score / 100) * 0.75);
+    speed = Math.min(11, 5.4 + Math.floor(score / 100) * 0.5);
 
     // obstacles
     for (var i = obstacles.length - 1; i >= 0; i--) {
