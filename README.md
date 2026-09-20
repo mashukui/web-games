@@ -4,7 +4,7 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-19-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-22-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
 [![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
@@ -36,6 +36,9 @@
 | **Cross Road** | 🐸 | Arcade | Hop one tile at a time, dodge the traffic and ride the logs across the river | [Play](https://mashukui.github.io/web-games/cross-road/) |
 | **Slide Puzzle** | 🧩 | Puzzle | The classic 15 puzzle — slide the tiles back into order in as few moves as you can | [Play](https://mashukui.github.io/web-games/slide-puzzle/) |
 | **Fruit Slice** | 🍉 | Action | Swipe through the fruit, chain combos and keep well clear of the bombs | [Play](https://mashukui.github.io/web-games/fruit-slice/) |
+| **Bubble Shooter** | 🫧 | Arcade | Aim, fire and match three or more bubbles. Cut a cluster loose and everything below falls | [Play](https://mashukui.github.io/web-games/bubble-shooter/) |
+| **Sudoku** | 🔢 | Puzzle | Three difficulties, every puzzle generated with exactly one solution. Tap a cell, then a number | [Play](https://mashukui.github.io/web-games/sudoku/) |
+| **Merge Drop** | 🍉 | Puzzle | Drop the fruit, merge the matching pairs and grow all the way to the giant | [Play](https://mashukui.github.io/web-games/merge-drop/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -89,6 +92,9 @@ web-games/
 ├── cross-road/index.html   # 🐸 hopper vs traffic
 ├── slide-puzzle/index.html # 🧩 sliding number puzzle
 ├── fruit-slice/index.html  # 🍉 swipe-and-slice arcade
+├── bubble-shooter/index.html # 🫧 hex-grid bubble popper
+├── sudoku/index.html       # 🔢 9x9 logic puzzle, one-solution generator
+├── merge-drop/index.html   # 🍉 drop-and-merge physics puzzle
 ├── README.md
 └── LICENSE                 # MIT
 ```
@@ -122,4 +128,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(19 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(22 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
