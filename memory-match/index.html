@@ -70,6 +70,11 @@
     perspective: 700px; font-family: inherit;
   }
   .card .inner {
+    /* ★ display:block 必须写:它是 <span>,默认 display:inline,
+       而行内元素的 width/height:100% 会被直接忽略 —— .inner 塌成 0×0,
+       两个牌面(absolute; inset:0)以 0×0 为包含块跟着塌,整副牌在屏幕上不画任何东西。
+       现象 = 点牌"毫无反应"(处理器照跑,但画面零变化)。 */
+    display: block;
     position: relative; width: 100%; height: 100%;
     transition: transform .32s cubic-bezier(.4,.8,.4,1);
     transform-style: preserve-3d;
