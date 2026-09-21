@@ -43,19 +43,19 @@
 
     en: {
       /* ---- shared ---- */
-      'common.play': 'PLAY',
       'common.start': 'START',
       'common.playAgain': 'PLAY AGAIN',
       'common.newGame': 'NEW GAME',
       'common.shareScore': 'SHARE SCORE',
       'common.copied': '✅ Copied!',
-      'common.best': 'BEST',
-      'common.score': 'SCORE',
       'common.paused': 'PAUSED',
       'common.newRecord': '🏆 NEW RECORD!',
       'common.toggleSound': 'Toggle sound',
+      'common.soundOff': 'Mute',
+      'common.soundOn': 'Unmute',
       'common.language': 'Language',
       'common.backHome': 'Back to home',
+      'common.home': 'Home',
       'common.madeBy': 'Made by',
       'common.moreGames': '🎮 More games',
       'common.freeVideo': '— free online video downloader',
@@ -440,19 +440,19 @@
 
     zh: {
       /* ---- shared ---- */
-      'common.play': '开始游戏',
       'common.start': '开始',
       'common.playAgain': '再玩一次',
       'common.newGame': '新游戏',
       'common.shareScore': '分享成绩',
       'common.copied': '✅ 已复制！',
-      'common.best': '最高',
-      'common.score': '得分',
       'common.paused': '已暂停',
       'common.newRecord': '🏆 新纪录！',
       'common.toggleSound': '开关声音',
+      'common.soundOff': '关闭声音',
+      'common.soundOn': '打开声音',
       'common.language': '语言',
       'common.backHome': '返回首页',
+      'common.home': '返回主页',
       'common.madeBy': '作者',
       'common.moreGames': '🎮 更多游戏',
       'common.freeVideo': '— 免费在线视频下载工具',
@@ -835,19 +835,19 @@
 
     es: {
       /* ---- shared ---- */
-      'common.play': 'JUGAR',
       'common.start': 'EMPEZAR',
       'common.playAgain': 'JUGAR OTRA VEZ',
       'common.newGame': 'NUEVA PARTIDA',
       'common.shareScore': 'COMPARTIR PUNTOS',
       'common.copied': '✅ ¡Copiado!',
-      'common.best': 'RÉCORD',
-      'common.score': 'PUNTOS',
       'common.paused': 'EN PAUSA',
       'common.newRecord': '🏆 ¡NUEVO RÉCORD!',
       'common.toggleSound': 'Activar o desactivar el sonido',
+      'common.soundOff': 'Silenciar',
+      'common.soundOn': 'Activar el sonido',
       'common.language': 'Idioma',
       'common.backHome': 'Volver al inicio',
+      'common.home': 'Inicio',
       'common.madeBy': 'Creado por',
       'common.moreGames': '🎮 Más juegos',
       'common.freeVideo': '— descargador de vídeo online gratis',
@@ -1230,19 +1230,19 @@
 
     pt: {
       /* ---- shared ---- */
-      'common.play': 'JOGAR',
       'common.start': 'COMEÇAR',
       'common.playAgain': 'JOGAR DE NOVO',
       'common.newGame': 'NOVO JOGO',
       'common.shareScore': 'COMPARTILHAR PONTOS',
       'common.copied': '✅ Copiado!',
-      'common.best': 'RECORDE',
-      'common.score': 'PONTOS',
       'common.paused': 'PAUSADO',
       'common.newRecord': '🏆 NOVO RECORDE!',
       'common.toggleSound': 'Ligar ou desligar o som',
+      'common.soundOff': 'Silenciar',
+      'common.soundOn': 'Ativar o som',
       'common.language': 'Idioma',
       'common.backHome': 'Voltar ao início',
+      'common.home': 'Início',
       'common.madeBy': 'Criado por',
       'common.moreGames': '🎮 Mais jogos',
       'common.freeVideo': '— baixador de vídeos online grátis',
@@ -1625,19 +1625,19 @@
 
     fr: {
       /* ---- shared ---- */
-      'common.play': 'JOUER',
       'common.start': 'COMMENCER',
       'common.playAgain': 'REJOUER',
       'common.newGame': 'NOUVELLE PARTIE',
       'common.shareScore': 'PARTAGER LE SCORE',
       'common.copied': '✅ Copié !',
-      'common.best': 'RECORD',
-      'common.score': 'SCORE',
       'common.paused': 'EN PAUSE',
       'common.newRecord': '🏆 NOUVEAU RECORD !',
       'common.toggleSound': 'Activer ou couper le son',
+      'common.soundOff': 'Couper le son',
+      'common.soundOn': 'Activer le son',
       'common.language': 'Langue',
       'common.backHome': 'Retour à l\'accueil',
+      'common.home': 'Accueil',
       'common.madeBy': 'Créé par',
       'common.moreGames': '🎮 Plus de jeux',
       'common.freeVideo': '— téléchargeur de vidéos en ligne gratuit',
@@ -2020,19 +2020,19 @@
 
     de: {
       /* ---- shared ---- */
-      'common.play': 'SPIELEN',
       'common.start': 'START',
       'common.playAgain': 'NOCHMAL SPIELEN',
       'common.newGame': 'NEUES SPIEL',
       'common.shareScore': 'ERGEBNIS TEILEN',
       'common.copied': '✅ Kopiert!',
-      'common.best': 'REKORD',
-      'common.score': 'PUNKTE',
       'common.paused': 'PAUSIERT',
       'common.newRecord': '🏆 NEUER REKORD!',
       'common.toggleSound': 'Ton ein- oder ausschalten',
+      'common.soundOff': 'Ton aus',
+      'common.soundOn': 'Ton ein',
       'common.language': 'Sprache',
       'common.backHome': 'Zurück zur Startseite',
+      'common.home': 'Startseite',
       'common.madeBy': 'Erstellt von',
       'common.moreGames': '🎮 Mehr Spiele',
       'common.freeVideo': '— kostenloser Online-Videodownloader',
@@ -2415,19 +2415,19 @@
 
     ja: {
       /* ---- shared ---- */
-      'common.play': 'プレイ',
       'common.start': 'スタート',
       'common.playAgain': 'もう一度プレイ',
       'common.newGame': '新しいゲーム',
       'common.shareScore': 'スコアをシェア',
       'common.copied': '✅ コピーしました！',
-      'common.best': 'ベスト',
-      'common.score': 'スコア',
       'common.paused': '一時停止中',
       'common.newRecord': '🏆 新記録！',
       'common.toggleSound': 'サウンドのオン／オフ',
+      'common.soundOff': '音を消す',
+      'common.soundOn': '音を出す',
       'common.language': '言語',
       'common.backHome': 'ホームに戻る',
+      'common.home': 'ホーム',
       'common.madeBy': '制作：',
       'common.moreGames': '🎮 他のゲーム',
       'common.freeVideo': '— 無料オンライン動画ダウンローダー',
@@ -2810,19 +2810,19 @@
 
     ko: {
       /* ---- shared ---- */
-      'common.play': '플레이',
       'common.start': '시작',
       'common.playAgain': '다시 플레이',
       'common.newGame': '새 게임',
       'common.shareScore': '점수 공유',
       'common.copied': '✅ 복사되었습니다!',
-      'common.best': '최고',
-      'common.score': '점수',
       'common.paused': '일시정지',
       'common.newRecord': '🏆 신기록!',
       'common.toggleSound': '소리 켜기/끄기',
+      'common.soundOff': '소리 끄기',
+      'common.soundOn': '소리 켜기',
       'common.language': '언어',
       'common.backHome': '홈으로 돌아가기',
+      'common.home': '홈',
       'common.madeBy': '만든 사람',
       'common.moreGames': '🎮 더 많은 게임',
       'common.freeVideo': '— 무료 온라인 동영상 다운로더',
@@ -3256,6 +3256,13 @@
     return out;
   }
 
+  /* Escape a plain dictionary value before it goes into innerHTML. The
+     dictionaries hold bare text (实体陷阱: `data-i18n` 写裸 &), so anything
+    拼接进 HTML 都必须先过这一道。 */
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   /* Apply translations to every tagged node inside `root`. */
   function apply(root) {
     root = root || global.document;
@@ -3295,6 +3302,10 @@
     var rootEl = global.document && global.document.documentElement;
     var titleKey = rootEl && rootEl.getAttribute('data-title-key');
     if (titleKey) global.document.title = t(titleKey);
+
+    /* 图标旁的文字标签(🔊 关闭声音 / 🏠 返回主页)也是可翻译文案,跟着一起刷。
+       静音标签还要看 muted 状态,renderMute() 自己会算。 */
+    renderMute();
   }
 
   var listeners = [];
@@ -3346,13 +3357,14 @@
   var CSS_ID = 'wg-lang-css';
   var CSS = '' +
     '.wg-lang{position:relative;display:inline-block;line-height:1;vertical-align:middle;font-family:inherit;}' +
-    '.wg-lang-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;font:700 12px/1 inherit;font-family:inherit;' +
-      'letter-spacing:.04em;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);' +
-      'border-radius:999px;padding:7px 12px;cursor:pointer;white-space:nowrap;box-shadow:none;margin:0;' +
+    '.wg-lang-btn{display:inline-flex;align-items:center;gap:7px;min-height:44px;font:600 13px/1.1 inherit;font-family:inherit;' +
+      'color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);' +
+      'border-radius:999px;padding:0 14px;cursor:pointer;white-space:nowrap;box-shadow:none;margin:0;' +
       'transition:background .15s,border-color .15s;}' +
     '.wg-lang-btn:hover{background:rgba(255,255,255,.24);border-color:rgba(255,255,255,.4);}' +
     '.wg-lang-btn:active{transform:scale(.96);}' +
-    '.wg-lang-globe{font-size:13px;line-height:1;}' +
+    /* 图标 + 文字的图标尺寸:语言键、静音键、返回键共用同一枚 .wg-ico */
+    '.wg-ico{font-size:16px;font-weight:400;line-height:1;}' +
     /* 方向由 placeMenu() 量过可用空间后决定,两个方向各留一条规则。
        原本写死 bottom:100% —— 按钮贴在页面顶部时面板整个弹到视口外,
        被浏览器裁掉(实测 hub 页:按钮 top=40、面板高 292 → 顶边 -260)。 */
@@ -3388,8 +3400,10 @@
     if (!box) return;
     var btn = box.querySelector('.wg-lang-btn');
     if (btn) {
-      var code = btn.querySelector('.wg-lang-code');
-      if (code) code.textContent = currentLang().short;
+      /* 显示语言全称(简体中文 / Português),不再是 "中"/"EN" 这种缩写 ——
+         缩写对非目标语言的用户等于没给信息。 */
+      var name = btn.querySelector('.wg-lang-name');
+      if (name) name.textContent = currentLang().name;
     }
     var items = box.querySelectorAll('.wg-lang-menu button');
     for (var i = 0; i < items.length; i++) {
@@ -3412,15 +3426,19 @@
   var TOOLS_CSS_ID = 'wg-tools-css';
   var TOOLS_CSS = '' +
     '.wg-tools{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 10px;}' +
+    /* 图标 + 文字并排:宽度随文案自适应,不再钉死 44×44 方块。
+       min-width/min-height 保住 44px 触控目标(规格 11)。 */
     '.wg-tools #mute-btn,.wg-tools a.wg-home-btn{' +
-      'position:static;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;' +
-      'width:44px;height:44px;min-width:44px;min-height:44px;padding:0;margin:0;' +
+      'position:static;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;' +
+      'width:auto;height:auto;min-width:44px;min-height:44px;padding:0 14px;margin:0;box-sizing:border-box;' +
       'border:none;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;' +
-      'font-family:inherit;font-size:18px;font-weight:700;line-height:1;text-align:center;' +
+      'font-family:inherit;font-size:13px;font-weight:600;line-height:1.1;letter-spacing:0;' +
+      'white-space:nowrap;text-align:center;overflow:visible;' +
       'cursor:pointer;text-decoration:none;box-shadow:none;' +
       'transition:background .15s,transform .12s;}' +
     '.wg-tools #mute-btn:hover,.wg-tools a.wg-home-btn:hover{background:rgba(255,255,255,.26);}' +
     '.wg-tools #mute-btn:active,.wg-tools a.wg-home-btn:active{transform:scale(.94);}' +
+    '.wg-tools .wg-ico{font-size:16px;font-weight:400;line-height:1;}' +
     '.wg-tools .wg-lang{flex:0 0 auto;}';
 
   function buildTools(doc) {
@@ -3453,6 +3471,72 @@
     for (var i = 0; i < seq.length; i++) if (seq[i]) row.appendChild(seq[i]);
   }
 
+  /* ------------------------------------------------------------------ */
+  /* 静音键的文字标签 — 在 🔊/🔇 旁边补一枚"关闭声音 / 打开声音"          */
+  /*                                                                     */
+  /* 宿主页面自己持有 muted 状态,并且在每次点击时用一行                  */
+  /*     muteBtn.textContent = muted ? '🔇' : '🔊';                       */
+  /* 整体重写按钮内容 —— 我们塞进去的 <span> 会被这一行直接抹掉。          */
+  /* 所以这里不跟宿主抢所有权,改成"写完再补":                            */
+  /*   1. 用 MutationObserver 盯住按钮的子节点,宿主写完图标后立刻把标签    */
+  /*      补回来(重建一次即稳定,不会来回打架);                            */
+  /*   2. 静音状态从宿主刚写下的 emoji 反读,不依赖 muted 变量 —— 它在各页  */
+  /*      IIFE 里,外部读不到。                                            */
+  /* 结构约定: [span.wg-ico][span.wg-mute-lbl]                            */
+  /* ------------------------------------------------------------------ */
+  var MUTE_ATTR = 'data-wg-mute';
+  var muteObserver = null;
+
+  function muteIsOff(btn) {
+    var txt = btn.textContent || '';
+    if (txt.indexOf('🔇') >= 0) return true;
+    if (txt.indexOf('🔊') >= 0) return false;
+    if (btn.getAttribute(MUTE_ATTR) === '1') return true;
+    return !!global.muted;   /* 图标万一被换掉,退而看页面全局状态 */
+  }
+
+  function paintMute(btn, off) {
+    var ico = off ? '🔇' : '🔊';
+    var lbl = t(off ? 'common.soundOn' : 'common.soundOff');
+    var icoEl = btn.querySelector('.wg-ico');
+    var lblEl = btn.querySelector('.wg-mute-lbl');
+    if (!icoEl || !lblEl) {
+      /* 宿主刚整体重写过按钮 → 结构没了,重建(先摘观察者,再挂回去) */
+      if (muteObserver) muteObserver.disconnect();
+      btn.innerHTML = '<span class="wg-ico" aria-hidden="true">' + ico + '</span>' +
+                      '<span class="wg-mute-lbl">' + esc(lbl) + '</span>';
+      if (muteObserver) muteObserver.observe(btn, { childList: true });
+    } else {
+      /* 结构完好 → 只动文字,不再碰 innerHTML(否则会自触发观察者) */
+      if (icoEl.textContent !== ico) icoEl.textContent = ico;
+      if (lblEl.textContent !== lbl) lblEl.textContent = lbl;
+    }
+    btn.setAttribute(MUTE_ATTR, off ? '1' : '0');
+    btn.setAttribute('title', lbl);
+    btn.setAttribute('aria-label', lbl);
+  }
+
+  function renderMute() {
+    var doc = global.document;
+    if (!doc || !doc.getElementById) return;
+    var btn = doc.getElementById('mute-btn');
+    if (!btn || !btn.querySelector) return;
+    paintMute(btn, muteIsOff(btn));
+  }
+
+  function startMuteWatch() {
+    var doc = global.document;
+    var btn = doc && doc.getElementById && doc.getElementById('mute-btn');
+    if (!btn || !global.MutationObserver) return;
+    if (!muteObserver) {
+      muteObserver = new global.MutationObserver(function () { renderMute(); });
+    }
+    /* 注意:把节点搬进工具行不会触发这里 —— 观察的是按钮的子节点,
+       不是它的父节点。 */
+    muteObserver.disconnect();
+    muteObserver.observe(btn, { childList: true });
+  }
+
   function buildSwitcher() {
     var doc = global.document;
     if (doc.getElementById('wg-lang')) return;
@@ -3474,8 +3558,8 @@
     var html = '<button type="button" class="wg-lang-btn" aria-haspopup="true" aria-expanded="false" ' +
       'aria-label="' + t('common.language').replace(/"/g, '&quot;') + '" ' +
       'title="' + t('common.language').replace(/"/g, '&quot;') + '">' +
-      '<span class="wg-lang-globe" aria-hidden="true">🌐</span>' +
-      '<span class="wg-lang-code">' + currentLang().short + '</span></button>' +
+      '<span class="wg-ico" aria-hidden="true">🌐</span>' +
+      '<span class="wg-lang-name">' + currentLang().name + '</span></button>' +
       '<span class="wg-lang-menu" role="menu">';
     for (var i = 0; i < LANGS.length; i++) {
       html += '<button type="button" role="menuitem" data-lang="' + LANGS[i].code + '">' + LANGS[i].name + '</button>';
@@ -3610,19 +3694,33 @@
   /* ------------------------------------------------------------------ */
   var HOME_CSS_ID = 'wg-home-css';
   var HOME_CSS = '' +
-    '.wg-home-btn{display:block;flex:0 0 auto;width:44px;height:44px;border-radius:10px;' +
-      'background:rgba(255,255,255,.2);color:#fff;font-size:20px;line-height:44px;' +
-      'text-align:center;text-decoration:none;cursor:pointer;z-index:8;box-sizing:border-box;' +
+    /* 与工具行那两枚按钮同一套几何:图标 + 文字并排、宽度随文案自适应,
+       min-height 44px 保住触控目标。无 .footer 的页面走这套退化样式时
+       也带着文字,不再是孤零零一个方块。 */
+    '.wg-home-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;' +
+      'width:auto;min-width:44px;min-height:44px;padding:0 14px;border-radius:10px;' +
+      'background:rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:600;line-height:1.1;' +
+      'white-space:nowrap;text-align:center;text-decoration:none;cursor:pointer;z-index:8;box-sizing:border-box;' +
       'transition:background .15s;}' +
+    '.wg-home-btn .wg-ico{font-size:16px;font-weight:400;line-height:1;}' +
     '.wg-home-btn:hover{background:rgba(255,255,255,.32);}' +
     '.wg-home-btn:active{transform:scale(.92);}';
+
+  function homeHTML(shortLbl) {
+    return '<span class="wg-ico" aria-hidden="true">🏠</span>' +
+           '<span class="wg-home-lbl">' + esc(shortLbl) + '</span>';
+  }
 
   function renderHome() {
     var doc = global.document;
     if (!doc || !doc.body || !doc.body.hasAttribute || !doc.body.hasAttribute('data-wg-home')) return;
-    var lbl = t('common.backHome');
+    var lbl = t('common.backHome');   /* 完整说明 → title / aria-label */
+    var short = t('common.home');     /* 键面短词 → 可见文字 */
     var existing = doc.querySelector('.wg-home-btn');
     if (existing) {   /* 语言切换后只刷新文案 */
+      var span = existing.querySelector('.wg-home-lbl');
+      if (span) span.textContent = short;
+      else existing.innerHTML = homeHTML(short);
       existing.setAttribute('title', lbl);
       existing.setAttribute('aria-label', lbl);
       return;
@@ -3636,7 +3734,7 @@
     var a = doc.createElement('a');
     a.className = 'wg-home-btn';
     a.href = '../';
-    a.textContent = '🏠';
+    a.innerHTML = homeHTML(short);
     a.setAttribute('title', lbl);
     a.setAttribute('aria-label', lbl);
 
@@ -3686,6 +3784,8 @@
     buildSwitcher();
     renderHome();
     arrangeTools();   /* 静音键搬进工具行 + 拍定 🔊 → 🏠 → 🌐 顺序 */
+    renderMute();     /* 图标旁补上"关闭声音 / 打开声音" */
+    startMuteWatch(); /* 宿主下次整体重写按钮内容时,自动把标签补回来 */
     /* keep other tabs of the same site in sync */
     if (global.addEventListener) {
       global.addEventListener('storage', function (e) {
