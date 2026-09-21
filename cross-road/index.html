@@ -259,7 +259,13 @@
     if (!lanes[row]) {
       var made = makeLane(row);
       lanes[row] = made;
-      if (made.type !== 'grass') { lastTypes.push(made.type); if (lastTypes.length > 2) lastTypes.shift(); }
+      // ★ 草地必须清空 streak。上一版只写了 else 分支(草地不入队),于是:
+      //   出现「road, road」→ 守卫命中 → 强制返回草地 → 草地不入队 → lastTypes 永远停在
+      //   ['road','road'] → 之后**每一行都被强制成草地** → 过完一条马路后前面全是草地、
+      //   永远走不到头(2026-09-21 用户报告「没有尽头」)。
+      //   正确语义:草地打断了"同类型连续",所以连击计数归零。
+      if (made.type === 'grass') { lastTypes.length = 0; }
+      else { lastTypes.push(made.type); if (lastTypes.length > 2) lastTypes.shift(); }
     }
     return lanes[row];
   }
