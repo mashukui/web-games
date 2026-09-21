@@ -222,7 +222,11 @@
     var d = diffFactor(row);
     var r = Math.random();
     var lastA = lastTypes[lastTypes.length - 1], lastB = lastTypes[lastTypes.length - 2];
-    if (lastA === lastB && lastA !== 'grass') r = 0.05;         // 不允许连续三行都是同一种危险车道
+    // 不允许连续三行都是同一种危险车道。
+    // ★ 必须带 lastTypes.length >= 2:队列为空时 lastA/lastB 都是 undefined,
+    //   undefined === undefined 为真 → r 被钉死 0.05 → 每一行都返回 grass,
+    //   而 grass 不会入队 → 状态永不解开 → 整张地图清一色草地(无车流/无河流)。
+    if (lastTypes.length >= 2 && lastA === lastB) r = 0.05;
     if (r < 0.28) return { type: 'grass' };
 
     if (r < 0.72) {
