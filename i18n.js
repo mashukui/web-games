@@ -451,7 +451,7 @@
       'common.soundOff': '关闭声音',
       'common.soundOn': '打开声音',
       'common.language': '语言',
-      'common.backHome': '返回首页',
+      'common.backHome': '返回主页',
       'common.home': '返回主页',
       'common.madeBy': '作者',
       'common.moreGames': '🎮 更多游戏',
