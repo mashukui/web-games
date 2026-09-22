@@ -92,6 +92,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': 'A tiny flying ant adventure. Tap to flap, squeeze through the branches.',
@@ -103,6 +104,7 @@
       'hub.desc.2048': 'Swipe and merge the tiles. Reach 2048, then keep going.',
       'hub.desc.minesweeper': 'Three difficulties, first-click-safe. Flag the mines, clear the field.',
       'hub.desc.star-defender': 'Wave after wave of enemies. Shoot, dodge, survive as long as you can.',
+      'hub.desc.water-sort': 'Pour the coloured liquids between tubes until every tube holds a single colour. Every deal is verified solvable.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — Free Online Flappy Game',
@@ -434,6 +436,22 @@
       'hub.desc.merge-drop': 'Drop the fruit, merge the matching pairs, grow all the way to the giant. Keep the pile below the line.',
       'hub.desc.sudoku': 'Fill every row, column and 3×3 box with 1–9. Three difficulties — every puzzle has exactly one solution.',
 
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — Free Online Liquid Sorting Puzzle',
+      'waterSort.final': 'Level {n} cleared in <b>{m}</b> moves',
+      'waterSort.first': 'No record yet — clear a level!',
+      'waterSort.hudBest': 'BEST',
+      'waterSort.hudLevel': 'LEVEL',
+      'waterSort.hudMoves': 'MOVES',
+      'waterSort.next': 'NEXT LEVEL',
+      'waterSort.over': 'CLEARED!',
+      'waterSort.restart': 'RESTART',
+      'waterSort.share': 'I cleared level {n} of Water Sort 🧪 in {m} moves. Can you do better? {url}',
+      'waterSort.stuck': 'No moves left — undo or restart',
+      'waterSort.tip': 'Tap a tube, then tap another to pour.<br>You can only pour onto the <b>same colour</b> or into an empty tube.<br>Every deal is verified solvable.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': 'UNDO',
+
     },
 
     /* @@MORE_LANGS@@ */
@@ -489,6 +507,7 @@
       'game.2048': '2048',
       'game.minesweeper': '扫雷',
       'game.star-defender': '星际守卫',
+      'game.water-sort': '水排序',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': '小蚂蚁的飞行冒险。点击拍翅，穿过树枝缝隙。',
@@ -500,6 +519,7 @@
       'hub.desc.2048': '滑动合并数字方块。凑出 2048，然后继续挑战。',
       'hub.desc.minesweeper': '三档难度，首点必安全。插旗标雷，扫清全场。',
       'hub.desc.star-defender': '一波接一波的敌人。射击、闪避，活得越久越好。',
+      'hub.desc.water-sort': '把彩色液体在试管之间倒来倒去，直到每根试管只剩一种颜色。每一局都验证过有解。',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': '蚂蚁快飞 — 免费在线飞行躲避小游戏',
@@ -813,6 +833,22 @@
       'mergeDrop.title': '合成大西瓜',
       'sudoku.docTitle': '数独 — 免费在线数独，三种难度',
       'sudoku.easy': '简单',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': '水排序 — 免费在线液体分类解谜',
+      'waterSort.final': '第 {n} 关，用了 <b>{m}</b> 步',
+      'waterSort.first': '还没有记录 —— 先过一关吧！',
+      'waterSort.hudBest': '最佳',
+      'waterSort.hudLevel': '关卡',
+      'waterSort.hudMoves': '步数',
+      'waterSort.next': '下一关',
+      'waterSort.over': '过关啦！',
+      'waterSort.restart': '重来',
+      'waterSort.share': '我用 {m} 步通关了水排序第 {n} 关 🧪，你能更快吗？{url}',
+      'waterSort.stuck': '没有可行的倒法了 —— 撤销或重来',
+      'waterSort.tip': '点一根试管，再点另一根就能倒过去。<br>只能倒在<b>同色</b>液体上，或倒进空试管。<br>每一局都验证过有解。',
+      'waterSort.title': '水排序',
+      'waterSort.undo': '撤销',
+
       'sudoku.erase': '擦除',
       'sudoku.final': '{d}难度用时 {t2}',
       'sudoku.first': '还没有记录 —— 去解一局吧！',
@@ -884,6 +920,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': 'La aventura de una pequeña hormiga voladora. Toca para aletear y pasa entre las ramas.',
@@ -895,6 +932,7 @@
       'hub.desc.2048': 'Desliza y combina las fichas. Llega a 2048 y sigue jugando.',
       'hub.desc.minesweeper': 'Tres dificultades y primer clic siempre seguro. Marca las minas y despeja el campo.',
       'hub.desc.star-defender': 'Oleada tras oleada de enemigos. Dispara, esquiva y aguanta todo lo que puedas.',
+      'hub.desc.water-sort': 'Vierte los líquidos de color entre tubos hasta que cada tubo tenga un solo color. Cada partida está verificada como resoluble.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — Juego de volar online y gratis',
@@ -1190,6 +1228,22 @@
       'bubbleShooter.hudScore': 'PUNTOS',
       'bubbleShooter.next': 'SIGUIENTE',
       'bubbleShooter.over': 'FIN DEL JUEGO',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — Puzle de clasificación de líquidos gratis online',
+      'waterSort.final': 'Nivel {n} superado en <b>{m}</b> jugadas',
+      'waterSort.first': 'Aún no hay récord: ¡supera un nivel!',
+      'waterSort.hudBest': 'RÉCORD',
+      'waterSort.hudLevel': 'NIVEL',
+      'waterSort.hudMoves': 'JUGADAS',
+      'waterSort.next': 'SIGUIENTE NIVEL',
+      'waterSort.over': '¡COMPLETADO!',
+      'waterSort.restart': 'REINICIAR',
+      'waterSort.share': 'Superé el nivel {n} de Water Sort 🧪 en {m} jugadas. ¿Puedes hacerlo mejor? {url}',
+      'waterSort.stuck': 'No quedan jugadas: deshaz o reinicia',
+      'waterSort.tip': 'Toca un tubo y luego otro para verter.<br>Solo puedes verter sobre el <b>mismo color</b> o en un tubo vacío.<br>Cada partida está verificada como resoluble.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': 'DESHACER',
+
       'bubbleShooter.overFull': '¡Las burbujas llegaron a la línea!',
       'bubbleShooter.share': 'Llegué a {n} puntos en Bubble Shooter 🫧 ¿Puedes superarlo? {url}',
       'bubbleShooter.subtitle': 'APUNTA · JUNTA 3 · REVIENTA',
@@ -1279,6 +1333,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': 'A aventura de uma formiguinha voadora. Toque para bater as asas e passe entre os galhos.',
@@ -1290,6 +1345,7 @@
       'hub.desc.2048': 'Deslize e combine as peças. Chegue a 2048 e continue jogando.',
       'hub.desc.minesweeper': 'Três dificuldades e primeiro clique sempre seguro. Marque as minas e limpe o campo.',
       'hub.desc.star-defender': 'Onda após onda de inimigos. Atire, desvie e sobreviva o máximo que puder.',
+      'hub.desc.water-sort': 'Verta os líquidos coloridos entre tubos até que cada tubo tenha uma só cor. Toda partida é verificada como resolvível.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — Jogo de voar online e grátis',
@@ -1567,6 +1623,22 @@
       'pianoTap.tip': 'Bata no <b>bloco preto mais baixo</b>: se deixar passar, o tabuleiro rola direto.<br>Toque no branco e está fora.<br>Teclado: <b>D F J K</b> ou <b>1 2 3 4</b>',
       'pianoTap.title': 'PIANO TAP',
       'slidePuzzle.docTitle': 'Slide Puzzle — Quebra-cabeça de 15 grátis online',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — Quebra-cabeça de classificação de líquidos grátis online',
+      'waterSort.final': 'Nível {n} concluído em <b>{m}</b> jogadas',
+      'waterSort.first': 'Ainda sem recorde — conclua um nível!',
+      'waterSort.hudBest': 'RECORDE',
+      'waterSort.hudLevel': 'NÍVEL',
+      'waterSort.hudMoves': 'JOGADAS',
+      'waterSort.next': 'PRÓXIMO NÍVEL',
+      'waterSort.over': 'CONCLUÍDO!',
+      'waterSort.restart': 'REINICIAR',
+      'waterSort.share': 'Concluí o nível {n} do Water Sort 🧪 em {m} jogadas. Consegue melhor? {url}',
+      'waterSort.stuck': 'Sem jogadas possíveis — desfaça ou reinicie',
+      'waterSort.tip': 'Toque num tubo e depois noutro para verter.<br>Só pode verter sobre a <b>mesma cor</b> ou num tubo vazio.<br>Toda partida é verificada como resolvível.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': 'DESFAZER',
+
       'slidePuzzle.final': 'Resolvido em <b>{m}</b> jogadas · {t}',
       'slidePuzzle.first': 'Ainda sem recorde — resolva um!',
       'slidePuzzle.hudBest': 'RECORDE',
@@ -1674,6 +1746,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': 'L\'aventure d\'une petite fourmi volante. Touchez pour battre des ailes et passez entre les branches.',
@@ -1685,6 +1758,7 @@
       'hub.desc.2048': 'Glissez et fusionnez les tuiles. Atteignez 2048, puis continuez.',
       'hub.desc.minesweeper': 'Trois difficultés, premier clic toujours sûr. Marquez les mines et dégagez le terrain.',
       'hub.desc.star-defender': 'Des vagues d\'ennemis sans fin. Tirez, esquivez, survivez le plus longtemps possible.',
+      'hub.desc.water-sort': 'Versez les liquides colorés d\'un tube à l\'autre jusqu\'à ce que chaque tube n\'ait plus qu\'une seule couleur. Chaque partie est vérifiée comme soluble.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — Jeu de vol en ligne gratuit',
@@ -1944,6 +2018,22 @@
       'fruitSlice.title': 'FRUIT SLICE',
       'game.cross-road': 'Cross Road',
       'game.fruit-slice': 'Fruit Slice',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — Puzzle de tri de liquides gratuit en ligne',
+      'waterSort.final': 'Niveau {n} terminé en <b>{m}</b> coups',
+      'waterSort.first': 'Pas encore de record — terminez un niveau !',
+      'waterSort.hudBest': 'RECORD',
+      'waterSort.hudLevel': 'NIVEAU',
+      'waterSort.hudMoves': 'COUPS',
+      'waterSort.next': 'NIVEAU SUIVANT',
+      'waterSort.over': 'RÉUSSI !',
+      'waterSort.restart': 'RECOMMENCER',
+      'waterSort.share': 'J\'ai terminé le niveau {n} de Water Sort 🧪 en {m} coups. Faites mieux ? {url}',
+      'waterSort.stuck': 'Plus aucun coup possible — annulez ou recommencez',
+      'waterSort.tip': 'Touchez un tube, puis un autre pour verser.<br>Vous ne pouvez verser que sur la <b>même couleur</b> ou dans un tube vide.<br>Chaque partie est vérifiée comme soluble.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': 'ANNULER',
+
       'game.piano-tap': 'Piano Tap',
       'game.slide-puzzle': 'Slide Puzzle',
       'hub.desc.cross-road': 'Avancez case par case, évitez la circulation et traversez la rivière sur les rondins.',
@@ -2069,6 +2159,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': 'Das Abenteuer einer kleinen fliegenden Ameise. Tippe zum Flattern und schlüpfe durch die Zweige.',
@@ -2080,6 +2171,7 @@
       'hub.desc.2048': 'Schiebe und verschmelze die Kacheln. Erreiche 2048 und spiel weiter.',
       'hub.desc.minesweeper': 'Drei Schwierigkeiten, erster Klick immer sicher. Markiere die Minen und räume das Feld.',
       'hub.desc.star-defender': 'Eine Welle nach der anderen. Schießen, ausweichen, so lange wie möglich überleben.',
+      'hub.desc.water-sort': 'Gieße die farbigen Flüssigkeiten zwischen den Röhrchen um, bis jedes nur noch eine Farbe enthält. Jede Aufgabe ist als lösbar geprüft.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — Kostenloses Flatter-Spiel online',
@@ -2321,6 +2413,22 @@
       'crossRoad.overWater': 'Du bist ins Wasser gefallen!',
       'crossRoad.right': 'Rechts',
       'crossRoad.share': 'Ich bin {n} Felder in Cross Road 🐸 gehüpft, ohne plattgefahren zu werden. Schlag mich: {url}',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — Kostenloses Flüssigkeits-Sortier-Puzzle online',
+      'waterSort.final': 'Level {n} in <b>{m}</b> Zügen geschafft',
+      'waterSort.first': 'Noch kein Rekord — schaffe ein Level!',
+      'waterSort.hudBest': 'REKORD',
+      'waterSort.hudLevel': 'LEVEL',
+      'waterSort.hudMoves': 'ZÜGE',
+      'waterSort.next': 'NÄCHSTES LEVEL',
+      'waterSort.over': 'GESCHAFFT!',
+      'waterSort.restart': 'NEU STARTEN',
+      'waterSort.share': 'Ich habe Level {n} von Water Sort 🧪 in {m} Zügen geschafft. Schaffst du es besser? {url}',
+      'waterSort.stuck': 'Keine Züge mehr möglich — rückgängig machen oder neu starten',
+      'waterSort.tip': 'Tippe ein Röhrchen an, dann ein zweites zum Umfüllen.<br>Du kannst nur auf die <b>gleiche Farbe</b> oder in ein leeres Röhrchen gießen.<br>Jede Aufgabe ist als lösbar geprüft.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': 'ZURÜCK',
+
       'crossRoad.subtitle': 'HÜPFEN · AUSWEICHEN · MITFAHREN',
       'crossRoad.tip': 'Hüpfe <b>vorwärts</b>, Feld für Feld. Weiche den Autos aus.<br>Auf dem Wasser musst du auf einem <b>Baumstamm</b> stehen — sonst sinkst du.<br>Wischen, das Steuerkreuz unten oder <b>Pfeiltasten / WASD</b>.',
       'crossRoad.title': 'CROSS ROAD',
@@ -2464,6 +2572,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': '小さな飛ぶアリの冒険。タップで羽ばたいて、枝の隙間をすり抜けよう。',
@@ -2475,6 +2584,7 @@
       'hub.desc.2048': 'タイルをスライドして合体。2048 を目指して、その先も続けよう。',
       'hub.desc.minesweeper': '3 段階の難易度、最初のクリックは必ず安全。地雷に旗を立てて全部開けよう。',
       'hub.desc.star-defender': '次々と押し寄せる敵。撃って、かわして、できるだけ生き延びろ。',
+      'hub.desc.water-sort': '色のついた液体を試験管から試験管へ移し、どの試験管も1色だけになるようにしよう。どの問題も解けることを検証済み。',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — 無料オンラインの羽ばたきアクション',
@@ -2698,6 +2808,22 @@
       'connectFour.you': 'あなた',
       'connectFour.ai': 'コンピュータ',
       'connectFour.draws': '引き分け',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — 無料オンライン液体仕分けパズル',
+      'waterSort.final': 'レベル {n} を <b>{m}</b> 手でクリア',
+      'waterSort.first': '記録はまだありません — 1面クリアしよう！',
+      'waterSort.hudBest': 'ベスト',
+      'waterSort.hudLevel': 'レベル',
+      'waterSort.hudMoves': '手数',
+      'waterSort.next': '次のレベル',
+      'waterSort.over': 'クリア！',
+      'waterSort.restart': 'やり直す',
+      'waterSort.share': 'Water Sort のレベル {n} を {m} 手でクリアしました 🧪 もっと少ない手数でできる？{url}',
+      'waterSort.stuck': 'これ以上移せません — 元に戻すかやり直そう',
+      'waterSort.tip': '試験管をタップしてから、別の試験管をタップすると注げます。<br>注げるのは<b>同じ色</b>の上か、空の試験管だけ。<br>どの問題も解けることを検証済み。',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': '元に戻す',
+
       'connectFour.thinking': 'コンピュータが考え中…',
       'connectFour.turn': '{p} の番',
       'connectFour.winYou': 'あなたの勝ち！🎉',
@@ -2859,6 +2985,7 @@
       'game.2048': '2048',
       'game.minesweeper': 'Minesweeper',
       'game.star-defender': 'Star Defender',
+      'game.water-sort': 'Water Sort',
 
       /* ---- hub descriptions ---- */
       'hub.desc.ant-flap': '작은 날아다니는 개미의 모험. 눌러서 날갯짓하고 나뭇가지 사이를 통과하세요.',
@@ -2870,6 +2997,7 @@
       'hub.desc.2048': '타일을 밀어 합치세요. 2048을 만들고 계속 도전하세요.',
       'hub.desc.minesweeper': '3단계 난이도, 첫 클릭은 항상 안전. 지뢰에 깃발을 꽂고 모두 열어보세요.',
       'hub.desc.star-defender': '끝없이 밀려오는 적들. 쏘고 피하고 최대한 오래 살아남으세요.',
+      'hub.desc.water-sort': '색깔 액체를 시험관 사이로 옮겨 모든 시험관이 한 가지 색만 담도록 만드세요. 모든 문제는 풀 수 있음을 검증했습니다.',
 
       /* ---- ant-flap ---- */
       'antFlap.docTitle': 'Ant Flap — 무료 온라인 날갯짓 게임',
@@ -3075,6 +3203,22 @@
       'whackAMole.docTitle': 'Whack-a-Mole — 무료 온라인 아케이드 게임',
       'whackAMole.title': 'WHACK-A-MOLE',
       'whackAMole.subtitle': '60초 반사신경 대결',
+      /* ---- water-sort ---- */
+      'waterSort.docTitle': 'Water Sort — 무료 온라인 액체 분류 퍼즐',
+      'waterSort.final': '레벨 {n}을 <b>{m}</b>수로 클리어',
+      'waterSort.first': '기록이 아직 없습니다 — 한 레벨을 깨보세요!',
+      'waterSort.hudBest': '최고',
+      'waterSort.hudLevel': '레벨',
+      'waterSort.hudMoves': '수',
+      'waterSort.next': '다음 레벨',
+      'waterSort.over': '클리어!',
+      'waterSort.restart': '다시 시작',
+      'waterSort.share': 'Water Sort 레벨 {n}을(를) {m}수로 클리어했습니다 🧪 더 잘할 수 있나요? {url}',
+      'waterSort.stuck': '더 이상 옮길 수 없습니다 — 되돌리거나 다시 시작하세요',
+      'waterSort.tip': '시험관을 탭한 뒤 다른 시험관을 탭하면 부을 수 있습니다.<br><b>같은 색</b> 위나 빈 시험관에만 부을 수 있습니다.<br>모든 문제는 풀 수 있음을 검증했습니다.',
+      'waterSort.title': 'WATER SORT',
+      'waterSort.undo': '되돌리기',
+
       'whackAMole.hudTime': '시간',
       'whackAMole.hudScore': '점수',
       'whackAMole.hudBest': '최고',
