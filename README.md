@@ -4,7 +4,7 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-23-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-32-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
 [![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
@@ -27,7 +27,7 @@
 | **Snake** | 🐍 | Classic | The all-time classic — eat, grow, speed up, don't bite yourself | [Play](https://mashukui.github.io/web-games/snake/) |
 | **Tic Tac Toe** | 🎯 | Classic | Three in a row vs an unbeatable AI — or two players on one device | [Play](https://mashukui.github.io/web-games/tic-tac-toe/) |
 | **Connect Four** | 🔴 | Classic | Drop a disc, line up four. Beat the computer in three difficulties | [Play](https://mashukui.github.io/web-games/connect-four/) |
-| **2048** | 🔢 | Puzzle | Swipe and merge the tiles. Reach 2048, then keep going | [Play](https://mashukui.github.io/web-games/2048/) |
+| **2048** | 🧮 | Puzzle | Swipe and merge the tiles. Reach 2048, then keep going | [Play](https://mashukui.github.io/web-games/2048/) |
 | **Minesweeper** | 💣 | Puzzle | Three difficulties, first-click-safe, timer & flag counter | [Play](https://mashukui.github.io/web-games/minesweeper/) |
 | **Memory Match** | 🃏 | Puzzle | Flip two cards, remember what you saw, find every pair in three difficulties | [Play](https://mashukui.github.io/web-games/memory-match/) |
 | **Star Defender** | 🚀 | Action | Wave after wave of enemies. Shoot, dodge, survive | [Play](https://mashukui.github.io/web-games/star-defender/) |
@@ -40,6 +40,15 @@
 | **Sudoku** | 🔢 | Puzzle | Three difficulties, every puzzle generated with exactly one solution. Tap a cell, then a number | [Play](https://mashukui.github.io/web-games/sudoku/) |
 | **Merge Drop** | 🍉 | Puzzle | Drop the fruit, merge the matching pairs and grow all the way to the giant | [Play](https://mashukui.github.io/web-games/merge-drop/) |
 | **Water Sort** | 🧪 | Puzzle | Pour the coloured liquids between tubes until every tube holds one colour. Every deal is verified solvable | [Play](https://mashukui.github.io/web-games/water-sort/) |
+| **Slingshot** | 🏹 | Action | Pull back the band, follow the dotted arc and release — the bullseye is worth 100 | [Play](https://mashukui.github.io/web-games/slingshot/) |
+| **Helix Drop** | 🌀 | Action | Spin the helix tower so the ball drops through every gap — red segments end the run | [Play](https://mashukui.github.io/web-games/helix-drop/) |
+| **Gem Match** | 💎 | Puzzle | Swap neighbouring gems, line up three or more and chain cascades for bonus points | [Play](https://mashukui.github.io/web-games/gem-match/) |
+| **Maze Muncher** | 🟡 | Arcade | Eat every dot, dodge four hunting ghosts, and grab a power pellet to bite back | [Play](https://mashukui.github.io/web-games/maze-muncher/) |
+| **Air Hockey** | 🏒 | Arcade | Drag your mallet, shoot the puck with real physics, first to seven goals wins | [Play](https://mashukui.github.io/web-games/air-hockey/) |
+| **Reversi** | ⚪ | Classic | Flank your opponent's discs to flip them. Three AI levels, legal moves highlighted | [Play](https://mashukui.github.io/web-games/reversi/) |
+| **Battleship** | 🚢 | Classic | Place your fleet, then hunt five hidden enemy ships. Three AI levels, one-tap random placement | [Play](https://mashukui.github.io/web-games/battleship/) |
+| **Sokoban** | 📦 | Puzzle | Push every crate onto a target. 30 levels, unlimited undo, stuck warning | [Play](https://mashukui.github.io/web-games/sokoban/) |
+| **Lights Out** | 💡 | Puzzle | Tap a light to flip it and its four neighbours — switch them all off. Every puzzle is solvable | [Play](https://mashukui.github.io/web-games/lights-out/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -84,7 +93,7 @@ web-games/
 ├── snake/index.html        # 🐍 classic snake
 ├── tic-tac-toe/index.html  # 🎯 three-in-a-row vs AI / 2P
 ├── connect-four/index.html # 🔴 four-in-a-row vs AI
-├── 2048/index.html         # 🔢 merge-the-tiles puzzle
+├── 2048/index.html         # 🧮 merge-the-tiles puzzle
 ├── minesweeper/index.html  # 💣 mine-hunting puzzle
 ├── memory-match/index.html # 🃏 memory card pairs
 ├── star-defender/index.html# 🚀 wave shooter
@@ -97,6 +106,15 @@ web-games/
 ├── sudoku/index.html       # 🔢 9x9 logic puzzle, one-solution generator
 ├── merge-drop/index.html   # 🍉 drop-and-merge physics puzzle
 ├── water-sort/index.html   # 🧪 liquid-sorting puzzle, solver-verified deals
+├── slingshot/index.html    # 🏹 slingshot physics, predicted trajectory
+├── helix-drop/index.html   # 🌀 pseudo-3D helix tower faller
+├── gem-match/index.html    # 💎 match-3 with cascades, never a dead board
+├── maze-muncher/index.html # 🟡 maze chase, 4 ghosts, power pellets
+├── air-hockey/index.html   # 🏒 top-down air hockey vs AI, first to 7
+├── reversi/index.html      # ⚪ Othello vs AI, flip animations, 3 levels
+├── battleship/index.html   # 🚢 hidden-fleet duel, 2 boards, hunting AI
+├── sokoban/index.html      # 📦 crate pusher, 30 verified levels
+├── lights-out/index.html   # 💡 flip-the-neighbours, always solvable
 ├── README.md
 └── LICENSE                 # MIT
 ```
@@ -130,4 +148,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(23 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(32 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
