@@ -5618,4 +5618,70 @@
   };
   global.t = t;   /* convenience for inline page scripts */
 
+  /* ------------------------------------------------------------------ */
+  /* Analytics — GoatCounter                                             */
+  /* ------------------------------------------------------------------ */
+  /* Loaded from here because i18n.js is the one script every page has    */
+  /* (hub + all 32 games), so a single edit covers the whole site.        */
+  /*                                                                      */
+  /* The counter script is vendored at the repo root as `analytics.js`    */
+  /* instead of being pulled from gc.zgo.at. Reasons, in order:           */
+  /*   1. gc.zgo.at is DNS-poisoned on mainland-China networks (it        */
+  /*      resolves to a Facebook IP and times out), so every pageview     */
+  /*      from there would be lost silently.                              */
+  /*   2. Same-origin keeps this site's "no external assets" promise.     */
+  /*   3. Ad blockers match it as a third-party host far less often.      */
+  /* Self-hosting is explicitly supported by upstream, and the /count     */
+  /* endpoint is guaranteed to stay backwards-compatible.                 */
+  /*                                                                      */
+  /* Provenance of analytics.js — verify before trusting it:              */
+  /*   upstream  https://gc.zgo.at/count.v5.js                            */
+  /*   source    github.com/arp242/goatcounter  public/count.v5.js        */
+  /*   version   v5 (9 Jun 2025) · ISC licence · 8996 bytes, unmodified   */
+  /*   sha384    sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ
+  /*   check     openssl dgst -sha384 -binary analytics.js | openssl base64 -A
+  /*                                                                      */
+  /* To turn analytics on, set GC_SITE to your counter endpoint, e.g.     */
+  /*   var GC_SITE = 'https://mashukui.goatcounter.com/count';            */
+  /* Leaving it empty means nothing is loaded and no request is made.     */
+  /* ------------------------------------------------------------------ */
+  var GC_SITE = 'https://mashukui.goatcounter.com/count';
+
+  (function analytics() {
+    if (!GC_SITE) return;                      /* disabled — load nothing */
+
+    var doc = global.document;
+    var tag = doc.querySelector('script[src*="i18n.js"]');
+    if (!tag) return;                          /* can't locate our own dir */
+
+    /* Resolve against i18n.js, not the document: game pages live one      */
+    /* level down (/web-games/snake/), so a bare relative path would 404.  */
+    var base = tag.src.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+    var prefix = base.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+/i, '').replace(/\/+$/, '');
+
+    var gc = global.goatcounter = global.goatcounter || {};
+
+    /* Keep one row per game. The default path is pathname + search, so   */
+    /* filter-clicking would otherwise split a game across ?lang=xx rows.  */
+    /* Also drops the /web-games prefix for a readable dashboard.          */
+    gc.path = function (p) {
+      p = String(p === null || p === undefined ? '/' : p).split('?')[0].split('#')[0];
+      if (prefix && p.indexOf(prefix + '/') === 0) p = p.slice(prefix.length);
+      else if (prefix && p === prefix) p = '/';
+      return p || '/';
+    };
+
+    /* Manual check only: ?wg_stat=force lifts the localhost / file://     */
+    /* filters so you can watch a hit land before deploying. Normal        */
+    /* visitors never carry that flag, so this cannot inflate real data.   */
+    if (/[?&]wg_stat=force(?:&|#|$)/.test(global.location.search))
+      gc.allow_local = true;
+
+    var s = doc.createElement('script');
+    s.async = true;
+    s.src = base + 'analytics.js';
+    s.setAttribute('data-goatcounter', GC_SITE);
+    (doc.head || doc.documentElement).appendChild(s);
+  })();
+
 })(window);
