@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="helicopter.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Helicopter Tunnel — Free Online Cave Flight Arcade Game</title>
+<meta name="description" content="Fly a helicopter through an endless narrowing cave. Hold to climb, release to fall, and chase your best distance. No install, works on mobile and desktop.">
+<meta name="keywords" content="helicopter game,cave flight,tunnel flyer,helicopter tunnel,arcade game,endless runner,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Helicopter Tunnel — Free Online Cave Flight Arcade Game">
+<meta property="og:description" content="Hold to climb, release to fall. The cave narrows forever — how far can you fly?">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚁</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #071226 0%, #0d2438 55%, #102a2a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 8px 8px 4px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 16px; padding: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 9px;
+    padding: 2px 6px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: .8px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { display: block; font-size: 16px; font-weight: 800; line-height: 1.25; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 9px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  /* 画布宽高双约束：两行 svh/vh（旧浏览器整条作废也不至于没宽度） */
+  .wrap {
+    position: relative; border-radius: 12px; overflow: hidden; background: #05070f;
+    width: min(480px, 100%, max(200px, calc((100vh - 190px) * 0.75)));
+    width: min(480px, 100%, max(200px, calc((100svh - 190px) * 0.75)));
+    touch-action: none;
+  }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; }
+  /* 提示叠在画布上（绝对定位）——不占纵向，横屏最缺的就是纵向 */
+  .hint {
+    position: absolute; left: 0; right: 0; top: 8px; z-index: 3; pointer-events: none;
+    text-align: center; font-size: 11.5px; font-weight: 700;
+    color: rgba(255,255,255,.62); letter-spacing: .3px; text-shadow: 0 1px 3px rgba(0,0,0,.8);
+  }
+  .hint:empty { display: none; }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 16px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 16px;
+    background: rgba(6, 12, 24, .88); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 21px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 12.5px; opacity: .82; line-height: 1.6; }
+  .icon-big { font-size: 38px; }
+  .final-line { font-size: 14px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 3px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 6px; margin-top: 4px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; font-family: inherit;
+  }
+  .btn-primary { background: #2f9e8f; color: #fff; box-shadow: 0 4px 0 #1b665c; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .start-btn { margin-top: 4px; padding: 11px 26px; }
+
+  .footer {
+    margin-top: 8px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.75; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 560px) {
+    body { flex-direction: row; align-items: center; justify-content: center; padding: 4px 6px; }
+    /* 横屏把 HUD 挪到画布右侧，纵向整条让给画布 */
+    .panel {
+      padding: 6px; gap: 8px;
+      display: grid; align-items: start;
+      grid-template-columns: auto 96px;
+      grid-template-areas: "wrap top";
+    }
+    .wrap { grid-area: wrap; }
+    .topbar { grid-area: top; flex-direction: column; align-items: stretch; gap: 6px; width: 96px; }
+    .wrap {
+      width: min(480px, max(160px, calc((100vh - 96px) * 0.75)));
+      width: min(480px, max(160px, calc((100svh - 96px) * 0.75)));
+    }
+    .footer {
+      width: 286px; flex: 0 0 auto; max-width: none; margin: 0 0 0 6px;
+      font-size: 10.5px; line-height: 1.3;
+    }
+    .footer .wg-tools { display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 6px; }
+    .footer .wg-tools #mute-btn,
+    .footer .wg-tools a.wg-home-btn,
+    .footer .wg-tools .wg-lang-btn { padding: 0 6px; font-size: 11px; gap: 4px; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 17px; }
+    .over-sub, .final-line { font-size: 11.5px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="helicopter.hudDist">DISTANCE</small><span id="hud-dist">0</span></div>
+    <div class="stat"><small data-i18n="helicopter.hudBest">BEST</small><span id="hud-best">0</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <canvas id="game" width="480" height="640"></canvas>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🚁</div>
+    <div class="over-title" data-i18n="game.helicopter">Helicopter</div>
+    <div class="over-sub" data-i18n-html="helicopter.tip">Hold the screen (or <b>Space / ↑ / W</b>) to climb, release to fall.<br>The cave gets <b>narrower and faster</b> the farther you fly.<br><b>P</b> pauses. One touch of rock ends the run.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var W = 480, H = 640;            // 逻辑画布
+  var HELI_X = 140, HELI_R = 13;   // 机身半径（高度 26）
+  var SCORE_KEY = 'helicopter_best_v1';
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var wrapEl = document.getElementById('wrap');
+  var panelEl = document.getElementById('panel');
+  var footerEl = document.querySelector('.footer');
+  var hintEl = document.getElementById('hint');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    rise: function () { beep(240, 0.05, 'sine', 0.035); },
+    crash: function () { beep(110, 0.28, 'sawtooth', 0.13); setTimeout(function () { beep(70, 0.4, 'sawtooth', 0.12); }, 150); },
+    tick: function () { beep(880, 0.04, 'square', 0.04); },
+    record: function () { [0, 110, 220].forEach(function (d, i) { setTimeout(function () { beep(660 + i * 180, 0.14, 'triangle', 0.08); }, d); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var heli = { x: HELI_X, y: 320, vy: 0 };
+  var thrust = false;
+  var dist = 0, score = 0, speed = 2.4;
+  var alive = true, started = false, paused = false;
+  var endKey = null, endStats = null;
+  var best = 0;
+  try { var b0 = parseInt(localStorage.getItem(SCORE_KEY) || '0', 10); best = isFinite(b0) && b0 > 0 ? b0 : 0; } catch (e) { best = 0; }
+  function saveBest(n) { try { localStorage.setItem(SCORE_KEY, String(n)); } catch (e) {} }
+
+  // ===== 解析式世界（可证可达）=====
+  /* center(x) 的导数 |0.36cos + 0.27cos| ≤ 0.63 px/px → 相邻 40px 段中心位移 ≤ 25.2px，
+     而一帧最大爬升 4.6px（40px 段约 17 帧）≈ 78px 可用 → 任意相邻段都飞得过去。
+     gap 最小 132px，机身 26px → 不存在必撞段。 */
+  function centerAt(x) { return 320 + 90 * Math.sin(x * 0.004) + 30 * Math.sin(x * 0.009 + 1.7); }
+  function gapAt(x) { return Math.max(132, 208 - x * 0.008); }
+  function topAt(x) {
+    var g = gapAt(x);
+    var t = centerAt(x) - g / 2;
+    return Math.max(30, Math.min(610 - g - 30, t));
+  }
+  function bottomAt(x) { return topAt(x) + gapAt(x); }
+
+  // ===== 帧更新 =====
+  function update(dt) {
+    if (!alive || paused || !started) return;
+    heli.vy += (thrust ? -0.34 : 0.16) * dt;
+    if (heli.vy < -4.6) heli.vy = -4.6;
+    if (heli.vy > 4.6) heli.vy = 4.6;
+    heli.y += heli.vy * dt;
+    speed = 2.4 + Math.min(2.4, dist / 2600);
+    dist += speed * dt;
+    score = Math.floor(dist);
+
+    var top = topAt(dist), bot = bottomAt(dist);
+    if (heli.y - HELI_R < top || heli.y + HELI_R > bot || heli.y < HELI_R || heli.y > H - HELI_R) {
+      crash();
+      return;
+    }
+    refreshHud();
+  }
+  function crash() {
+    alive = false;
+    endKey = 'helicopter.over';
+    var rec = score > best;
+    if (rec) { best = score; saveBest(best); }
+    endStats = { dist: Math.floor(dist), score: score, record: rec };
+    document.getElementById('new-record').classList.toggle('hidden', !rec);
+    refreshOver(); refreshBest(); refreshHud();
+    overOverlay.classList.remove('hidden');
+    if (rec) sfx.record(); else sfx.crash();
+    draw();
+  }
+  function begin() {
+    if (!alive) return;
+    if (!started) { started = true; startOverlay.classList.add('hidden'); }
+    if (paused) { paused = false; refreshHint(); }
+  }
+  function resetRun() {
+    heli.y = 320; heli.vy = 0;
+    dist = 0; score = 0; speed = 2.4;
+    alive = true; started = true; paused = false; thrust = false;
+    endKey = null; endStats = null;
+    overOverlay.classList.add('hidden');
+    startOverlay.classList.add('hidden');
+    refreshAll();
+    draw();
+  }
+
+  // ===== 绘制 =====
+  var ROTOR = 0;
+  function draw() {
+    var sx = canvas.width / W, sy = canvas.height / H;
+    ctx.setTransform(sx, 0, 0, sy, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    var sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#071324');
+    sky.addColorStop(.45, '#10314a');
+    sky.addColorStop(.75, '#0d2b3f');
+    sky.addColorStop(1, '#061019');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // 远处星空/尘埃：给"洞外"一点深度
+    ctx.fillStyle = 'rgba(180,225,255,.25)';
+    for (var st = 0; st < 26; st++) {
+      var sx2 = (st * 97 - dist * 0.12) % (W + 40);
+      if (sx2 < 0) sx2 += W + 40;
+      var sy2 = (st * 53) % H;
+      ctx.fillRect(sx2, sy2, 1.6, 1.6);
+    }
+
+    // 洞穴：世界 x = dist + (屏幕 x - HELI_X)
+    var STEP = 16;
+    var topPts = [], botPts = [], sxx;
+    for (sxx = -STEP * 2; sxx <= W + STEP * 2; sxx += STEP) {
+      var wx = dist + (sxx - HELI_X);
+      topPts.push([sxx, topAt(wx)]);
+      botPts.push([sxx, bottomAt(wx)]);
+    }
+    // 上方岩壁（亮面在上缘，暗部往里收）
+    ctx.beginPath();
+    ctx.moveTo(-40, -40);
+    for (var i = 0; i < topPts.length; i++) ctx.lineTo(topPts[i][0], topPts[i][1]);
+    ctx.lineTo(W + 40, -40);
+    ctx.closePath();
+    var rockTop = ctx.createLinearGradient(0, 0, 0, 400);
+    rockTop.addColorStop(0, '#1b2f3c');
+    rockTop.addColorStop(.55, '#2b4757');
+    rockTop.addColorStop(1, '#3d6272');
+    ctx.fillStyle = rockTop;
+    ctx.fill();
+
+    // 下方岩壁
+    ctx.beginPath();
+    ctx.moveTo(-40, H + 40);
+    for (var j = 0; j < botPts.length; j++) ctx.lineTo(botPts[j][0], botPts[j][1]);
+    ctx.lineTo(W + 40, H + 40);
+    ctx.closePath();
+    var rockBot = ctx.createLinearGradient(0, H, 0, 280);
+    rockBot.addColorStop(0, '#1b2f3c');
+    rockBot.addColorStop(.5, '#2b4757');
+    rockBot.addColorStop(1, '#3d6272');
+    ctx.fillStyle = rockBot;
+    ctx.fill();
+
+    // 岩壁内层的层理线（平行于洞壁，向内偏移 14px）
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(140,205,225,.10)';
+    ctx.beginPath();
+    for (var l1 = 0; l1 < topPts.length; l1++) {
+      if (l1 === 0) ctx.moveTo(topPts[l1][0], topPts[l1][1] - 14);
+      else ctx.lineTo(topPts[l1][0], topPts[l1][1] - 14);
+    }
+    for (var l2 = 0; l2 < botPts.length; l2++) {
+      if (l2 === 0) ctx.moveTo(botPts[l2][0], botPts[l2][1] + 14);
+      else ctx.lineTo(botPts[l2][0], botPts[l2][1] + 14);
+    }
+    ctx.stroke();
+
+    // 洞壁高光（青色发光轮廓）
+    ctx.save();
+    ctx.shadowColor = 'rgba(70,230,200,.85)';
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 3.2;
+    ctx.strokeStyle = '#54e8cd';
+    ctx.beginPath();
+    for (var k = 0; k < topPts.length; k++) {
+      if (k === 0) ctx.moveTo(topPts[k][0], topPts[k][1]);
+      else ctx.lineTo(topPts[k][0], topPts[k][1]);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (var m = 0; m < botPts.length; m++) {
+      if (m === 0) ctx.moveTo(botPts[m][0], botPts[m][1]);
+      else ctx.lineTo(botPts[m][0], botPts[m][1]);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 岩壁上的横向纹理（滚动感）
+    ctx.strokeStyle = 'rgba(255,255,255,.055)';
+    ctx.lineWidth = 2;
+    var spacing = 120;
+    var off = dist % spacing;
+    for (var gx = -spacing + off; gx < W + spacing; gx += spacing) {
+      var wx2 = dist + (gx - HELI_X);
+      var tp = topAt(wx2), bp = bottomAt(wx2);
+      ctx.beginPath();
+      ctx.moveTo(gx, tp + 10); ctx.lineTo(gx, Math.min(tp + 90, tp + 60));
+      ctx.moveTo(gx, bp - 10); ctx.lineTo(gx, Math.max(bp - 90, bp - 60));
+      ctx.stroke();
+    }
+
+    // 距离里程碑
+    var marker = 500;
+    var nextM = Math.ceil(dist / marker) * marker;
+    var mx = HELI_X + (nextM - dist);
+    if (mx > -20 && mx < W + 20) {
+      ctx.strokeStyle = 'rgba(255,215,110,.35)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 8]);
+      ctx.beginPath();
+      ctx.moveTo(mx, topAt(nextM));
+      ctx.lineTo(mx, bottomAt(nextM));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    drawHeli();
+  }
+  function drawHeli() {
+    var x = heli.x, y = heli.y;
+    ctx.save();
+    ctx.translate(x, y);
+    // 尾梁
+    ctx.fillStyle = '#2f6f7a';
+    ctx.beginPath();
+    ctx.moveTo(4, 2); ctx.lineTo(30, -6); ctx.lineTo(30, -1); ctx.lineTo(6, 8);
+    ctx.closePath(); ctx.fill();
+    // 尾桨
+    ctx.strokeStyle = 'rgba(200,230,240,.65)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(30, -10); ctx.lineTo(30, 2);
+    ctx.stroke();
+    // 机身
+    ctx.fillStyle = '#f0b429';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 17, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 14, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 座舱玻璃
+    ctx.fillStyle = '#9fe8ff';
+    ctx.beginPath();
+    ctx.ellipse(-6, -2, 8, 6, -0.25, 0, Math.PI * 2);
+    ctx.fill();
+    // 起落架
+    ctx.strokeStyle = '#8fb6c2';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-8, 11); ctx.lineTo(-10, 16); ctx.lineTo(8, 16); ctx.lineTo(6, 11);
+    ctx.stroke();
+    // 主旋翼（animate）
+    var rw = 26 + Math.sin(ROTOR) * 5;
+    ctx.strokeStyle = 'rgba(220,240,250,.75)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-rw, -14); ctx.lineTo(rw, -14);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(220,240,250,.28)';
+    ctx.beginPath();
+    ctx.ellipse(0, -14, rw * .9, 2.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // 桅杆
+    ctx.strokeStyle = '#9fb9c4';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, -13); ctx.lineTo(0, -6); ctx.stroke();
+    ctx.restore();
+  }
+
+  // ===== HUD / 文案 =====
+  function refreshHud() {
+    document.getElementById('hud-dist').textContent = Math.floor(dist);
+    document.getElementById('hud-best').textContent = best;
+  }
+  function refreshBest() {
+    document.getElementById('start-best').textContent = best > 0
+      ? t('common.bestScore', { n: best }) : t('helicopter.first');
+    document.getElementById('over-best').textContent = best > 0
+      ? t('common.bestLabel', { n: best }) : '';
+  }
+  function refreshOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('final-line').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = endStats
+      ? t('helicopter.final', { n: endStats.dist }) : '';
+  }
+  function refreshHint() {
+    if (paused) hintEl.textContent = t('common.paused');
+    else if (!started) hintEl.textContent = t('helicopter.hint');
+    else hintEl.textContent = '';
+  }
+  function refreshAll() { refreshHud(); refreshBest(); refreshOver(); refreshHint(); }
+
+  // ===== 输入 =====
+  function press() {
+    if (!started) begin();
+    if (paused || !alive) return;
+    thrust = true;
+    sfx.rise();
+  }
+  function release() { thrust = false; }
+  wrapEl.addEventListener('pointerdown', function (e) {
+    if (e.cancelable) e.preventDefault();
+    press();
+    try { wrapEl.setPointerCapture && wrapEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  wrapEl.addEventListener('pointerup', function (e) { release(); try { wrapEl.releasePointerCapture && wrapEl.releasePointerCapture(e.pointerId); } catch (err) {} });
+  wrapEl.addEventListener('pointercancel', release);
+  wrapEl.addEventListener('pointerleave', release);
+  window.addEventListener('pointerup', release);
+  window.addEventListener('blur', release);
+
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '').toLowerCase();
+    if (k === ' ' || k === 'spacebar' || k === 'arrowup' || k === 'w') {
+      press(); e.preventDefault(); return;
+    }
+    if (k === 'p') {
+      if (!started) return;
+      paused = !paused; thrust = false; refreshHint(); e.preventDefault(); return;
+    }
+    if (k === 'r') { resetRun(); e.preventDefault(); return; }
+    if (k === 'enter') { begin(); e.preventDefault(); return; }
+  });
+  document.addEventListener('keyup', function (e) {
+    var k = String(e.key || '').toLowerCase();
+    if (k === ' ' || k === 'spacebar' || k === 'arrowup' || k === 'w') { release(); e.preventDefault(); }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', function () {
+    started = true;
+    startOverlay.classList.add('hidden');
+    refreshHint();
+    draw();
+  });
+  document.getElementById('btn-again').addEventListener('click', resetRun);
+
+  // ===== 分享 =====
+  function shareText() {
+    return t('helicopter.share', { n: endStats ? endStats.dist : Math.floor(dist), url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 尺寸自适应（DPR）=====
+  var mqLandscape = window.matchMedia('(orientation: landscape) and (max-height: 560px)');
+  function resizeCanvas() {
+    var r = wrapEl.getBoundingClientRect();
+    var cssW = Math.max(1, r.width);
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssW * (H / W) * dpr);
+    draw();
+  }
+  function fit() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panelEl);
+    var bodyPadV = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var bodyPadH = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var panelPadV = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var panelPadH = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var land = mqLandscape.matches;
+    var topH = document.querySelector('.topbar').offsetHeight;
+    var footerH = 0, footerW = 0;
+    if (footerEl) {
+      var fcs = getComputedStyle(footerEl);
+      footerH = footerEl.offsetHeight + parseFloat(fcs.marginTop || 0);
+      footerW = footerEl.offsetWidth;
+    }
+    var availH, availW;
+    if (land) {
+      availH = window.innerHeight - bodyPadV - panelPadV - 14;
+      availW = window.innerWidth - bodyPadH - panelPadH - footerW - 16;
+    } else {
+      availH = window.innerHeight - bodyPadV - panelPadV - footerH - topH - 18;
+      availW = Math.min(window.innerWidth, 584) - bodyPadH - panelPadH - 4;
+    }
+    var w = Math.min(480, availW, availH * (W / H));
+    if (!(w > 0)) w = 200;
+    wrapEl.style.width = Math.max(150, Math.round(w)) + 'px';
+    resizeCanvas();
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  WG.onChange(function () { refreshAll(); fit(); });
+
+  // ===== 主循环 =====
+  var last = performance.now(), acc = 0;
+  function loop(ts) {
+    requestAnimationFrame(loop);          // ★ 先排下一帧，单帧异常不连坐
+    var dt = Math.min((ts - last) / 16.666, 2.5);
+    last = ts;
+    if (!(dt > 0)) dt = 1;
+    ROTOR += dt * 0.55;
+    acc += dt;
+    var guard = 0;
+    while (acc >= 1 && guard++ < 6) { acc -= 1; update(1); }
+    draw();
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); acc = 0; });
+  requestAnimationFrame(loop);
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      y: heli.y, vy: heli.vy, thrust: thrust, dist: dist, score: score,
+      gap: gapAt(dist), alive: alive, endKey: endKey, best: best,
+      started: started, paused: paused, speed: speed
+    };
+  };
+  window.__drive = function (n) {
+    for (var i = 0; i < n; i++) update(1);
+    draw();
+    return window.__st();
+  };
+  window.__seq = function (n) {
+    var centers = [], gaps = [];
+    for (var i = 0; i < n; i++) {
+      var x = dist + i * 40;
+      centers.push(centerAt(x));
+      gaps.push(gapAt(x));
+    }
+    return { centers: centers, gaps: gaps };
+  };
+  window.__reset = function () { resetRun(); return window.__st(); };
+  window.__auto = function (n) {
+    if (!alive) resetRun();
+    started = true;
+    for (var i = 0; i < n; i++) {
+      if (!alive) break;
+      var target = centerAt(dist + 60);
+      var err = heli.y - target;
+      if (err > 5) thrust = true;
+      else if (err < -5) thrust = false;
+      else thrust = heli.vy > 0;
+      update(1);
+    }
+    thrust = false;
+    draw();
+    return window.__st();
+  };
+
+  // ===== 启动 =====
+  resetRun();
+  started = false;
+  startOverlay.classList.remove('hidden');
+  refreshAll();
+  fit();
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>

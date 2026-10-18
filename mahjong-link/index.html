@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="mahjongLink.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mahjong Link — Free Online Tile Matching Puzzle</title>
+<meta name="description" content="Play Mahjong Link free in your browser. Clear every tile by pairing identical ones with a path of at most two turns. Ten timed levels, a guaranteed opening move and automatic reshuffles. No install, works on mobile and desktop.">
+<meta name="keywords" content="mahjong link,mahjong connect,shanghai,tile matching,pair puzzle,link game,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Mahjong Link — Free Online Tile Matching Puzzle">
+<meta property="og:description" content="Pair identical tiles with at most two turns. Ten timed levels, never a dead board.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🀄</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #10251a 0%, #16382a 55%, #0d1f2b 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 4px 2px 2px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 16px; padding: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+  }
+  .side { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+
+  .topbar { display: flex; align-items: center; gap: 5px; width: 100%; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 9px;
+    padding: 2px 4px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: .7px; opacity: .55; white-space: nowrap; }
+  .stat span { display: block; font-size: 15px; font-weight: 800; line-height: 1.25; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 9px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  .status { min-height: 15px; font-size: 11.5px; font-weight: 700;
+    color: rgba(255,255,255,.6); text-align: center; line-height: 1.3; }
+  .actions { display: flex; gap: 6px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 44px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; letter-spacing: .6px; font-family: inherit;
+    background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  }
+  .actions button:active { transform: scale(.96); }
+
+  .board-area {
+    display: flex; justify-content: safe center; align-items: flex-start;
+    max-width: 100%; overflow: auto; -webkit-overflow-scrolling: touch;
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--ts, 44px));
+    grid-auto-rows: var(--ts, 44px);
+    gap: 2px;
+    padding: 2px;
+    background: #0c2c1e;
+    border-radius: 10px;
+    box-shadow: inset 0 3px 14px rgba(0,0,0,.55);
+  }
+  /* 牌面：<button>，正面 CJK 字；消失用 visibility 保留格子（不重排） */
+  .tile {
+    position: relative; width: var(--ts, 44px); height: var(--ts, 44px); min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; border-radius: 5px; cursor: pointer; padding: 0;
+    font-family: "Hiragino Mincho ProN", "Songti SC", "Noto Serif CJK SC", "Yu Mincho", serif;
+    font-size: calc(var(--ts, 44px) * .52); font-weight: 700; line-height: 1;
+    color: #23331f;
+    background: linear-gradient(165deg, #fbf6e4 0%, #ece1c2 62%, #d9cba6 100%);
+    box-shadow: inset 0 0 0 1px rgba(120,96,50,.45), 0 2px 3px rgba(0,0,0,.35);
+    transition: transform .09s ease, box-shadow .09s ease;
+    touch-action: manipulation;
+  }
+  .tile:hover { transform: translateY(-1px); }
+  .tile.sel {
+    box-shadow: inset 0 0 0 3px #ffd76e, 0 0 12px rgba(255,215,110,.65);
+    background: linear-gradient(165deg, #fffdf2 0%, #ffeeb8 62%, #f0d98a 100%);
+  }
+  .tile.cursor { outline: 2px solid rgba(120,220,255,.8); outline-offset: 1px; }
+  .tile.hintpulse { animation: hintpulse .5s ease 2; }
+  @keyframes hintpulse { 0%,100% { box-shadow: inset 0 0 0 2px rgba(120,220,255,.3); } 50% { box-shadow: inset 0 0 0 3px #7fe3ff, 0 0 14px rgba(120,220,255,.8); } }
+  .tile.gone { visibility: hidden; pointer-events: none; }
+  .tile.pop { animation: pop .18s ease; }
+  @keyframes pop { 0%,100% { transform: scale(1); } 45% { transform: scale(.82); } }
+  .tile.nope { animation: nope .26s ease; }
+  @keyframes nope { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-3px)} 70%{transform:translateX(3px)} }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 16px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; text-align: center; padding: 16px;
+    background: rgba(8, 26, 18, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 21px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 12.5px; opacity: .82; line-height: 1.55; }
+  .icon-big { font-size: 38px; }
+  .final-line { font-size: 14px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 3px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 6px; margin-top: 4px; width: 100%; flex-wrap: wrap; }
+  .over-btns button {
+    flex: 1 1 96px; min-height: 44px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 12.5px; font-weight: 800; font-family: inherit;
+  }
+  .btn-primary { background: #35a06b; color: #fff; box-shadow: 0 4px 0 #1d6a44; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .start-btn { margin-top: 4px; padding: 11px 26px; flex: 0 0 auto; }
+
+  .footer {
+    margin-top: 6px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.75; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 620px) {
+    body { flex-direction: row; align-items: center; justify-content: center; padding: 2px 4px; }
+    .panel { flex-direction: row; align-items: flex-start; padding: 6px; gap: 6px; }
+    .board-area { order: -1; }
+    .side { width: 122px; flex: 0 0 auto; gap: 4px; }
+    .stat { padding: 2px 3px; }
+    .stat small { font-size: 8px; letter-spacing: 0; }
+    .stat span { font-size: 14px; }
+    .status { font-size: 10.5px; }
+    .actions button { font-size: 12px; }
+    .footer {
+      width: 214px; flex: 0 0 auto; max-width: none; margin: 0 0 0 6px;
+      font-size: 10.5px; line-height: 1.3;
+    }
+    .footer .wg-tools { display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 6px; }
+    /* 横屏页脚只有 214px：工具键改为纯图标（title/aria-label 仍在），保证同排不换行 */
+    .footer .wg-tools .wg-mute-lbl,
+    .footer .wg-tools .wg-home-lbl,
+    .footer .wg-tools .wg-lang-name { display: none; }
+    .footer .wg-tools #mute-btn,
+    .footer .wg-tools a.wg-home-btn,
+    .footer .wg-tools .wg-lang-btn { padding: 0 8px; font-size: 11px; gap: 4px; min-width: 44px; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 17px; }
+    .over-sub, .final-line { font-size: 11.5px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side">
+    <div class="topbar">
+      <div class="stat"><small data-i18n="mahjongLink.hudLevel">LEVEL</small><span id="hud-level">1</span></div>
+      <div class="stat"><small data-i18n="mahjongLink.hudTime">TIME</small><span id="hud-time">120</span></div>
+      <div class="stat"><small data-i18n="mahjongLink.hudLeft">TILES</small><span id="hud-left">48</span></div>
+      <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="actions">
+      <button id="btn-restart" data-i18n="mahjongLink.restart">RESTART</button>
+    </div>
+  </div>
+
+  <div class="board-area" id="board-area">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-next" data-i18n="mahjongLink.next">NEXT LEVEL</button>
+      <button class="btn-ghost" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🀄</div>
+    <div class="over-title" data-i18n="game.mahjong-link">Mahjong Link</div>
+    <div class="over-sub" data-i18n-html="mahjongLink.tip">Tap two <b>identical</b> tiles to clear them.<br>The connecting path may turn <b>at most twice</b> and may run around the outside of the board.<br>Every level starts with a move and reshuffles itself rather than dead-ending.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KINDS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '東', '南', '西', '北', '中', '發', '白'];
+  var MAX_LEVEL = 10;
+  var SCORE_KEY = 'mahjong_link_best_v1';
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var boardArea = document.getElementById('board-area');
+  var sideEl = document.querySelector('.side');
+  var footerEl = document.querySelector('.footer');
+  var statusEl = document.getElementById('status');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    pick: function () { beep(620, 0.04, 'triangle', 0.05); },
+    pair: function () { beep(520, 0.07, 'triangle', 0.07); setTimeout(function () { beep(760, 0.08, 'triangle', 0.06); }, 55); },
+    nope: function () { beep(150, 0.1, 'sawtooth', 0.05); },
+    shuffle: function () { beep(300, 0.09, 'square', 0.05); setTimeout(function () { beep(430, 0.09, 'square', 0.05); }, 90); },
+    level: function () { [523, 659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.16, 'triangle', 0.09); }, i * 95); }); },
+    over: function () { beep(240, 0.22, 'sawtooth', 0.1); setTimeout(function () { beep(150, 0.3, 'sawtooth', 0.1); }, 160); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var level = 1;
+  var cols = 8, rows = 6, total = 48;
+  var tiles = [];              // 牌种下标；-1 = 已消除
+  var tileEls = [];
+  var remaining = 0, moves = 0;
+  var selected = -1, cursor = 0;
+  var hasMove = true;
+  var timeLeft = 120, started = false, over = false;
+  var endKey = null, endStats = null;
+  var shuffleCount = 0;
+  var toastT = 0;
+  var store = loadStore();
+
+  function loadStore() {
+    var out = { level: 0, best: 0 };
+    try {
+      var raw = JSON.parse(localStorage.getItem(SCORE_KEY) || '{}') || {};
+      out.level = raw.level || 0;
+      out.best = raw.best || 0;
+    } catch (e) {}
+    return out;
+  }
+  function saveStore() {
+    try { localStorage.setItem(SCORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  // ===== 关卡 =====
+  function levelCfg(lv) {
+    if (lv <= 3) return { cols: 8, rows: 6, time: 120 };
+    if (lv <= 6) return { cols: 8, rows: 8, time: 110 };
+    if (lv <= 9) return { cols: 10, rows: 8, time: 100 };
+    return { cols: 10, rows: 8, time: 90 };
+  }
+
+  // ===== 寻路：最多两折，外圈可走 =====
+  var DX = [0, 0, -1, 1], DY = [-1, 1, 0, 0];   // 上 下 左 右
+  function cellEmpty(x, y) {
+    if (x < -1 || x > cols || y < -1 || y > rows) return false;
+    if (x === -1 || x === cols || y === -1 || y === rows) return true;   // 外圈永远空
+    return tiles[y * cols + x] < 0;
+  }
+  function pathClear(a, b) {
+    if (a === b) return false;
+    var ax = a % cols, ay = (a / cols) | 0;
+    var bx = b % cols, by = (b / cols) | 0;
+    if (tiles[a] < 0 || tiles[b] < 0) return false;
+    var W2 = cols + 2;
+    var seen = new Uint8Array(W2 * (rows + 2) * 4);
+    var qx = [], qy = [], qd = [], qt = [];
+    function push(x, y, d, t) {
+      if (x < -1 || x > cols || y < -1 || y > rows) return;
+      if (t > 2) return;
+      var isTarget = (x === bx && y === by);
+      if (!isTarget && !cellEmpty(x, y)) return;
+      var key = ((y + 1) * W2 + (x + 1)) * 4 + d;
+      if (seen[key] && seen[key] <= t + 1) return;
+      seen[key] = t + 1;
+      qx.push(x); qy.push(y); qd.push(d); qt.push(t);
+    }
+    for (var d0 = 0; d0 < 4; d0++) push(ax + DX[d0], ay + DY[d0], d0, 0);
+    for (var head = 0; head < qx.length; head++) {
+      var x = qx[head], y = qy[head], d = qd[head], t = qt[head];
+      if (x === bx && y === by) return true;
+      push(x + DX[d], y + DY[d], d, t);                  // 直走
+      if (t < 2) {
+        var p1 = (d + 2) % 4, p2 = (d + 3) % 4;          // 两个垂直方向
+        push(x + DX[p1], y + DY[p1], p1, t + 1);
+        push(x + DX[p2], y + DY[p2], p2, t + 1);
+      }
+    }
+    return false;
+  }
+
+  // ===== 世界生成 =====
+  function makeKinds(pairs) {
+    var out = [], base = Math.floor(pairs / KINDS.length), rem = pairs % KINDS.length;
+    for (var k = 0; k < KINDS.length; k++) {
+      var n = base + (k < rem ? 1 : 0);
+      for (var j = 0; j < n; j++) { out.push(k); out.push(k); }   // 每种牌恒为偶数张
+    }
+    return out;
+  }
+  function shuffleArr(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function buildTiles() {
+    total = cols * rows;
+    var arr = shuffleArr(makeKinds(total / 2));
+    tiles = arr.slice(0, total);
+    // ★ 第一层保证：顶边两枚强制同种 —— 走外圈只需两折，开局必有可消对
+    var k0 = tiles[0];
+    if (tiles[cols - 1] !== k0) {
+      for (var i = 1; i < total; i++) {
+        if (i !== cols - 1 && tiles[i] === k0) {
+          tiles[i] = tiles[cols - 1];
+          tiles[cols - 1] = k0;
+          break;
+        }
+      }
+    }
+    remaining = total; moves = 0; selected = -1; cursor = 0;
+    shuffleCount = 0;
+  }
+  function findPairs() {
+    var groups = {}, i;
+    for (i = 0; i < total; i++) {
+      if (tiles[i] < 0) continue;
+      (groups[tiles[i]] = groups[tiles[i]] || []).push(i);
+    }
+    var out = [];
+    for (var k in groups) {
+      var g = groups[k];
+      for (var a = 0; a < g.length; a++) {
+        for (var b = a + 1; b < g.length; b++) {
+          if (pathClear(g[a], g[b])) out.push([g[a], g[b]]);
+        }
+      }
+    }
+    return out;
+  }
+  function anyPair() { return findPairs().length > 0; }
+
+  /* 只重排剩余牌（种类张数不变、每种仍为偶数），仍然无解时强制凑一对 */
+  function reshuffleRemaining() {
+    var cells = [], kinds = [], i;
+    for (i = 0; i < total; i++) if (tiles[i] >= 0) { cells.push(i); kinds.push(tiles[i]); }
+    if (cells.length < 2) return false;
+    for (var t = 0; t < 20; t++) {
+      shuffleArr(kinds);
+      for (i = 0; i < cells.length; i++) tiles[cells[i]] = kinds[i];
+      if (anyPair()) { shuffleCount++; toastT = 150; paintAll(); renderStatus(); sfx.shuffle(); return true; }
+    }
+    // 兜底：找一对当前就连得通的格子，把它们改成同种（用同种牌交换，张数不变）
+    for (var a = 0; a < cells.length; a++) {
+      for (var b = a + 1; b < cells.length; b++) {
+        var p = cells[a], q = cells[b];
+        if (!pathClear(p, q)) continue;
+        var k = tiles[p];
+        if (tiles[q] !== k) {
+          for (var r = 0; r < cells.length; r++) {
+            if (cells[r] !== q && cells[r] !== p && tiles[cells[r]] === k) {
+              var tmp = tiles[q]; tiles[q] = k; tiles[cells[r]] = tmp;
+              break;
+            }
+          }
+        }
+        if (tiles[p] === tiles[q]) { shuffleCount++; toastT = 150; paintAll(); renderStatus(); sfx.shuffle(); return true; }
+      }
+    }
+    return anyPair();
+  }
+
+  // ===== DOM =====
+  function buildDom() {
+    boardEl.innerHTML = '';
+    tileEls = [];
+    boardEl.style.gridTemplateColumns = 'repeat(' + cols + ', var(--ts))';
+    boardEl.style.gridAutoRows = 'var(--ts)';
+    for (var i = 0; i < total; i++) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile';
+      b.dataset.i = String(i);
+      b.textContent = tiles[i] >= 0 ? KINDS[tiles[i]] : '';
+      boardEl.appendChild(b);
+      tileEls.push(b);
+    }
+  }
+  function paintTile(i) {
+    var el = tileEls[i];
+    if (!el) return;
+    var v = tiles[i];
+    el.textContent = v >= 0 ? KINDS[v] : '';
+    el.className = 'tile' + (v < 0 ? ' gone' : '') + (i === selected ? ' sel' : '') + (i === cursor ? ' cursor' : '');
+  }
+  function paintAll() {
+    for (var i = 0; i < total; i++) paintTile(i);
+  }
+
+  // ===== 流程 =====
+  function startLevel(lv, keepStart) {
+    level = Math.max(1, Math.min(MAX_LEVEL, lv | 0));
+    var cfg = levelCfg(level);
+    cols = cfg.cols; rows = cfg.rows;
+    // 牌面太小时转置（cols/rows 互换）再算一次；竖屏同样适用
+    var a = tileSizeFor(cols, rows), b = tileSizeFor(rows, cols);
+    if (a < 44 && b > a) { cols = rows; rows = cfg.cols; }
+    timeLeft = cfg.time;
+    over = false; endKey = null; endStats = null; started = !keepStart;
+    buildTiles();
+    hasMove = anyPair();
+    if (!hasMove) reshuffleRemaining();          // 理论上顶边那对已经保证有解，这里只是双保险
+    buildDom();
+    paintAll();
+    overOverlay.classList.add('hidden');
+    document.getElementById('btn-next').classList.add('hidden');
+    startOverlay.classList.toggle('hidden', !keepStart);
+    refreshAll();
+  }
+  function endGame(key) {
+    over = true;
+    endKey = key;
+    var rec = false;
+    if (key === 'mahjongLink.overClear' || key === 'mahjongLink.overWin') {
+      if (level > store.level) { store.level = level; rec = true; }
+      if (level > store.best) store.best = level;
+      saveStore();
+      sfx.level();
+    } else {
+      sfx.over();
+    }
+    endStats = { level: level, moves: moves, time: Math.max(0, Math.ceil(timeLeft)), record: rec };
+    document.getElementById('new-record').classList.toggle('hidden', !rec);
+    document.getElementById('btn-next').classList.toggle('hidden',
+      !(key === 'mahjongLink.overClear' && level < MAX_LEVEL));
+    refreshOver(); refreshBest(); refreshHud();
+    overOverlay.classList.remove('hidden');
+  }
+
+  // ===== 消除 =====
+  function tapTile(i) {
+    if (over || !started) return;
+    if (i < 0 || i >= total || tiles[i] < 0) return;
+    cursor = i;
+    if (selected === i) { selected = -1; paintTile(i); sfx.pick(); return; }
+    if (selected < 0) { selected = i; paintAll(); sfx.pick(); return; }
+    if (tiles[selected] !== tiles[i]) { selected = i; paintAll(); sfx.pick(); return; }
+    if (!pathClear(selected, i)) {                    // 同种但连不上 → 改选
+      var prev = selected; selected = i;
+      paintTile(prev); paintTile(i);
+      tileEls[i].classList.remove('nope');
+      void tileEls[i].offsetWidth;
+      tileEls[i].classList.add('nope');
+      sfx.nope();
+      return;
+    }
+    var a = selected, b = i;
+    selected = -1;
+    tiles[a] = -1; tiles[b] = -1;
+    remaining -= 2; moves++;
+    paintTile(a); paintTile(b);
+    tileEls[a].classList.add('gone', 'pop');
+    tileEls[b].classList.add('gone', 'pop');
+    sfx.pair();
+    hasMove = anyPair();
+    if (remaining <= 0) {
+      refreshHud(); renderStatus();
+      endGame(level >= MAX_LEVEL ? 'mahjongLink.overWin' : 'mahjongLink.overClear');
+      return;
+    }
+    if (!hasMove) { reshuffleRemaining(); hasMove = anyPair(); }
+    refreshHud(); renderStatus();
+  }
+  function hint() {
+    if (over || !started) return;
+    var p = findPairs()[0];
+    if (!p) return;
+    selected = p[0];
+    paintAll();
+    [p[0], p[1]].forEach(function (i) {
+      var el = tileEls[i];
+      el.classList.remove('hintpulse');
+      void el.offsetWidth;
+      el.classList.add('hintpulse');
+    });
+    sfx.pick();
+  }
+
+  // ===== HUD / 文案 =====
+  function refreshHud() {
+    document.getElementById('hud-level').textContent = level;
+    document.getElementById('hud-time').textContent = Math.max(0, Math.ceil(timeLeft));
+    document.getElementById('hud-left').textContent = remaining;
+    document.getElementById('btn-restart').textContent = t('mahjongLink.restart');
+  }
+  function renderStatus() {
+    if (over) { statusEl.textContent = endKey ? t(endKey) : ''; return; }
+    statusEl.textContent = toastT > 0 ? t('mahjongLink.shuffled') : t('mahjongLink.hint');
+  }
+  function refreshOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('final-line').textContent = '';
+      document.getElementById('over-best').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = endStats
+      ? t('mahjongLink.final', { l: endStats.level, m: endStats.moves, s: endStats.time }) : '';
+    document.getElementById('over-best').textContent = store.level > 0
+      ? t('mahjongLink.bestLine', { n: store.level }) : t('mahjongLink.first');
+  }
+  function refreshBest() {
+    document.getElementById('start-best').textContent = store.level > 0
+      ? t('mahjongLink.bestLine', { n: store.level }) : t('mahjongLink.first');
+  }
+  function refreshAll() { refreshHud(); renderStatus(); refreshOver(); refreshBest(); fit(); }
+
+  // ===== 输入 =====
+  boardEl.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== boardEl && el.dataset.i === undefined) el = el.parentNode;
+    if (!el || el === boardEl || el.dataset.i === undefined) return;
+    tapTile(parseInt(el.dataset.i, 10));
+  });
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '').toLowerCase();
+    if (k === 'arrowleft') { cursor = (cursor % cols > 0) ? cursor - 1 : cursor; paintAll(); e.preventDefault(); return; }
+    if (k === 'arrowright') { cursor = (cursor % cols < cols - 1) ? cursor + 1 : cursor; paintAll(); e.preventDefault(); return; }
+    if (k === 'arrowup') { cursor = cursor - cols >= 0 ? cursor - cols : cursor; paintAll(); e.preventDefault(); return; }
+    if (k === 'arrowdown') { cursor = cursor + cols < total ? cursor + cols : cursor; paintAll(); e.preventDefault(); return; }
+    if (k === 'enter' || k === ' ') { tapTile(cursor); e.preventDefault(); return; }
+    if (k === 'h') { hint(); e.preventDefault(); return; }
+    if (k === 'r') { startLevel(level); startOverlay.classList.add('hidden'); e.preventDefault(); return; }
+  });
+  document.getElementById('btn-start').addEventListener('click', function () {
+    started = true;
+    startOverlay.classList.add('hidden');
+    renderStatus();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function () {
+    startLevel(level);
+    startOverlay.classList.add('hidden');
+  });
+  document.getElementById('btn-again').addEventListener('click', function () {
+    startLevel(level);
+    startOverlay.classList.add('hidden');
+  });
+  document.getElementById('btn-next').addEventListener('click', function () {
+    startLevel(level + 1);
+    startOverlay.classList.add('hidden');
+  });
+
+  // ===== 分享 =====
+  function shareText() {
+    var s = endStats || { level: level, moves: moves, time: Math.ceil(timeLeft) };
+    return t('mahjongLink.share', { l: s.level, m: s.moves, url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 尺寸自适应 =====
+  var mqLandscape = window.matchMedia('(orientation: landscape) and (max-height: 620px)');
+  function availBox() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadV = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var bodyPadH = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var panelPadV = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var panelPadH = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var footerH = 0, footerW = 0;
+    if (footerEl) {
+      var fcs = getComputedStyle(footerEl);
+      footerH = footerEl.offsetHeight + parseFloat(fcs.marginTop || 0);
+      footerW = footerEl.offsetWidth;
+    }
+    var land = mqLandscape.matches;
+    var out = { land: land, gap: 2 };
+    if (land) {
+      out.w = window.innerWidth - bodyPadH - 2 - panelPadH - 12 - footerW - sideEl.offsetWidth - 4;
+      out.h = window.innerHeight - bodyPadV - panelPadV - 4;
+    } else {
+      out.w = Math.min(window.innerWidth, 584) - bodyPadH - panelPadH - 6;
+      out.h = window.innerHeight - bodyPadV - panelPadV - footerH - sideEl.offsetHeight - 20;
+    }
+    return out;
+  }
+  function tileSizeFor(c, r) {
+    var b = availBox(), g = b.gap;
+    return Math.min(60, (b.w - (c - 1) * g - 4) / c, (b.h - (r - 1) * g - 4) / r);
+  }
+  function fit() {
+    var b = availBox(), g = b.gap;
+    var ts = Math.min(60, (b.w - (cols - 1) * g - 4) / cols, (b.h - (rows - 1) * g - 4) / rows);
+    if (!(ts > 0)) ts = 44;
+    /* clamp(44, …, 60)：牌面绝不低于 44px 触控底线；装不下就交给 .board-area 滚动 */
+    if (ts < 44) ts = 44;
+    if (ts > 60) ts = 60;
+    if (boardArea) boardArea.style.width = Math.max(44, b.w) + 'px';
+    boardEl.style.setProperty('--ts', ts.toFixed(2) + 'px');
+    if (panel) panel.style.setProperty('--ts', ts.toFixed(2) + 'px');   // 供布局探针直接从 #panel 读
+    boardEl.style.setProperty('--cols', String(cols));
+    boardEl.style.setProperty('--rows', String(rows));
+    if (panel) {
+      panel.style.setProperty('--cols', String(cols));
+      panel.style.setProperty('--rows', String(rows));
+    }
+    boardEl.style.gridTemplateColumns = 'repeat(' + cols + ', ' + ts.toFixed(2) + 'px)';
+    boardEl.style.gridAutoRows = ts.toFixed(2) + 'px';
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  WG.onChange(function () { refreshAll(); });
+
+  // ===== 主循环（倒计时）=====
+  var last = performance.now(), acc = 0;
+  function update(dt) {
+    if (!started || over) return;
+    if (toastT > 0) { toastT -= dt; if (toastT <= 0) renderStatus(); }
+    timeLeft -= dt / 60;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      endGame('mahjongLink.overTime');
+      return;
+    }
+    document.getElementById('hud-time').textContent = Math.max(0, Math.ceil(timeLeft));
+  }
+  function loop(ts) {
+    requestAnimationFrame(loop);        // ★ 先排下一帧
+    var dt = Math.min((ts - last) / 16.666, 2.5);
+    last = ts;
+    if (!(dt > 0)) dt = 1;
+    acc += dt;
+    var guard = 0;
+    while (acc >= 1 && guard++ < 6) { acc -= 1; update(1); }
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); acc = 0; });
+  requestAnimationFrame(loop);
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      level: level, cols: cols, rows: rows, remaining: remaining, moves: moves,
+      selected: selected, hasMove: hasMove, timeLeft: Math.max(0, Math.round(timeLeft * 10) / 10),
+      endKey: endKey, over: over, shuffleCount: shuffleCount, started: started
+    };
+  };
+  window.__lv = function (n) {
+    startLevel(n, false);
+    startOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    return window.__st();
+  };
+  window.__pairs = function () {
+    return findPairs().slice(0, 40);
+  };
+  window.__drive = function (n) {
+    for (var i = 0; i < n; i++) update(1);
+    return window.__st();
+  };
+
+  // ===== 启动 =====
+  startLevel(1, true);
+  fit();
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>

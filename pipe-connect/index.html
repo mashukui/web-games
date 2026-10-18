@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="pipeConnect.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Pipe Connect — Free Online Rotate-the-Pipes Puzzle</title>
+<meta name="description" content="Play Pipe Connect free in your browser: rotate the pipes until water flows from the source to the outlet. 12 levels from 5×5 to 7×7, a countdown timer and a guaranteed-solvable board every time.">
+<meta name="keywords" content="pipe connect,pipe puzzle,rotate pipes,plumbing game,logic puzzle,free online game,html5 game,browser game,mobile game,no install">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Pipe Connect — Free Online Rotate-the-Pipes Puzzle">
+<meta property="og:description" content="Rotate the pipes until the water reaches the outlet. 12 levels, every board is solvable.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #132030 0%, #1b2b45 55%, #14263a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 10px 8px 4px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    --cs: 52px;        /* 格子边长,由 fit() 覆写 */
+    --gap: 2px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .side { display: contents; }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; order: 0; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 6px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  .stat span.low { color: #ff8f7a; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+
+  .board-area { order: 1; display: flex; justify-content: center; align-items: flex-start; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(var(--n, 5), var(--cs));
+    grid-template-rows: repeat(var(--n, 5), var(--cs));
+    gap: var(--gap);
+    padding: 4px;
+    background: #1a2a3d;
+    border-radius: 12px;
+    box-shadow: inset 0 3px 12px rgba(0,0,0,.45);
+    touch-action: none;
+  }
+  .tile {
+    position: relative; width: var(--cs); height: var(--cs); min-width: 44px; min-height: 44px;
+    padding: 0; border: none; border-radius: 4px; cursor: pointer; overflow: hidden;
+    background: #24384f; font-family: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+  }
+  .tile.cursor { box-shadow: inset 0 0 0 2px rgba(255,255,255,.6); }
+  /* 旋转组：<span> 必须 display:block，否则行内元素忽略 inset → 整格塌成 0×0 */
+  .rot {
+    display: block; position: absolute; inset: 0;
+    transform: rotate(calc(var(--rot, 0) * 90deg));
+    transition: transform .14s ease;
+  }
+  .hub {
+    display: block; position: absolute; left: 34%; top: 34%; width: 32%; height: 32%;
+    border-radius: 50%; background: #5d6f8c;
+  }
+  .arm { display: block; position: absolute; background: #5d6f8c; }
+  .arm.off { display: none; }
+  .arm.a0 { left: 50%; top: 0; width: 26%; height: 50%; margin-left: -13%; border-radius: 3px 3px 0 0; }
+  .arm.a1 { top: 50%; right: 0; width: 50%; height: 26%; margin-top: -13%; border-radius: 0 3px 3px 0; }
+  .arm.a2 { left: 50%; bottom: 0; width: 26%; height: 50%; margin-left: -13%; border-radius: 0 0 3px 3px; }
+  .arm.a3 { top: 50%; left: 0; width: 50%; height: 26%; margin-top: -13%; border-radius: 3px 0 0 3px; }
+
+  .tile.wet .hub, .tile.wet .arm { background: #3f9bff; box-shadow: 0 0 6px rgba(63,155,255,.65); }
+  .tile.wet { background: #1f3752; }
+  .tile.src .hub { background: #ffd76e; }
+  .tile.sink .hub { background: #9fe08a; }
+  .tile.wet.src .hub { background: #ffd76e; }
+  .tile.wet.sink .hub { background: #9fe08a; }
+  .tile.fixed { cursor: default; }
+
+  .actions { order: 2; display: flex; gap: 8px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px; font-family: inherit;
+    transition: transform .12s ease;
+  }
+  .actions button:active { transform: scale(.96); }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(11, 20, 32, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+  .over-sub { font-size: 13px; opacity: .8; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .final-line { font-size: 15px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 6px; padding: 12px 28px; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (max-width: 430px) {
+    body { padding: 6px 4px 2px; }
+    .panel { padding: 6px; border-radius: 14px; }
+    .overlay { border-radius: 14px; }
+  }
+  /* 横屏 / 矮窗口：棋盘靠左，HUD 与按钮收到右侧 160px 栏 */
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 2px 6px 2px; }
+    .panel { flex-direction: row; align-items: center; padding: 6px; gap: 8px; }
+    .side { display: flex; flex-direction: column; width: 160px; flex: 0 0 auto; gap: 6px; order: 2; }
+    .board-area { flex: 1 1 auto; min-width: 0; justify-content: center; }
+    .topbar { flex-direction: column; width: 160px; gap: 4px; }
+    .stat { width: 100%; padding: 1px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .4px; }
+    .stat span { font-size: 13px; }
+    .actions { flex-direction: column; width: 160px; }
+    .actions { justify-content: flex-start; }
+    .actions button { width: 160px; height: 44px; min-height: 44px; font-size: 13px; flex: 0 0 auto; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin-right: 8px; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 18px; }
+    .over-sub, .final-line { font-size: 12px; }
+    .icon-big { font-size: 24px; }
+    .over-btns button { min-height: 44px; font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="pipeConnect.hudLevel">LEVEL</small><span id="hud-level">1/12</span></div>
+    <div class="stat"><small data-i18n="pipeConnect.hudMoves">TURNS</small><span id="hud-moves">0</span></div>
+    <div class="stat"><small data-i18n="pipeConnect.hudTime">TIME</small><span id="hud-time">90</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn-ghost" id="btn-restart" data-i18n="pipeConnect.restart">RESTART</button>
+  </div>
+  </div>
+
+  <div class="board-area" id="board-area">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">🔧</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-next" data-i18n="pipeConnect.next">NEXT LEVEL</button>
+      <button class="btn-ghost" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🔧</div>
+    <div class="over-title" data-i18n="pipeConnect.title">PIPE CONNECT</div>
+    <div class="over-sub" data-i18n-html="pipeConnect.tip">Rotate every <b>pipe</b> until water flows from the yellow source to the green outlet.<br>Tap a tile to turn it 90° — its arm must meet the neighbour's arm.<br>Keys <b>←↑→↓</b> move, <b>Space</b> turns, <b>R</b> restarts.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var LEVELS = 12;
+  var STORE_KEY = 'pipe_connect_best_v1';
+  var PW_CAP = 584;
+  var DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // 0=上 1=右 2=下 3=左
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var boardArea = document.getElementById('board-area');
+  var footerEl = document.querySelector('.footer');
+  var topbarEl = document.querySelector('.topbar');
+  var actionsEl = document.querySelector('.actions');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var timeEl = document.getElementById('hud-time');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    turn:  function () { beep(430, 0.05, 'square', 0.05); },
+    flow:  function () { beep(660, 0.1, 'sine', 0.06); },
+    lock:  function () { beep(180, 0.07, 'sawtooth', 0.05); },
+    win:   function () { [0, 110, 220, 340].forEach(function (d, i) { setTimeout(function () { beep(560 + i * 160, 0.16, 'triangle', 0.09); }, d); }); },
+    lose:  function () { beep(220, 0.25, 'sawtooth', 0.1); setTimeout(function () { beep(130, 0.3, 'sawtooth', 0.09); }, 160); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var level = 1;
+  var n = 5;
+  var mask = [];
+  var rot = [];
+  var fixed = [];
+  var wet = [];
+  var wetCount = 0, sinkWet = false;
+  var moves = 0;
+  var timeLeft = 90;
+  var playing = false;
+  var solved = false;
+  var endKey = null;
+  var endStats = null;
+  var cursor = 0;
+  var tileEls = [];
+  var store = { level: 0, best: 0 };
+
+  try {
+    var raw = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+    if (raw && typeof raw === 'object') {
+      if (typeof raw.level === 'number' && raw.level >= 0) store.level = raw.level | 0;
+      if (typeof raw.best === 'number' && raw.best > 0) store.best = raw.best | 0;
+    }
+  } catch (e) {}
+  function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  function cfgFor(k) {
+    if (k <= 4) return { n: 5, time: 90 };
+    if (k <= 8) return { n: 6, time: 75 };
+    return { n: 7, time: 60 };
+  }
+
+  // ===== 世界生成：随机 DFS 生成树 → 必然有解 =====
+  function hasArm(m, r, d) {
+    return ((m >> ((d - r + 4) % 4)) & 1) === 1;
+  }
+  function bfsOk(m, r, nn) {
+    var N = nn * nn, seen = [], q = [0], i;
+    for (i = 0; i < N; i++) seen.push(false);
+    seen[0] = true;
+    while (q.length) {
+      var cur = q.shift(), x = cur % nn, y = (cur / nn) | 0;
+      for (var d = 0; d < 4; d++) {
+        if (!hasArm(m[cur], r[cur], d)) continue;
+        var nx = x + DIRS[d][0], ny = y + DIRS[d][1];
+        if (nx < 0 || ny < 0 || nx >= nn || ny >= nn) continue;
+        var j = ny * nn + nx;
+        if (seen[j]) continue;
+        if (!hasArm(m[j], r[j], (d + 2) % 4)) continue;
+        seen[j] = true;
+        q.push(j);
+      }
+    }
+    return seen[N - 1];
+  }
+  function buildWorld(nn) {
+    for (var attempt = 0; attempt < 20; attempt++) {
+      var N = nn * nn, i;
+      var m = [], vis = [], r = [], fx = [];
+      for (i = 0; i < N; i++) { m.push(0); vis.push(false); r.push(0); fx.push(false); }
+      // 随机 DFS：以 (0,0) 为根生成树
+      var stack = [0];
+      vis[0] = true;
+      while (stack.length) {
+        var cur = stack[stack.length - 1], x = cur % nn, y = (cur / nn) | 0;
+        var opts = [];
+        for (var d = 0; d < 4; d++) {
+          var nx = x + DIRS[d][0], ny = y + DIRS[d][1];
+          if (nx < 0 || ny < 0 || nx >= nn || ny >= nn) continue;
+          var j = ny * nn + nx;
+          if (!vis[j]) opts.push([d, j]);
+        }
+        if (!opts.length) { stack.pop(); continue; }
+        var pick = opts[(Math.random() * opts.length) | 0];
+        m[cur] |= 1 << pick[0];
+        m[pick[1]] |= 1 << ((pick[0] + 2) % 4);
+        vis[pick[1]] = true;
+        stack.push(pick[1]);
+      }
+      m[0] |= 1 << 3;          // 源格：西侧进水口
+      m[N - 1] |= 1 << 1;      // 汇格：东侧出水口
+      fx[0] = true; fx[N - 1] = true;
+
+      var any = false;
+      for (i = 0; i < N; i++) {
+        if (fx[i]) { r[i] = 0; continue; }
+        r[i] = (Math.random() * 4) | 0;
+        if (r[i]) any = true;
+      }
+      if (!any) r[(N / 2) | 0] = 1 + ((Math.random() * 3) | 0);   // 保证不是"开局已解开"
+
+      // 立刻自检：目标解（全部归零）必须连通
+      var saved = r.slice();
+      for (i = 0; i < N; i++) r[i] = 0;
+      var ok = bfsOk(m, r, nn);
+      r = saved;
+      if (ok) return { mask: m, rot: r, fixed: fx };
+    }
+    // 理论上不会走到这里；兜底成一条蛇形通路
+    var N2 = nn * nn, m2 = [], r2 = [], f2 = [];
+    for (var k = 0; k < N2; k++) { m2.push(0); r2.push(0); f2.push(false); }
+    for (var y2 = 0; y2 < nn; y2++) {
+      for (var x2 = 0; x2 < nn; x2++) {
+        var idx = y2 * nn + x2;
+        if (x2 < nn - 1) { m2[idx] |= 1 << 1; m2[idx + 1] |= 1 << 3; }
+        if (y2 < nn - 1) { m2[idx] |= 1 << 2; m2[idx + nn] |= 1 << 0; }
+      }
+    }
+    m2[0] |= 1 << 3; m2[N2 - 1] |= 1 << 1;
+    f2[0] = true; f2[N2 - 1] = true;
+    return { mask: m2, rot: r2, fixed: f2 };
+  }
+
+  function computeWet() {
+    var N = n * n, i;
+    for (i = 0; i < N; i++) wet[i] = false;
+    wetCount = 0;
+    if (!N) { sinkWet = false; return; }
+    var q = [0];
+    wet[0] = true; wetCount = 1;
+    while (q.length) {
+      var cur = q.shift(), x = cur % n, y = (cur / n) | 0;
+      for (var d = 0; d < 4; d++) {
+        if (!hasArm(mask[cur], rot[cur], d)) continue;
+        var nx = x + DIRS[d][0], ny = y + DIRS[d][1];
+        if (nx < 0 || ny < 0 || nx >= n || ny >= n) continue;
+        var j = ny * n + nx;
+        if (wet[j]) continue;
+        if (!hasArm(mask[j], rot[j], (d + 2) % 4)) continue;
+        wet[j] = true; wetCount++;
+        q.push(j);
+      }
+    }
+    sinkWet = !!wet[N - 1];
+  }
+
+  // ===== 关卡 =====
+  function newLevel(k, autoStart) {
+    level = Math.max(1, Math.min(LEVELS, k | 0));
+    var c = cfgFor(level);
+    n = c.n;
+    timeLeft = c.time;
+    moves = 0;
+    solved = false;
+    endKey = null;
+    endStats = null;
+    cursor = 0;
+    var w = buildWorld(n);
+    mask = w.mask; rot = w.rot; fixed = w.fixed;
+    computeWet();
+    buildDom();
+    overOverlay.classList.add('hidden');
+    if (autoStart) { startOverlay.classList.add('hidden'); playing = true; }
+    else playing = false;
+    refreshAll();
+    fit();
+  }
+
+  function buildDom() {
+    boardEl.innerHTML = '';
+    boardEl.style.setProperty('--n', String(n));
+    tileEls = [];
+    for (var i = 0; i < n * n; i++) {
+      var b = document.createElement('button');
+      b.className = 'tile' + (fixed[i] ? ' fixed' : '') + (i === 0 ? ' src' : '') + (i === n * n - 1 ? ' sink' : '');
+      b.dataset.i = String(i);
+      var rotEl = document.createElement('span');
+      rotEl.className = 'rot';
+      var hub = document.createElement('span');
+      hub.className = 'hub';
+      rotEl.appendChild(hub);
+      for (var d = 0; d < 4; d++) {
+        var arm = document.createElement('span');
+        arm.className = 'arm a' + d + (((mask[i] >> d) & 1) ? '' : ' off');
+        rotEl.appendChild(arm);
+      }
+      b.appendChild(rotEl);
+      boardEl.appendChild(b);
+      tileEls.push(b);
+    }
+    paintRot();
+  }
+
+  function paintRot() {
+    for (var i = 0; i < tileEls.length; i++) {
+      var el = tileEls[i];
+      if (!el) continue;
+      el.style.setProperty('--rot', String(rot[i]));
+      el.classList.toggle('wet', !!wet[i]);
+      el.classList.toggle('cursor', i === cursor);
+    }
+  }
+
+  function turn(i) {
+    if (playedOver()) return;
+    if (fixed[i]) { sfx.lock(); return; }
+    rot[i] = (rot[i] + 1) & 3;
+    moves++;
+    var before = wetCount;
+    computeWet();
+    var el = tileEls[i];
+    if (el) el.style.setProperty('--rot', String(rot[i]));
+    paintWet(before);
+    sfx.turn();
+    refreshHud();
+    if (sinkWet && wetCount === n * n) winLevel();
+  }
+
+  // DOM 只在 wet 变化时改 class，不逐帧重建
+  function paintWet(prevCount) {
+    for (var i = 0; i < tileEls.length; i++) {
+      var el = tileEls[i];
+      if (!el) continue;
+      var isWet = !!wet[i];
+      if (el.classList.contains('wet') !== isWet) el.classList.toggle('wet', isWet);
+    }
+    if (wetCount > prevCount) sfx.flow();
+  }
+
+  function playedOver() { return solved || !!endKey; }
+
+  function winLevel() {
+    solved = true;
+    playing = false;
+    endKey = 'pipeConnect.over';
+    var rec = false;
+    if (level > store.level) { store.level = level; store.best = moves; rec = true; }
+    else if (level === store.level && (!store.best || moves < store.best)) { store.best = moves; rec = true; }
+    saveStore();
+    endStats = { level: level, moves: moves, left: Math.max(0, Math.round(timeLeft)), time: cfgFor(level).time, record: rec };
+    refreshHud();
+    renderOver();
+    renderStartBest();
+    overOverlay.classList.remove('hidden');
+    sfx.win();
+  }
+
+  function timeUp() {
+    if (playedOver()) return;
+    playing = false;
+    endKey = 'pipeConnect.timeUp';
+    endStats = { level: level, moves: moves, left: 0, time: cfgFor(level).time, record: false };
+    refreshHud();
+    renderOver();
+    overOverlay.classList.remove('hidden');
+    sfx.lose();
+  }
+
+  // ===== 帧更新 =====
+  function update(dt) {
+    if (!playing) return;
+    timeLeft -= dt / 60;
+    if (timeLeft <= 0.001) { timeLeft = 0; timeUp(); return; }
+    refreshTime();
+  }
+
+  var lastShown = -1;
+  function refreshTime() {
+    var s = Math.ceil(timeLeft);
+    if (s !== lastShown) {
+      lastShown = s;
+      timeEl.textContent = String(s);
+      timeEl.classList.toggle('low', s <= 10);
+    }
+  }
+
+  // ===== HUD / 文案 =====
+  function refreshHud() {
+    document.getElementById('hud-level').textContent = level + '/' + LEVELS;
+    document.getElementById('hud-moves').textContent = String(moves);
+    lastShown = -1;
+    refreshTime();
+  }
+  function renderOver() {
+    if (!endKey || !endStats) return;
+    var s = endStats;
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = endKey === 'pipeConnect.timeUp'
+      ? t('pipeConnect.finalTime', { m: s.moves, l: s.level })
+      : t('pipeConnect.final', { m: s.moves, t: s.left });
+    document.getElementById('over-best').textContent = store.best
+      ? t('pipeConnect.best', { l: store.level, m: store.best })
+      : t('pipeConnect.first');
+    document.getElementById('new-record').classList.toggle('hidden', !s.record);
+    document.getElementById('btn-next').classList.toggle('hidden', s.level >= LEVELS || endKey === 'pipeConnect.timeUp');
+    document.getElementById('btn-again').classList.toggle('hidden', s.level < LEVELS && endKey !== 'pipeConnect.timeUp');
+  }
+  function renderStartBest() {
+    document.getElementById('start-best').textContent = store.level > 0
+      ? t('pipeConnect.best', { l: store.level, m: store.best })
+      : t('pipeConnect.first');
+  }
+  function refreshAll() {
+    refreshHud(); renderOver(); renderStartBest(); paintRot(); fit();
+  }
+
+  // ===== 尺寸：穷举 + 打分（SPECS 26）=====
+  function fit() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadH = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var bodyPadV = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var panelPadH = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var panelPadV = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var land = window.matchMedia('(orientation: landscape) and (max-height: 700px)').matches;
+    var GAP = 2, BORDER = 2;
+
+    // 可用宽度只从 window.innerWidth 反推，封顶 PW_CAP
+    var availW = Math.min(window.innerWidth, PW_CAP) - bodyPadH - panelPadH - BORDER - 8 - (land ? 168 : 0);
+    var footerH = footerEl ? footerEl.offsetHeight + 10 : 90;
+    var chromeV = bodyPadV + panelPadV + BORDER + 8 + footerH;
+    if (!land) chromeV += (topbarEl ? topbarEl.offsetHeight : 48) + (actionsEl ? actionsEl.offsetHeight : 50);
+    var availH = Math.max(100, window.innerHeight - chromeV);
+
+    var csW = (availW - (n - 1) * GAP) / n;
+    var csH = (availH - (n - 1) * GAP) / n;
+    /* 穷举 + 打分：在 44..COMFY 之间逐个候选打分。
+       溢出的代价(×8)远大于格子大一点带来的好处 → 有空间就取大，
+       空间不足时宁可变小也不溢出；44 是触控硬底线。 */
+    var COMFY = 64, pick = 44, bestScore = -1e9;
+    for (var cand = 44; cand <= COMFY; cand++) {
+      var over = Math.max(0, cand - csW) + Math.max(0, cand - csH);
+      var score = cand - over * 8;
+      if (score > bestScore) { bestScore = score; pick = cand; }
+    }
+    var cs = pick;
+    panel.style.setProperty('--cs', cs.toFixed(1) + 'px');
+    panel.style.setProperty('--gap', GAP + 'px');
+
+    var need = n * cs + (n - 1) * GAP + 8;
+    boardArea.style.maxHeight = availH + 'px';
+    boardArea.style.overflowY = need > availH ? 'auto' : 'visible';
+    boardArea.style.overflowX = need > availW + 8 ? 'auto' : 'visible';
+  }
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+
+  // ===== 输入 =====
+  boardEl.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== boardEl && (el.dataset ? el.dataset.i === undefined : true)) el = el.parentNode;
+    if (!el || el === boardEl || !el.dataset || el.dataset.i === undefined) return;
+    var i = parseInt(el.dataset.i, 10);
+    cursor = i;
+    turn(i);
+    paintRot();
+    if (solved) renderOver();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    var k = e.key;
+    var x = cursor % n, y = (cursor / n) | 0;
+    if (k === 'ArrowLeft') { x = (x + n - 1) % n; cursor = y * n + x; paintRot(); e.preventDefault(); return; }
+    if (k === 'ArrowRight') { x = (x + 1) % n; cursor = y * n + x; paintRot(); e.preventDefault(); return; }
+    if (k === 'ArrowUp') { y = (y + n - 1) % n; cursor = y * n + x; paintRot(); e.preventDefault(); return; }
+    if (k === 'ArrowDown') { y = (y + 1) % n; cursor = y * n + x; paintRot(); e.preventDefault(); return; }
+    if (k === ' ' || k === 'Enter') { turn(cursor); paintRot(); e.preventDefault(); return; }
+    if (k === 'r' || k === 'R') { newLevel(level, true); e.preventDefault(); return; }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', function () {
+    startOverlay.classList.add('hidden');
+    playing = true;
+    lastShown = -1;
+    fit();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function () {
+    startOverlay.classList.add('hidden');
+    newLevel(level, true);
+    overOverlay.classList.add('hidden');
+  });
+  document.getElementById('btn-next').addEventListener('click', function () {
+    if (level < LEVELS) { newLevel(level + 1, true); overOverlay.classList.add('hidden'); }
+  });
+  document.getElementById('btn-again').addEventListener('click', function () {
+    newLevel(1, true); overOverlay.classList.add('hidden');
+  });
+
+  // ===== 分享 =====
+  function shareText() {
+    var s = endStats || { level: level, moves: moves };
+    return t('pipeConnect.share', { l: s.level, m: s.moves, url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 主循环 =====
+  var last = performance.now();
+  function loop(ts) {
+    requestAnimationFrame(loop);              // ★ 先排下一帧
+    var dt = Math.min((ts - last) / 16.666, 2.5);
+    last = ts;
+    update(dt);
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); });
+  requestAnimationFrame(loop);
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      n: n, level: level, rot: rot.slice(), mask: mask.slice(),
+      wetCount: wetCount, sinkWet: sinkWet, moves: moves,
+      timeLeft: timeLeft, solved: solved, endKey: endKey, best: store.best
+    };
+  };
+  window.__lv = function (k) { newLevel(k | 0, true); return window.__st(); };
+  window.__drive = function (steps) { for (var i = 0; i < steps; i++) update(1); };
+  window.__verify = function () {
+    var saved = rot.slice(), i, ok;
+    for (i = 0; i < rot.length; i++) rot[i] = 0;
+    ok = bfsOk(mask, rot, n);
+    rot = saved.slice();
+    return !!ok;
+  };
+
+  // ===== 启动 =====
+  WG.onChange(function () { refreshHud(); renderOver(); renderStartBest(); fit(); });
+  newLevel(1, false);
+  startOverlay.classList.remove('hidden');
+  fit();
+  setTimeout(fit, 120);
+  if (location.hash === '#play') { startOverlay.classList.add('hidden'); playing = true; }
+})();
+</script>
+</body>
+</html>

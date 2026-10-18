@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="simonSays.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Simon Says — Free Online Memory Sequence Game</title>
+<meta name="description" content="Play Simon Says free in your browser: watch the four lights flash, then repeat the pattern. Every round adds one step and speeds up. Works on mobile and desktop with touch, mouse or keyboard.">
+<meta name="keywords" content="simon says,memory game,sequence memory,brain game,memory training,free online game,html5 game,browser game,mobile game,no install">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Simon Says — Free Online Memory Sequence Game">
+<meta property="og:description" content="Watch the lights, repeat the pattern. One extra step every round.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #101828 0%, #241d33 60%, #12212e 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 10px 8px 4px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    --ps: 140px; --gap: 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .side { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .topbar { display: flex; align-items: center; gap: 8px; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 6px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { font-size: 16px; font-weight: 800; letter-spacing: .5px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  .status {
+    min-height: 22px; line-height: 22px; text-align: center;
+    font-size: 12px; font-weight: 800; letter-spacing: 1.4px;
+    color: #ffd76e;
+  }
+  .wide { width: 100%; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; letter-spacing: 1px; font-family: inherit;
+    transition: transform .12s ease; }
+  .wide:active { transform: scale(.97); }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+
+  /* 2×2 四色灯。--ps 由 fit() 按视口算，CSS 里的 clamp 只是首帧兜底。 */
+  #board {
+    display: grid;
+    grid-template-columns: repeat(2, var(--ps));
+    grid-auto-rows: var(--ps);
+    gap: var(--gap);
+    touch-action: manipulation;
+  }
+  .pad {
+    width: var(--ps); height: var(--ps);
+    border: none; border-radius: 22px; padding: 0; cursor: pointer;
+    /* 亮/暗两档必须是 background-color 本身（不能用 filter 压暗：
+       探针读 getComputedStyle().backgroundColor，filter 改的它读不出来） */
+    background: #1b2130;
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,.32), inset 0 4px 0 rgba(255,255,255,.06);
+    transition: transform .09s ease, box-shadow .09s ease;
+  }
+  .pad[data-i="0"] { background: #1d4b28; }
+  .pad[data-i="1"] { background: #59201d; }
+  .pad[data-i="2"] { background: #57441a; }
+  .pad[data-i="3"] { background: #1c3a5c; }
+  .pad[data-i="0"].on { background: #39d353; box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 0 30px rgba(57,211,83,.85), inset 0 -6px 0 rgba(0,0,0,.2); }
+  .pad[data-i="1"].on { background: #f85149; box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 0 30px rgba(248,81,73,.85), inset 0 -6px 0 rgba(0,0,0,.2); }
+  .pad[data-i="2"].on { background: #e3b341; box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 0 30px rgba(227,179,65,.85), inset 0 -6px 0 rgba(0,0,0,.2); }
+  .pad[data-i="3"].on { background: #58a6ff; box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 0 30px rgba(88,166,255,.85), inset 0 -6px 0 rgba(0,0,0,.2); }
+  .pad.on { transform: scale(.96); }
+  .pad:active { transform: scale(.97); }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 16px;
+    background: rgba(12, 14, 24, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 21px; font-weight: 800; letter-spacing: 1.6px; }
+  .over-sub { font-size: 13px; opacity: .8; line-height: 1.6; }
+  .icon-big { font-size: 38px; }
+  .final-line { font-size: 14px; font-weight: 700; line-height: 1.5; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 4px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 4px; padding: 12px 30px; min-height: 44px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 800; letter-spacing: 1px; font-family: inherit; cursor: pointer; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 4px 6px 2px; }
+    .panel { flex-direction: row; align-items: center; padding: 6px; gap: 10px; }
+    #board { order: -1; }
+    .side { width: 164px; flex: 0 0 auto; gap: 6px; }
+    .stat { padding: 2px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .4px; }
+    .stat span { font-size: 14px; }
+    .status { font-size: 11px; min-height: 18px; line-height: 18px; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin-right: 8px; }
+    .overlay { padding: 10px; gap: 5px; }
+    .over-title { font-size: 17px; }
+    .over-sub, .final-line { font-size: 11px; }
+    .icon-big { font-size: 24px; }
+    .over-btns button, .start-btn { min-height: 44px; font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side" id="side">
+    <div class="topbar">
+      <div class="stat"><small data-i18n="simonSays.hudLevel">LEVEL</small><span id="hud-level">1</span></div>
+      <div class="stat"><small data-i18n="simonSays.hudBest">BEST</small><span id="hud-best">—</span></div>
+      <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+    </div>
+    <div class="status" id="status"></div>
+    <button class="wide btn-ghost" id="btn-restart" data-i18n="simonSays.restart">RESTART</button>
+  </div>
+
+  <div id="board">
+    <button class="pad" type="button" data-i="0" aria-label="Top left"></button>
+    <button class="pad" type="button" data-i="1" aria-label="Top right"></button>
+    <button class="pad" type="button" data-i="2" aria-label="Bottom left"></button>
+    <button class="pad" type="button" data-i="3" aria-label="Bottom right"></button>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🎵</div>
+    <div class="over-title" data-i18n="simonSays.title">SIMON SAYS</div>
+    <div class="over-sub" data-i18n-html="simonSays.tip">Watch the four lights, then repeat the pattern in the same order.<br>Every round adds <b>one more step</b> and gets a little faster.<br>Tap the pads, or press <b>1–4</b> / the <b>arrow keys</b>.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="start-btn btn-primary" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">💥</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BEST_KEY = 'simon_says_best_v1';
+  var PADS = 4;
+  var PAD_CHARS = ['1', '2', '3', '4'];
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var sideEl = document.getElementById('side');
+  var footerEl = document.querySelector('.footer');
+  var statusEl = document.getElementById('status');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var overTitleEl = document.getElementById('over-title');
+  var padEls = Array.prototype.slice.call(document.querySelectorAll('.pad'));
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var PAD_FREQ = [329.6, 261.6, 392.0, 523.3];
+  var sfx = {
+    tone: function (i) { beep(PAD_FREQ[i] || 400, 0.16, 'triangle', 0.09); },
+    bad:  function () { beep(160, 0.22, 'sawtooth', 0.11); setTimeout(function () { beep(110, 0.3, 'sawtooth', 0.1); }, 130); },
+    win:  function () { [523, 659, 784].forEach(function (f, i) { setTimeout(function () { beep(f, 0.13, 'triangle', 0.08); }, i * 90); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  // level = 已完成的整段数量（0 起）；seq 长度恒为 level + 2（开局 2 位，每过一段 +1）
+  var seq = [];
+  var level = 0;
+  var idx = 0;
+  var phase = 'idle';         // idle | show | input | over
+  var flash = -1;
+  var best = 0;
+  var endKey = null;
+  var endStats = null;
+  var timers = [];
+  var pending = false;        // 上一段已过、下一段还没开始回放的空白窗口
+
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+
+  function clearTimers() {
+    for (var i = 0; i < timers.length; i++) clearTimeout(timers[i]);
+    timers.length = 0;
+  }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  function paintPad(i, on) {
+    var b = padEls[i];
+    if (!b) return;
+    b.classList.toggle('on', !!on);
+    if (on) flash = i; else if (flash === i) flash = -1;
+  }
+  function paintAllOff() { for (var i = 0; i < PADS; i++) paintPad(i, false); }
+
+  // ===== HUD / 文案 =====
+  function refreshHud() {
+    document.getElementById('hud-level').textContent = String(level + 1);
+    document.getElementById('hud-best').textContent = best > 0 ? String(best) : '—';
+  }
+  function refreshStatus() {
+    statusEl.textContent = phase === 'show' ? t('simonSays.watch')
+      : phase === 'input' ? t('simonSays.yourTurn') : '';
+  }
+  function refreshOver() {
+    if (!endKey) return;
+    overTitleEl.textContent = t(endKey);
+    if (endStats) {
+      document.getElementById('final-line').textContent =
+        t('simonSays.final', { n: endStats.len, b: best });
+    }
+    document.getElementById('over-best').textContent =
+      best > 0 ? t('common.bestLabel', { n: best }) : '';
+  }
+  function refreshStartBest() {
+    document.getElementById('start-best').textContent =
+      best > 0 ? t('common.bestLabel', { n: best }) : t('simonSays.first');
+  }
+  function refreshAll() { refreshHud(); refreshStatus(); refreshOver(); refreshStartBest(); }
+
+  // ===== 流程 =====
+  function nextStep() { return 1 + Math.floor(Math.random() * PADS); }
+
+  function playRound() {
+    clearTimers();
+    phase = 'show';
+    idx = 0;
+    pending = false;
+    paintAllOff();
+    var iv = Math.max(220, 620 - level * 35);
+    for (var k = 0; k < seq.length; k++) {
+      (function (j) {
+        // seq 里存的是 1..4（探针按 1..4 校验），灯的 DOM 下标是 0..3
+        later(function () { paintPad(seq[j] - 1, true); sfx.tone(seq[j] - 1); }, j * iv);
+        later(function () { paintPad(seq[j] - 1, false); }, j * iv + Math.round(iv * 0.55));
+      })(k);
+    }
+    later(function () {
+      paintAllOff();
+      phase = 'input';
+      idx = 0;
+      refreshStatus();
+    }, seq.length * iv + 40);
+    refreshStatus();
+  }
+
+  function startGame() {
+    clearTimers();
+    seq = [];
+    level = 0;
+    idx = 0;
+    pending = false;
+    endKey = null;
+    endStats = null;
+    startOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    document.getElementById('new-record').classList.add('hidden');
+    seq.push(nextStep());
+    seq.push(nextStep());
+    level = seq.length - 2;
+    refreshHud();
+    refreshStartBest();
+    playRound();
+  }
+
+  // 一段全部答对：立刻把下一位追加到 seq（只追加不重排），保持 phase='input'，
+  // 停顿 760ms 后才回放 —— 这段时间 pending=true，输入被屏蔽。
+  function completeRound() {
+    idx = seq.length;
+    pending = true;
+    sfx.win();
+    seq.push(nextStep());
+    level = seq.length - 2;
+    idx = 0;
+    refreshHud();
+    later(function () { if (phase === 'input' && pending) playRound(); }, 760);
+  }
+
+  function gameOver() {
+    clearTimers();
+    phase = 'over';
+    pending = false;
+    idx = 0;
+    paintAllOff();
+    var reached = seq.length;
+    endKey = 'simonSays.over';
+    endStats = { len: reached };
+    var rec = reached > best;
+    if (rec) {
+      best = reached;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch (e) {}
+    }
+    document.getElementById('new-record').classList.toggle('hidden', !rec);
+    refreshAll();
+    overOverlay.classList.remove('hidden');
+    sfx.bad();
+  }
+
+  function tapPad(i) {
+    if (phase === 'idle') {
+      startGame();
+      paintPad(i, true);
+      later(function () { paintPad(i, false); }, 340);
+      return;
+    }
+    if (phase !== 'input' || pending) return;
+    paintPad(i, true);
+    later(function () { paintPad(i, false); }, 170);
+    if (i + 1 === seq[idx]) {
+      idx++;
+      sfx.tone(i);
+      if (idx >= seq.length) completeRound();
+    } else {
+      gameOver();
+    }
+  }
+
+  // ===== 输入 =====
+  boardEl.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== boardEl && el.dataset.i === undefined) el = el.parentNode;
+    if (!el || el === boardEl) return;
+    tapPad(parseInt(el.dataset.i, 10));
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '');
+    var map = { '1': 0, '2': 1, '3': 2, '4': 3, 'ArrowLeft': 0, 'ArrowUp': 1, 'ArrowRight': 2, 'ArrowDown': 3 };
+    if (map[k] !== undefined) { tapPad(map[k]); e.preventDefault(); }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', startGame);
+  document.getElementById('btn-again').addEventListener('click', startGame);
+  document.getElementById('btn-restart').addEventListener('click', function () {
+    if (phase === 'over' || phase === 'idle') { startGame(); return; }
+    startGame();
+  });
+
+  // ===== 分享 =====
+  function shareText() {
+    var n = endStats ? endStats.len : seq.length;
+    return t('simonSays.share', { n: n, u: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 尺寸自适应 =====
+  /* 纯事件驱动、没有 rAF。棋盘是固定 2×2，所以只算灯块边长：
+     可用宽 = 视口宽 − body/panel 内边距 − 描边（宽度只从 innerWidth 反推）
+     可用高 = 视口高 − 上下内边距 − 页脚 − 竖屏时侧栏（顶栏/状态/重开键）
+     横屏（视口高 ≤700）时侧栏移到右边，改从宽度里扣。 */
+  var GAP = 12, MIN_PS = 88, MAX_PS = 180;
+  var mqLandscape = window.matchMedia('(orientation: landscape) and (max-height: 700px)');
+
+  function fit() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadX = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var bodyPadY = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var panelPadX = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var panelPadY = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var fcs = footerEl ? getComputedStyle(footerEl) : null;
+    var footerH = footerEl ? footerEl.offsetHeight + parseFloat(fcs.marginTop || 0) : 80;
+    var land = mqLandscape.matches;
+    var BORDER = 2, SPARE = 10;
+    var availW, availH;
+    if (land) {
+      availW = Math.min(window.innerWidth, 720) - bodyPadX - panelPadX - BORDER
+        - sideEl.offsetWidth - SPARE;
+      availH = window.innerHeight - bodyPadY - panelPadY - BORDER - footerH - SPARE;
+    } else {
+      availW = Math.min(window.innerWidth, 584) - bodyPadX - panelPadX - BORDER - SPARE;
+      availH = window.innerHeight - bodyPadY - panelPadY - BORDER - footerH
+        - sideEl.offsetHeight - SPARE;
+    }
+    var ps = Math.floor(Math.min((availW - GAP) / 2, (availH - GAP) / 2));
+    if (!(ps > 0)) ps = MIN_PS;
+    ps = Math.max(MIN_PS, Math.min(MAX_PS, ps));
+    panel.style.setProperty('--ps', ps + 'px');
+    panel.style.setProperty('--gap', GAP + 'px');
+  }
+
+  var fitTimer = null;
+  window.addEventListener('resize', function () {
+    if (fitTimer) clearTimeout(fitTimer);
+    fitTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  WG.onChange(function () { refreshAll(); fit(); });
+
+  // ===== 探针钩子 =====
+  window.__st = function () {
+    return { level: level, seqLen: seq.length, phase: phase, idx: idx, best: best, endKey: endKey };
+  };
+  window.__seq = function () { return seq.slice(); };
+  window.__skip = function () {
+    if (phase === 'idle' || phase === 'over') return;
+    clearTimers();
+    pending = false;
+    paintAllOff();
+    phase = 'input';
+    idx = 0;
+    refreshStatus();
+  };
+  window.__reset = function () {
+    clearTimers();
+    seq = []; level = 0; idx = 0; phase = 'idle'; pending = false;
+    endKey = null; endStats = null;
+    paintAllOff();
+    overOverlay.classList.add('hidden');
+    startOverlay.classList.remove('hidden');
+    refreshAll();
+  };
+
+  // ===== 启动 =====
+  refreshAll();
+  fit();
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>

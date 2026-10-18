@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="nonogram.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Nonogram — Free Online Picross Logic Puzzle</title>
+<meta name="description" content="Play Nonogram (Picross) free in your browser: use the number clues to fill the grid. 12 levels from 5×5 to 12×12, every puzzle verified for a unique solution, works on mobile and desktop.">
+<meta name="keywords" content="nonogram,picross,griddler,paint by numbers,logic puzzle,picture puzzle,brain game,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Nonogram — Free Online Picross Logic Puzzle">
+<meta property="og:description" content="Read the clues, fill the grid. 12 levels, unique solutions.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #121a2c 0%, #232a44 55%, #2b2140 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 8px 8px 4px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    --n: 5; --cs: 44px; --clueW: 44px; --clueH: 40px; --gap: 2px; --fs: 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    width: 100%; max-width: 600px; min-width: 0;
+  }
+  .side { display: flex; flex-direction: column; gap: 7px; width: 100%; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 5px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: .8px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { font-size: 14px; font-weight: 800; letter-spacing: .3px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  .modes { display: flex; gap: 7px; width: 100%; }
+  .mode {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    background: rgba(255,255,255,.08); color: rgba(255,255,255,.72);
+    font-family: inherit; font-size: 13px; font-weight: 800; letter-spacing: .6px;
+    transition: background .14s ease, color .14s ease;
+  }
+  .mode.active { background: #6fd7ff; color: #06243a; }
+  .actions { display: flex; gap: 7px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; letter-spacing: .6px; font-family: inherit;
+    transition: transform .12s ease;
+  }
+  .actions button:active { transform: scale(.96); }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+
+  /* 数量可变的 DOM 棋盘：列 = 线索条 + n 个格子。
+     #board 自己带 overflow:auto —— 44px 是硬底线，装不下时滚动的是它，
+     这样 body 永远不会横向溢出（也不用把父级宽度反推成循环依赖）。 */
+  .board-area { width: 100%; max-width: 100%; min-width: 0; }
+  .board {
+    display: grid;
+    grid-template-columns: var(--clueW) repeat(var(--n), var(--cs));
+    grid-template-rows: var(--clueH) repeat(var(--n), var(--cs));
+    gap: var(--gap);
+    padding: 4px;
+    background: #232b3d;
+    border-radius: 12px;
+    box-shadow: inset 0 3px 12px rgba(0,0,0,.4);
+    margin: 0 auto;
+    width: max-content;      /* 列数少时不要撑出一块空底板 */
+    max-width: 100%;
+    overflow: auto;
+    touch-action: manipulation;
+  }
+  .clue {
+    display: flex; align-items: center; justify-content: center;
+    color: #a9b6cc; font-weight: 800; font-size: var(--fs);
+    line-height: 1; overflow: hidden;
+  }
+  .clue.top { flex-direction: column; justify-content: flex-end; gap: 1px; padding-bottom: 2px; }
+  .clue.left { flex-direction: row; justify-content: flex-end; gap: 3px; padding-right: 3px; }
+  .clue.corner { background: transparent; }
+  .clue.done { color: #6fd7ff; }
+  .cell {
+    width: var(--cs); height: var(--cs);
+    border: none; border-radius: 4px; padding: 0; display: block;
+    background: rgba(255,255,255,.10);
+    cursor: pointer;
+    position: relative;
+  }
+  .cell.on { background: #dbe7ff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+  .cell.bad { background: #f85149; box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
+  .cell.x::after {
+    content: '✕'; position: absolute; inset: 0;
+    display: block; line-height: var(--cs); text-align: center;
+    font-size: calc(var(--cs) * 0.42); color: rgba(160,180,210,.85);
+  }
+  .cell.cursor { outline: 3px solid #ffd76e; outline-offset: -3px; animation: breathe 1.4s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 16px;
+    background: rgba(12, 16, 28, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 20px; font-weight: 800; letter-spacing: 1.4px; }
+  .over-sub { font-size: 13px; opacity: .8; line-height: 1.6; }
+  .icon-big { font-size: 38px; }
+  .stars { font-size: 26px; letter-spacing: 4px; color: #ffd76e; }
+  .final-line { font-size: 14px; font-weight: 700; line-height: 1.5; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 4px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 4px; padding: 12px 30px; min-height: 44px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 800; letter-spacing: 1px; font-family: inherit; cursor: pointer; }
+
+  .footer {
+    margin-top: 8px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 3px 6px 2px; }
+    .panel { flex-direction: row; align-items: center; justify-content: center; padding: 6px; gap: 8px; max-width: 760px; margin: 0 auto; }
+    .board-area { order: -1; width: auto; flex: 0 1 auto; min-width: 0; }
+    .side { width: 148px; flex: 0 0 auto; gap: 5px; }
+    .topbar { flex-wrap: wrap; gap: 4px; }
+    .stat { flex: 1 1 58px; padding: 2px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .3px; }
+    .stat span { font-size: 12px; }
+    .mode { font-size: 11px; min-height: 44px; }
+    .actions button { font-size: 11px; min-height: 44px; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin-right: 8px; }
+    .overlay { padding: 10px; gap: 5px; }
+    .over-title { font-size: 16px; }
+    .over-sub, .final-line { font-size: 11px; }
+    .icon-big { font-size: 22px; }
+    .stars { font-size: 18px; }
+    .over-btns button, .start-btn { min-height: 44px; font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side" id="side">
+    <div class="topbar">
+      <div class="stat"><small data-i18n="nonogram.levelLabel">LEVEL</small><span id="hud-level">1/12</span></div>
+      <div class="stat"><small data-i18n="nonogram.hudMistakes">MISTAKES</small><span id="hud-mist">0</span></div>
+      <div class="stat"><small data-i18n="nonogram.hudTime">TIME</small><span id="hud-time">0:00</span></div>
+      <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+    </div>
+    <div class="modes">
+      <button class="mode active" id="mode-fill" data-i18n="nonogram.fillMode">FILL</button>
+      <button class="mode" id="mode-x" data-i18n="nonogram.xMode">MARK ✕</button>
+    </div>
+    <div class="actions">
+      <button class="btn-ghost" id="btn-restart" data-i18n="nonogram.restart">RESTART</button>
+    </div>
+  </div>
+
+  <div class="board-area" id="board-area">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🎨</div>
+    <div class="over-title" data-i18n="nonogram.title">NONOGRAM</div>
+    <div class="over-sub" data-i18n-html="nonogram.tip">The numbers tell you the lengths of the <b>runs of filled squares</b> in that row or column, in order.<br>Fill squares with <b>FILL</b> mode, or cross out blanks with <b>MARK ✕</b>.<br>Arrow keys move the cursor, <b>SPACE</b> fills, <b>X</b> crosses, <b>1 / 2</b> switch modes.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="start-btn btn-primary" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="stars" id="stars">★★★</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var BEST_KEY = 'nonogram_best_v1';
+  var TOTAL_LEVELS = 12;
+  var NODE_CAP = 300000;
+  var TIME_CAP = 250;
+  var MAX_TRIES = 12;
+  var MAX_TRIES_BIG = 3;
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var boardArea = document.getElementById('board-area');
+  var sideEl = document.getElementById('side');
+  var footerEl = document.querySelector('.footer');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+
+  function sizeFor(level) {
+    if (level <= 4) return 5;
+    if (level <= 8) return 10;
+    return 12;
+  }
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    fill: function () { beep(720, 0.04, 'triangle', 0.05); },
+    clear: function () { beep(420, 0.04, 'sine', 0.04); },
+    x: function () { beep(300, 0.035, 'square', 0.035); },
+    bad: function () { beep(130, 0.14, 'sawtooth', 0.08); },
+    win: function () { [523, 659, 784, 1046].forEach(function (f, i) { setTimeout(function () { beep(f, 0.16, 'triangle', 0.09); }, i * 95); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var level = 1;
+  var size = 5;
+  var sol = [];              // 0/1 解矩阵，长度 size*size
+  var rows = [];             // 行线索（run 数组）
+  var cols = [];             // 列线索
+  var marks = [];            // 0 空 / 1 填 / 2 叉
+  var mistakes = 0;
+  var time = 0;
+  var running = false;
+  var solved = false;
+  var unique = false;
+  var endKey = null, endStats = null;
+  var cursor = 0;
+  var mode = 1;              // 1 = 填，2 = 叉
+  var cellEls = [];
+  var store = { level: 1, best: 0 };
+
+  try {
+    var raw = JSON.parse(localStorage.getItem(BEST_KEY) || '{}') || {};
+    if (typeof raw.level === 'number') store.level = Math.max(1, Math.min(TOTAL_LEVELS, raw.level | 0));
+    if (typeof raw.best === 'number') store.best = Math.max(0, Math.min(TOTAL_LEVELS, raw.best | 0));
+  } catch (e) {}
+
+  function saveStore() {
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  // ===== 线索 / 求解器 =====
+  function runsOf(arr, n, off, step) {
+    var out = [], cur = 0;
+    for (var i = 0; i < n; i++) {
+      if (arr[off + i * step]) cur++;
+      else if (cur) { out.push(cur); cur = 0; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function rowRunsOf(g, n) {
+    var out = [];
+    for (var r = 0; r < n; r++) out.push(runsOf(g, n, r * n, 1));
+    return out;
+  }
+  function colRunsOf(g, n) {
+    var out = [];
+    for (var c = 0; c < n; c++) out.push(runsOf(g, n, c, n));
+    return out;
+  }
+
+  /* 一行的所有合法排列（0/1 数组）。n ≤ 12，排列数很小。 */
+  function patterns(n, runs) {
+    var res = [];
+    var R = runs.length;
+    if (!R) {
+      var z = [];
+      for (var i = 0; i < n; i++) z.push(0);
+      res.push(z);
+      return res;
+    }
+    var need = new Array(R + 1);
+    need[R] = 0;
+    for (var q = R - 1; q >= 0; q--) need[q] = runs[q] + (q < R - 1 ? 1 + need[q + 1] : 0);
+    function rec(ri, pos, acc) {
+      if (ri === R) {
+        var row = acc.slice();
+        while (row.length < n) row.push(0);
+        res.push(row);
+        return;
+      }
+      var L = runs[ri];
+      for (var s = pos; s + L <= n; s++) {
+        if (n - s < need[ri]) break;
+        var row2 = acc.slice();
+        while (row2.length < s) row2.push(0);
+        for (var j = 0; j < L; j++) row2.push(1);
+        rec(ri + 1, s + L + 1, row2);
+      }
+    }
+    rec(0, 0, []);
+    return res;
+  }
+
+  /* 列的自动机：state = (下一个待完成的 run 下标 i, 当前 run 已填长度 cur)。
+     位 0/1 各一张转移表；-1 = 该前缀已经不可能满足线索。 */
+  function buildCol(runs, n) {
+    var R = runs.length, maxCur = 0, i, cur;
+    for (i = 0; i < R; i++) if (runs[i] > maxCur) maxCur = runs[i];
+    var span = maxCur + 1;
+    var S = (R + 1) * span;
+    var t0 = new Int16Array(S), t1 = new Int16Array(S), minNeed = new Int16Array(S);
+    var finalOk = new Int8Array(S);
+    for (i = 0; i <= R; i++) {
+      for (cur = 0; cur <= maxCur; cur++) {
+        var id = i * span + cur;
+        // bit = 0
+        if (cur === 0) t0[id] = id;
+        else if (i < R && cur === runs[i]) t0[id] = (i + 1) * span;
+        else t0[id] = -1;
+        // bit = 1
+        if (i < R) {
+          if (cur === 0) t1[id] = i * span + 1;
+          else if (cur < runs[i]) t1[id] = i * span + (cur + 1);
+          else t1[id] = -1;
+        } else t1[id] = -1;
+        // 从该状态起最少还需要填多少格（含必要的分隔）
+        var sum = 0;
+        for (var q = i; q < R; q++) sum += runs[q];
+        if (cur > 0) minNeed[id] = (runs[i] - cur) + (sum - runs[i]) + Math.max(0, R - i - 1);
+        else minNeed[id] = sum + Math.max(0, R - i - 1);
+        // 终态：所有段已完成；或最后一段刚好在最后一行填满（不需要再有一个 0 收尾）
+        finalOk[id] = (i === R && cur === 0) ? 1
+          : (i === R - 1 && cur > 0 && cur === runs[R - 1]) ? 1 : 0;
+      }
+    }
+    return { t0: t0, t1: t1, minNeed: minNeed, finalOk: finalOk, final: R * span, span: span };
+  }
+
+  /* 数独式 DFS：按行枚举合法排列，逐列推进自动机 + MRV 排序 + 最少格数剪枝。
+     节点上限 300k / 时间上限 250ms，命中即返回 aborted（12×12 允许降级）。 */
+  function countSolutions(rowClues, colClues, limit) {
+    var n = rowClues.length, r, c;
+    var colT = [], rowPats = [];
+    for (c = 0; c < n; c++) colT.push(buildCol(colClues[c], n));
+    for (r = 0; r < n; r++) {
+      var ps = patterns(n, rowClues[r]);
+      if (!ps.length) return { count: 0, aborted: false };
+      rowPats.push(ps);
+    }
+    var order = [];
+    for (r = 0; r < n; r++) order.push(r);
+    /* 列自动机只能沿「行的自然顺序」推进（换行序会改变列的 run），
+       所以不做行级 MRV；改成行内候选按「离列容量上限的余量」排序，
+       再加上每列的 span 下界剪枝。 */
+
+    var stk = [];
+    for (var q = 0; q <= n; q++) stk.push(new Int16Array(n));
+
+    var nodes = 0, aborted = false, count = 0;
+    var t0 = Date.now();
+
+    function dfs(k) {
+      if (aborted || count >= limit) return;
+      nodes++;
+      if (nodes > NODE_CAP) { aborted = true; return; }
+      if ((nodes & 1023) === 0 && Date.now() - t0 > TIME_CAP) { aborted = true; return; }
+      if (k === n) {
+        var cur = stk[k];
+        for (var q2 = 0; q2 < n; q2++) if (!colT[q2].finalOk[cur[q2]]) return;
+        count++;
+        return;
+      }
+      var pats = rowPats[k];
+      var base = stk[k], nxt = stk[k + 1];
+      for (var p = 0; p < pats.length; p++) {
+        var pat = pats[p], ok = true;
+        for (var c2 = 0; c2 < n; c2++) {
+          var tb = pat[c2] ? colT[c2].t1 : colT[c2].t0;
+          var ns = tb[base[c2]];
+          if (ns < 0) { ok = false; break; }
+          nxt[c2] = ns;
+        }
+        if (!ok) continue;
+        var rem = n - k - 1;
+        for (var c3 = 0; c3 < n; c3++) {
+          if (colT[c3].minNeed[nxt[c3]] > rem) { ok = false; break; }
+        }
+        if (!ok) continue;
+        dfs(k + 1);
+        if (aborted || count >= limit) return;
+      }
+    }
+    dfs(0);
+    return { count: count, aborted: aborted };
+  }
+
+  // ===== 生成 =====
+  function randomSolution(n) {
+    var g = new Uint8Array(n * n), i, r, c, bad;
+    for (var attempt = 0; attempt < 40; attempt++) {
+      for (i = 0; i < n * n; i++) g[i] = Math.random() < 0.48 ? 1 : 0;
+      bad = false;
+      for (r = 0; r < n && !bad; r++) {
+        var s = 0;
+        for (c = 0; c < n; c++) s += g[r * n + c];
+        if (s === 0 || s === n) bad = true;
+      }
+      for (c = 0; c < n && !bad; c++) {
+        var t2 = 0;
+        for (r = 0; r < n; r++) t2 += g[r * n + c];
+        if (t2 === 0 || t2 === n) bad = true;
+      }
+      if (!bad) break;
+    }
+    return g;
+  }
+
+  function genPuzzle(n) {
+    var tries = n >= 12 ? MAX_TRIES_BIG : MAX_TRIES;
+    var last = null;
+    for (var t = 0; t < tries; t++) {
+      var g = randomSolution(n);
+      var rc = rowRunsOf(g, n), cc = colRunsOf(g, n);
+      var res = countSolutions(rc, cc, 2);
+      last = { sol: g, rows: rc, cols: cc, unique: (res.count === 1 && !res.aborted) };
+      if (last.unique) return last;
+    }
+    last.unique = false;
+    return last;
+  }
+
+  // ===== DOM =====
+  function buildBoard() {
+    boardEl.innerHTML = '';
+    cellEls = [];
+    var n = size, r, c;
+    var maxRow = 1, maxCol = 1;
+    for (r = 0; r < n; r++) if (rows[r].length > maxRow) maxRow = rows[r].length;
+    for (c = 0; c < n; c++) if (cols[c].length > maxCol) maxCol = cols[c].length;
+    var clueW = Math.max(40, Math.min(78, 8 + maxRow * 11));
+    var clueH = Math.max(24, Math.min(88, 6 + maxCol * 11));
+    panel.style.setProperty('--clueW', clueW + 'px');
+    panel.style.setProperty('--clueH', clueH + 'px');
+    panel.style.setProperty('--n', String(n));
+    panel.style.setProperty('--fs', (n >= 12 ? 9 : n >= 10 ? 10 : 12) + 'px');
+
+    var corner = document.createElement('div');
+    corner.className = 'clue corner';
+    boardEl.appendChild(corner);
+
+    for (c = 0; c < n; c++) {
+      var ct = document.createElement('div');
+      ct.className = 'clue top';
+      var list = cols[c].length ? cols[c] : [0];
+      for (var i = 0; i < list.length; i++) {
+        var sp = document.createElement('span');
+        sp.textContent = String(list[i]);
+        sp.style.display = 'block';
+        ct.appendChild(sp);
+      }
+      boardEl.appendChild(ct);
+    }
+
+    for (r = 0; r < n; r++) {
+      var cl = document.createElement('div');
+      cl.className = 'clue left';
+      var rl = rows[r].length ? rows[r] : [0];
+      for (var j = 0; j < rl.length; j++) {
+        var sp2 = document.createElement('span');
+        sp2.textContent = String(rl[j]);
+        sp2.style.display = 'block';
+        cl.appendChild(sp2);
+      }
+      boardEl.appendChild(cl);
+      for (c = 0; c < n; c++) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'cell';
+        b.dataset.i = String(r * n + c);
+        boardEl.appendChild(b);
+        cellEls.push(b);
+      }
+    }
+    paintCells();
+    fit();
+  }
+
+  function paintCells() {
+    for (var i = 0; i < cellEls.length; i++) {
+      var el = cellEls[i], m = marks[i];
+      el.classList.toggle('on', m === 1 && !!sol[i]);
+      el.classList.toggle('bad', m === 1 && !sol[i]);
+      el.classList.toggle('x', m === 2);
+      el.classList.toggle('cursor', i === cursor && running && !solved);
+    }
+  }
+
+  // ===== 尺寸 =====
+  var MIN_CS = 44, MAX_CS = 56;
+  function fit() {
+    var n = size;
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadX = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var bodyPadY = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var panelPadX = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var panelPadY = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var fcs = footerEl ? getComputedStyle(footerEl) : null;
+    var footerH = footerEl ? footerEl.offsetHeight + parseFloat(fcs.marginTop || 0) : 70;
+    var land = window.matchMedia('(orientation: landscape) and (max-height: 700px)').matches;
+
+    var clueW = parseFloat(pcs.getPropertyValue('--clueW')) || 44;
+    var clueH = parseFloat(pcs.getPropertyValue('--clueH')) || 40;
+    var GAP = 2, PAD = 8, BORDER = 2;
+    var availW, availH;
+    if (land) {
+      availW = window.innerWidth - bodyPadX - panelPadX - BORDER - PAD - sideEl.offsetWidth - 10;
+      availH = window.innerHeight - bodyPadY - panelPadY - BORDER - footerH - 8;
+    } else {
+      availW = Math.min(window.innerWidth, 600) - bodyPadX - panelPadX - BORDER - PAD - 10;
+      availH = window.innerHeight - bodyPadY - panelPadY - BORDER - footerH - sideEl.offsetHeight - 14;
+    }
+    if (availH < 120) availH = 120;
+    if (availW < 120) availW = 120;
+
+    var cs = Math.floor(Math.min(MAX_CS, (availW - clueW) / n, (availH - clueH) / n));
+    if (!(cs > 0)) cs = MIN_CS;
+    if (cs < MIN_CS) cs = MIN_CS;         // 44 是硬底线；装不下交给 #board 自己滚动
+    if (cs > MAX_CS) cs = MAX_CS;
+    panel.style.setProperty('--cs', cs + 'px');
+    panel.style.setProperty('--gap', GAP + 'px');
+    boardEl.style.maxHeight = Math.round(availH) + 'px';
+    boardArea.style.maxHeight = Math.round(availH) + 'px';
+  }
+
+  // ===== 流程 =====
+  function loadLevel(lv, keepOverlay) {
+    level = Math.max(1, Math.min(TOTAL_LEVELS, lv | 0));
+    size = sizeFor(level);
+    var p = genPuzzle(size);
+    sol = Array.prototype.slice.call(p.sol);
+    rows = p.rows;
+    cols = p.cols;
+    unique = p.unique;
+    marks = [];
+    for (var i = 0; i < size * size; i++) marks.push(0);
+    mistakes = 0;
+    time = 0;
+    solved = false;
+    endKey = null;
+    endStats = null;
+    cursor = 0;
+    running = true;
+    if (!keepOverlay) {
+      overOverlay.classList.add('hidden');
+      startOverlay.classList.add('hidden');
+      document.getElementById('new-record').classList.add('hidden');
+    }
+    buildBoard();
+    refreshAll();
+  }
+
+  function newPuzzle() { loadLevel(level, false); }
+
+  function refreshHud() {
+    document.getElementById('hud-level').textContent = level + '/' + TOTAL_LEVELS;
+    document.getElementById('hud-mist').textContent = String(mistakes);
+  }
+  function fmtTime(s) {
+    var m = Math.floor(s / 60), ss = Math.floor(s % 60);
+    return m + ':' + (ss < 10 ? '0' : '') + ss;
+  }
+  function paintTime() {
+    var el = document.getElementById('hud-time');
+    var txt = fmtTime(time);
+    if (el.textContent !== txt) el.textContent = txt;
+  }
+  function refreshOver() {
+    if (!endKey) return;
+    document.getElementById('over-title').textContent = t(endKey);
+    if (endStats) {
+      document.getElementById('stars').textContent = ['★☆☆', '★★☆', '★★★'][endStats.stars - 1];
+      document.getElementById('final-line').textContent =
+        t('nonogram.final', { n: endStats.level, t: fmtTime(endStats.time), m: endStats.mistakes });
+    }
+    document.getElementById('over-best').textContent =
+      store.best > 0 ? t('common.bestLabel', { n: store.best + '/' + TOTAL_LEVELS }) : '';
+  }
+  function refreshStartBest() {
+    document.getElementById('start-best').textContent =
+      store.best > 0 ? t('common.bestLabel', { n: store.best + '/' + TOTAL_LEVELS }) : t('nonogram.first');
+  }
+  function refreshMode() {
+    document.getElementById('mode-fill').classList.toggle('active', mode === 1);
+    document.getElementById('mode-x').classList.toggle('active', mode === 2);
+  }
+  function refreshAll() { refreshHud(); paintTime(); refreshMode(); refreshOver(); refreshStartBest(); }
+
+  function wrongCount() {
+    var n = 0;
+    for (var i = 0; i < marks.length; i++) if (marks[i] === 1 && !sol[i]) n++;
+    return n;
+  }
+  function filledCount() {
+    var n = 0;
+    for (var i = 0; i < marks.length; i++) if (marks[i] === 1) n++;
+    return n;
+  }
+  function isSolved() {
+    for (var i = 0; i < sol.length; i++) {
+      if (sol[i] && marks[i] !== 1) return false;
+      if (!sol[i] && marks[i] === 1) return false;
+    }
+    return true;
+  }
+
+  function tap(i) {
+    if (solved) return;
+    running = true;
+    startOverlay.classList.add('hidden');
+    cursor = i;
+    if (mode === 1) {
+      if (marks[i] === 1) { marks[i] = 0; sfx.clear(); }
+      else {
+        marks[i] = 1;
+        if (!sol[i]) { mistakes++; sfx.bad(); } else sfx.fill();
+      }
+    } else {
+      marks[i] = marks[i] === 2 ? 0 : 2;
+      sfx.x();
+    }
+    paintCells();
+    refreshHud();
+    if (isSolved()) win();
+  }
+
+  function win() {
+    solved = true;
+    running = false;
+    endKey = 'nonogram.over';
+    var stars = mistakes === 0 ? 3 : mistakes <= 3 ? 2 : 1;
+    endStats = { level: level, time: time, mistakes: mistakes, stars: stars };
+    var rec = level > store.best;
+    if (rec) { store.best = level; saveStore(); }
+    if (level > store.level && level < TOTAL_LEVELS) { store.level = level + 1; saveStore(); }
+    document.getElementById('new-record').classList.toggle('hidden', !rec);
+    document.getElementById('btn-again').textContent =
+      level < TOTAL_LEVELS ? t('nonogram.next') : t('common.playAgain');
+    refreshAll();
+    overOverlay.classList.remove('hidden');
+    sfx.win();
+  }
+
+  // ===== 输入 =====
+  boardEl.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== boardEl && el.dataset.i === undefined) el = el.parentNode;
+    if (!el || el === boardEl) return;
+    tap(parseInt(el.dataset.i, 10));
+  });
+
+  window.addEventListener('keydown', function (e) {
+    var k = String(e.key || '');
+    var r = Math.floor(cursor / size), c = cursor % size;
+    if (k === 'ArrowLeft') { cursor = r * size + (c - 1 + size) % size; paintCells(); e.preventDefault(); return; }
+    if (k === 'ArrowRight') { cursor = r * size + (c + 1) % size; paintCells(); e.preventDefault(); return; }
+    if (k === 'ArrowUp') { cursor = ((r - 1 + size) % size) * size + c; paintCells(); e.preventDefault(); return; }
+    if (k === 'ArrowDown') { cursor = ((r + 1) % size) * size + c; paintCells(); e.preventDefault(); return; }
+    if (k === ' ') { tap(cursor); e.preventDefault(); return; }
+    if (k === 'x' || k === 'X') {
+      var old = mode; mode = 2; refreshMode();
+      tap(cursor);
+      mode = old; refreshMode();
+      e.preventDefault(); return;
+    }
+    if (k === '1') { mode = 1; refreshMode(); e.preventDefault(); return; }
+    if (k === '2') { mode = 2; refreshMode(); e.preventDefault(); return; }
+  });
+
+  document.getElementById('mode-fill').addEventListener('click', function () { mode = 1; refreshMode(); });
+  document.getElementById('mode-x').addEventListener('click', function () { mode = 2; refreshMode(); });
+  document.getElementById('btn-restart').addEventListener('click', newPuzzle);
+  document.getElementById('btn-start').addEventListener('click', function () {
+    running = true;
+    startOverlay.classList.add('hidden');
+    paintCells();
+  });
+  document.getElementById('btn-again').addEventListener('click', function () {
+    if (solved && level < TOTAL_LEVELS) loadLevel(level + 1, false);
+    else if (solved) loadLevel(1, false);
+    else newPuzzle();
+  });
+
+  function shareText() {
+    return t('nonogram.share', { n: level, t: fmtTime(endStats ? endStats.time : time), u: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 主循环（只做计时 + 光标呼吸，不逐帧重排 DOM） =====
+  function update(dt) {
+    if (!running || solved) return;
+    time += dt / 60;
+  }
+  var last = performance.now();
+  function loop(now) {
+    requestAnimationFrame(loop);
+    var dt = Math.min((now - last) / 16.666, 2.5);
+    if (!(dt > 0)) dt = 0;
+    last = now;
+    update(dt);
+    paintTime();
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); });
+
+  var fitTimer = null;
+  window.addEventListener('resize', function () {
+    if (fitTimer) clearTimeout(fitTimer);
+    fitTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  WG.onChange(function () { refreshAll(); fit(); });
+
+  // ===== 探针钩子 =====
+  function cluesOk() {
+    var rr = rowRunsOf(sol, size), cc = colRunsOf(sol, size);
+    if (rr.length !== rows.length || cc.length !== cols.length) return false;
+    for (var i = 0; i < size; i++) {
+      if (rr[i].join(',') !== rows[i].join(',')) return false;
+      if (cc[i].join(',') !== cols[i].join(',')) return false;
+    }
+    return true;
+  }
+  window.__st = function () {
+    return {
+      size: size, level: level, solved: solved, unique: unique,
+      filled: filledCount(), wrong: wrongCount(), marks: marks.slice(),
+      time: time, endKey: endKey
+    };
+  };
+  window.__lv = function (k) { loadLevel(k, false); return window.__st(); };
+  window.__gen = function () { newPuzzle(); return window.__st(); };
+  window.__solCells = function () {
+    var out = [];
+    for (var i = 0; i < sol.length; i++) if (sol[i]) out.push(i);
+    return out;
+  };
+  window.__cluesOk = function () { return cluesOk(); };
+  window.__drive = function (n) { for (var i = 0; i < n; i++) update(1); };
+
+  // ===== 启动 =====
+  loadLevel(store.level, true);
+  startOverlay.classList.remove('hidden');
+  fit();
+  requestAnimationFrame(loop);
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>

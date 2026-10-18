@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="rushHour.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Rush Hour — Free Online Car Parking Puzzle</title>
+<meta name="description" content="Play Rush Hour free in your browser: slide the blocking cars out of the way and drive the red car through the exit. 12 generated levels, every one solvable, mouse or touch.">
+<meta name="keywords" content="rush hour,parking puzzle,sliding block puzzle,car puzzle,traffic jam,logic puzzle,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Rush Hour — Free Online Car Parking Puzzle">
+<meta property="og:description" content="Slide the blocking cars aside and drive the red car out of the 6x6 traffic jam. 12 levels, always solvable.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #1a2230 0%, #243347 55%, #33263c 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 8px 8px 4px;
+    user-select: none; touch-action: manipulation; color: #fff;
+  }
+  .panel {
+    position: relative;
+    --cs: 56px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1 1 0; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 6px; text-align: center; min-width: 0;
+  }
+  .stat small {
+    display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+
+  .board-area { overflow: auto; border-radius: 12px; }
+  .board {
+    position: relative;
+    width: calc(var(--cs) * 6);
+    height: calc(var(--cs) * 6);
+    border-radius: 12px;
+    background: #2b3346;
+    box-shadow: inset 0 4px 18px rgba(0,0,0,.5);
+    touch-action: none;
+  }
+  .cells {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: repeat(6, var(--cs));
+    grid-template-rows: repeat(6, var(--cs));
+  }
+  .cell { position: relative; }
+  .cell::before {
+    content: ''; position: absolute; inset: 1px; border-radius: 4px;
+    background: rgba(255,255,255,.05);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .cell.alt::before { background: rgba(255,255,255,.085); }
+
+  /* 出口：row=2 的右边缘 */
+  #exit {
+    position: absolute; right: -9px; top: calc(var(--cs) * 2);
+    width: 9px; height: var(--cs);
+    background: repeating-linear-gradient(45deg, #6be08a 0 5px, #2f7a4b 5px 10px);
+    border-radius: 0 5px 5px 0;
+    box-shadow: 0 0 10px rgba(107,224,138,.55);
+  }
+  #exit::after {
+    content: '▶'; position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: #6be08a;
+  }
+  .exit-glow {
+    position: absolute; right: 0; top: calc(var(--cs) * 2);
+    width: calc(var(--cs) * 0.5); height: var(--cs);
+    background: linear-gradient(90deg, rgba(107,224,138,0), rgba(107,224,138,.16));
+    pointer-events: none;
+  }
+
+  /* 车：<span> 必须 display:block + position:absolute */
+  .car {
+    display: block; position: absolute; z-index: 3;
+    transition: left .16s ease, top .16s ease;
+    touch-action: none; cursor: grab;
+  }
+  .car::before {
+    content: ''; position: absolute; inset: 3px; border-radius: 9px;
+    background: linear-gradient(160deg, #6fa8e8, #3a6fb5 70%, #2a5288);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.28), inset 0 -3px 0 rgba(0,0,0,.28), 0 4px 8px rgba(0,0,0,.35);
+  }
+  .car::after {
+    content: ''; position: absolute; left: 24%; top: 24%; width: 52%; height: 52%;
+    border-radius: 5px; background: rgba(220,240,255,.22);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .car[data-dir="v"]::after { left: 24%; top: 24%; width: 52%; height: 52%; }
+  .car.target::before {
+    background: linear-gradient(160deg, #ff8a7a, #e53935 65%, #a11d1a);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -3px 0 rgba(0,0,0,.3), 0 4px 10px rgba(229,57,53,.45);
+  }
+  .car.sel::before { box-shadow: 0 0 0 2px #6fd7ff, 0 0 16px rgba(111,215,255,.6), inset 0 2px 0 rgba(255,255,255,.3); }
+  .car.drag { transition: none; z-index: 4; }
+  .car.drag::before { box-shadow: 0 0 0 2px #ffd76e, 0 8px 18px rgba(0,0,0,.5); }
+
+  .actions { display: flex; gap: 8px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px; font-family: inherit;
+  }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(12, 18, 30, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 13px; opacity: .82; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .final-line { font-size: 15px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 6px; padding: 12px 28px; min-height: 48px; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 800; font-family: inherit; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 4px 6px 2px; }
+    .panel {
+      display: grid; grid-template-columns: auto 164px;
+      grid-template-areas: "board top" "board act";
+      align-items: start; padding: 8px; gap: 8px;
+    }
+    .topbar { grid-area: top; flex-direction: column; gap: 5px; width: 100%; }
+    .stat { width: 100%; padding: 2px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .4px; }
+    .stat span { font-size: 13px; }
+    .board-area { grid-area: board; }
+    .actions { grid-area: act; flex-direction: column; }
+    .actions button { min-height: 48px; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin: 0 8px 0 0; }
+    .footer a { line-height: 44px; }
+    .overlay { padding: 10px; gap: 5px; }
+    .over-title { font-size: 18px; }
+    .over-sub, .final-line { font-size: 12px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { min-height: 44px; font-size: 13px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="rushHour.hudLevel">LEVEL</small><span id="hud-level">1/12</span></div>
+    <div class="stat"><small data-i18n="rushHour.hudMoves">MOVES</small><span id="hud-moves">0</span></div>
+    <div class="stat"><small data-i18n="rushHour.hudPar">PAR</small><span id="hud-par">–</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="board-area" id="board-area">
+    <div class="board" id="board">
+      <div class="cells" id="cells"></div>
+      <div class="exit-glow"></div>
+      <div id="exit"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-ghost" id="btn-restart" data-i18n="rushHour.restart">RESTART</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">🚗</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="rushHour.next">NEXT LEVEL</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🚗</div>
+    <div class="over-title" data-i18n="rushHour.title">RUSH HOUR</div>
+    <div class="over-sub" data-i18n-html="rushHour.tip">Slide the cars along their lane — they only move <b>forward and back</b>.<br>Clear row 3 and drive the <b>red car</b> out of the exit on the right.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var N = 6;
+  var STORE_KEY = 'rush_hour_best_v1';
+  var LEVELS = 12;
+  var BFS_NODES = 90000;
+  var BFS_DEPTH = 45;
+  /* 解状态：目标车 X 在 (4,2)，出口在 row=2 右边缘。其余车按固定模板摆好。 */
+  var TEMPLATE = [
+    { id: 'X', x: 4, y: 2, len: 2, dir: 'h', target: true },
+    { id: 'A', x: 0, y: 0, len: 2, dir: 'h' },
+    { id: 'B', x: 2, y: 0, len: 2, dir: 'v' },
+    { id: 'C', x: 5, y: 0, len: 2, dir: 'v' },
+    { id: 'D', x: 0, y: 3, len: 2, dir: 'v' },
+    { id: 'E', x: 2, y: 3, len: 2, dir: 'h' },
+    { id: 'F', x: 1, y: 4, len: 2, dir: 'v' },
+    { id: 'G', x: 4, y: 4, len: 2, dir: 'h' },
+    { id: 'H', x: 2, y: 5, len: 2, dir: 'h' },
+    { id: 'I', x: 4, y: 0, len: 2, dir: 'v' }
+  ];
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var cellsEl = document.getElementById('cells');
+  var footerEl = document.querySelector('.footer');
+  var topbarEl = document.querySelector('.topbar');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var mqLand = window.matchMedia('(orientation: landscape) and (max-height: 700px)');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    pick: function () { beep(420, 0.04, 'sine', 0.04); },
+    move: function () { beep(240, 0.05, 'square', 0.05); },
+    bad:  function () { beep(120, 0.07, 'sawtooth', 0.04); },
+    win:  function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { setTimeout(function () { beep(f, 0.18, 'triangle', 0.09); }, i * 95); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var level = 1, cars = [], sol = [], par = 0, moves = 0;
+  var solved = false, endKey = null, endStats = null, started = false;
+  var store = loadStore();
+  var selected = -1;
+  var drag = null;
+  var CS = 56;
+
+  function loadStore() {
+    var out = { level: 0, best: 0 };
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      if (raw && typeof raw === 'object') {
+        if (typeof raw.level === 'number') out.level = Math.max(0, Math.min(LEVELS, raw.level | 0));
+        if (typeof raw.best === 'number') out.best = Math.max(0, raw.best | 0);
+      }
+    } catch (e) {}
+    return out;
+  }
+  function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  // ===== 生成器：反向滑步（保证有解）+ BFS 校验 =====
+  function cloneCars() {
+    return TEMPLATE.map(function (c) {
+      return { id: c.id, x: c.x, y: c.y, len: c.len, dir: c.dir, target: !!c.target };
+    });
+  }
+  function cellAt(list, x, y) {
+    if (x < 0 || y < 0 || x >= N || y >= N) return -1;
+    for (var i = 0; i < list.length; i++) {
+      var c = list[i];
+      if (c.dir === 'h') { if (y === c.y && x >= c.x && x < c.x + c.len) return i; }
+      else { if (x === c.x && y >= c.y && y < c.y + c.len) return i; }
+    }
+    return -1;
+  }
+  function freeFor(list, skip, x, y, len, dir) {
+    if (dir === 'h') {
+      if (x < 0 || y < 0 || y >= N || x + len > N) return false;
+      for (var i = 0; i < len; i++) { var o = cellAt(list, x + i, y); if (o >= 0 && o !== skip) return false; }
+    } else {
+      if (x < 0 || y < 0 || x >= N || y + len > N) return false;
+      for (var j = 0; j < len; j++) { var o2 = cellAt(list, x, y + j); if (o2 >= 0 && o2 !== skip) return false; }
+    }
+    return true;
+  }
+  function exitDist(c) {
+    var cx = c.x + (c.dir === 'h' ? c.len / 2 : 0.5);
+    var cy = c.y + (c.dir === 'v' ? c.len / 2 : 0.5);
+    return Math.abs(cx - N) + Math.abs(cy - 2);
+  }
+  function keyOf(list) {
+    var out = [];
+    for (var i = 0; i < list.length; i++) out.push(list[i].id + ':' + list[i].x + ',' + list[i].y);
+    return out.join('|');
+  }
+  function applyPath(list, path) {
+    for (var i = 0; i < path.length; i++) {
+      var m = path[i];
+      for (var j = 0; j < list.length; j++) {
+        if (list[j].id === m[0]) { list[j].x += m[1]; list[j].y += m[2]; break; }
+      }
+    }
+  }
+
+  /* 通用 BFS：从 startCars 出发找到满足 goal(pos[]) 的状态，返回移动序列 [id,dx,dy][] */
+  function bfs(startCars, goal, maxDepth) {
+    var start = startCars.map(function (c) { return c.y * N + c.x; });
+    if (goal(start)) return [];
+    var sk = compress(start);
+    var prev = Object.create(null);
+    prev[sk] = null;
+    var queue = [{ p: start, k: sk, d: 0 }];
+    var head = 0, nodes = 0;
+    while (head < queue.length && nodes < BFS_NODES) {
+      var cur = queue[head++]; nodes++;
+      if (cur.d >= maxDepth) continue;
+      var occ = new Int8Array(36); occ.fill(-1);
+      for (var i = 0; i < cur.p.length; i++) {
+        var c = TEMPLATE[i], px = cur.p[i] % N, py = (cur.p[i] / N) | 0, j;
+        for (j = 0; j < c.len; j++) {
+          if (c.dir === 'h') occ[py * N + px + j] = i;
+          else occ[(py + j) * N + px] = i;
+        }
+      }
+      for (var ci = 0; ci < TEMPLATE.length; ci++) {
+        var cc = TEMPLATE[ci], cx = cur.p[ci] % N, cy = (cur.p[ci] / N) | 0;
+        var horiz = cc.dir === 'h';
+        for (var s = 0; s < 2; s++) {
+          var sgn = s === 0 ? 1 : -1;
+          var px2 = cx, py2 = cy, dist = 0;
+          while (true) {
+            /* 从车头/车尾外侧逐格探路，避免把自身车身当成障碍 */
+            var ax = horiz ? (sgn > 0 ? px2 + cc.len : px2 - 1) : px2;
+            var ay = horiz ? py2 : (sgn > 0 ? py2 + cc.len : py2 - 1);
+            if (ax < 0 || ay < 0 || ax >= N || ay >= N) break;
+            if (occ[ay * N + ax] >= 0) break;
+            px2 += horiz ? sgn : 0;
+            py2 += horiz ? 0 : sgn;
+            dist++;
+            var np = cur.p.slice();
+            np[ci] = py2 * N + px2;
+            var nk = '';
+            for (var b = 0; b < np.length; b++) nk += String.fromCharCode(65 + np[b]);
+            if (nk in prev) continue;
+            prev[nk] = { k: cur.k, m: [cc.id, horiz ? sgn * dist : 0, horiz ? 0 : sgn * dist] };
+            if (goal(np)) {
+              var out = [], kk = nk;
+              while (prev[kk]) { out.push(prev[kk].m); kk = prev[kk].k; }
+              return out.reverse();
+            }
+            queue.push({ p: np, k: nk, d: cur.d + 1 });
+          }
+        }
+      }
+    }
+    return null;
+  }
+  function compress(list) {
+    var s = '';
+    for (var i = 0; i < list.length; i++) s += String.fromCharCode(65 + list[i].y * N + list[i].x);
+    return s;
+  }
+
+  /* 目标车 X 开到 (4,2) 即算脱出（其余车不必归位） */
+  function bfsEscape(startCars) {
+    return bfs(startCars, function (p) { return p[0] === 2 * N + 4; }, BFS_DEPTH);
+  }
+
+  function scramble(lv) {
+    var want = Math.min(30, 6 + lv * 2);            /* 反向步数 ≈ 8 → 30 */
+    var needPar = 2 + Math.floor(lv / 2);
+    var best = null;
+    for (var attempt = 0; attempt < 60; attempt++) {
+      var list = cloneCars(), path = [], guard = 0;
+      while (path.length < want && guard++ < 900) {
+        var opts = [], tot = 0;
+        for (var i = 0; i < list.length; i++) {
+          var c = list[i];
+          for (var d = -1; d <= 1; d += 2) {
+            var nx = c.x + (c.dir === 'h' ? d : 0);
+            var ny = c.y + (c.dir === 'v' ? d : 0);
+            if (!freeFor(list, i, nx, ny, c.len, c.dir)) continue;
+            var w;
+            if (c.target) {
+              w = d < 0 ? 5 : 1;                      /* 目标车优先往左开 */
+            } else {
+              /* 竖车滑进 row=2（尤其 3/4/5 列）就是堵路，权重高 */
+              w = 1;
+              if (c.dir === 'v') {
+                var covers2 = (ny <= 2 && ny + c.len - 1 >= 2);
+                if (covers2 && c.x >= 3) w = 7;
+                else if (covers2) w = 4;
+              } else if (c.y === 2 && c.x >= 3) w = 4;
+            }
+            opts.push({ i: i, dx: c.dir === 'h' ? d : 0, dy: c.dir === 'v' ? d : 0, w: w });
+            tot += w;
+          }
+        }
+        if (!opts.length) break;
+        var pick = Math.random() * tot, sel = opts[0];
+        for (var q = 0; q < opts.length; q++) { pick -= opts[q].w; if (pick <= 0) { sel = opts[q]; break; } }
+        var mv = list[sel.i];
+        mv.x += sel.dx; mv.y += sel.dy;
+        path.push([mv.id, sel.dx, sel.dy]);
+      }
+      if (path.length < 6) continue;
+
+      var xi = 0;
+      for (var z = 0; z < list.length; z++) if (list[z].target) xi = z;
+      var X = list[xi];
+      if (X.x > 3 || X.y !== 2) continue;            /* 开局不能已在出口 */
+      if (cellAt(list, X.x - 1, 2) >= 0) continue;   /* 左边要留一格，看着像能走 */
+
+      var esc = bfsEscape(list);
+      if (!esc || esc.length < 2) continue;
+
+      var score = esc.length;
+      if (!best || score > best.par) best = { list: list, path: path, par: score };
+      if (score >= needPar) return best;
+    }
+    return best;
+  }
+
+  // ===== 关卡 =====
+  function loadLevel(n) {
+    level = Math.max(1, Math.min(LEVELS, n | 0));
+    var gen = scramble(level);
+    if (!gen) {
+      gen = { list: cloneCars(), path: [], par: 0 };
+      var fx = 0;
+      for (var fi = 0; fi < gen.list.length; fi++) if (gen.list[fi].target) fx = fi;
+      gen.list[fx].x = 2;
+      gen.par = 4;
+    }
+    cars = gen.list;
+    var optimal = bfsEscape(cars);
+    if (optimal && optimal.length) {
+      sol = optimal; par = optimal.length;
+    } else {
+      sol = gen.path.slice().reverse(); par = sol.length;
+    }
+    moves = 0; solved = false; endKey = null; endStats = null; selected = -1;
+    drag = null;
+    overOverlay.classList.add('hidden');
+    document.getElementById('new-record').classList.add('hidden');
+    buildDom();
+    refreshAll();
+  }
+  function restartLevel() {
+    loadLevel(level);
+    startOverlay.classList.add('hidden');
+  }
+
+  // ===== DOM =====
+  function buildDom() {
+    cellsEl.innerHTML = '';
+    for (var i = 0; i < 36; i++) {
+      var d = document.createElement('div');
+      d.className = 'cell' + ((((i / 6) | 0) + i % 6) % 2 ? ' alt' : '');
+      cellsEl.appendChild(d);
+    }
+    var old = boardEl.querySelectorAll('.car');
+    for (var j = 0; j < old.length; j++) old[j].parentNode.removeChild(old[j]);
+    for (var c = 0; c < cars.length; c++) {
+      var car = cars[c];
+      var el = document.createElement('span');
+      el.className = 'car' + (car.target ? ' target' : '');
+      el.dataset.id = car.id;
+      el.dataset.dir = car.dir;
+      boardEl.appendChild(el);
+      car.el = el;
+      paintCar(c);
+    }
+    paintSelection();
+    fit();
+  }
+  function paintCar(i) {
+    var c = cars[i], el = c.el;
+    if (!el) return;
+    el.style.left = 'calc(var(--cs) * ' + c.x + ')';
+    el.style.top = 'calc(var(--cs) * ' + c.y + ')';
+    el.style.width = 'calc(var(--cs) * ' + (c.dir === 'h' ? c.len : 1) + ')';
+    el.style.height = 'calc(var(--cs) * ' + (c.dir === 'v' ? c.len : 1) + ')';
+    el.classList.toggle('sel', selected === i);
+  }
+  function paintSelection() {
+    for (var i = 0; i < cars.length; i++) {
+      if (!cars[i].el) continue;
+      cars[i].el.classList.toggle('sel', selected === i);
+    }
+  }
+
+  // ===== 规则 =====
+  function occupancy(skip) {
+    var occ = new Int8Array(36);
+    for (var i = 0; i < cars.length; i++) {
+      if (i === skip) continue;
+      var c = cars[i], j;
+      for (j = 0; j < c.len; j++) {
+        if (c.dir === 'h') occ[c.y * N + c.x + j] = 1;
+        else occ[(c.y + j) * N + c.x] = 1;
+      }
+    }
+    return occ;
+  }
+  function rangeFor(i) {
+    var c = cars[i], occ = occupancy(i), lo = 0, hi = 0;
+    if (c.dir === 'h') {
+      while (c.x - lo - 1 >= 0 && !occ[c.y * N + c.x - lo - 1]) lo++;
+      while (c.x + c.len + hi < N && !occ[c.y * N + c.x + c.len + hi]) hi++;
+    } else {
+      while (c.y - lo - 1 >= 0 && !occ[(c.y - lo - 1) * N + c.x]) lo++;
+      while (c.y + c.len + hi < N && !occ[(c.y + c.len + hi) * N + c.x]) hi++;
+    }
+    return { back: -lo, fwd: hi };
+  }
+  function applyMove(i, cells) {
+    if (!cells) return false;
+    var c = cars[i];
+    if (c.dir === 'h') c.x += cells; else c.y += cells;
+    moves++;
+    selected = i;
+    paintCar(i);
+    refreshHud();
+    sfx.move();
+    checkSolved();
+    return true;
+  }
+  function checkSolved() {
+    var X = null;
+    for (var i = 0; i < cars.length; i++) if (cars[i].target) X = cars[i];
+    if (!X || X.x !== 4 || X.y !== 2) return false;
+    solved = true;
+    endKey = 'rushHour.over';
+    endStats = { level: level, moves: moves, par: par };
+    var record = false;
+    if (level >= store.level) { store.level = level; store.best = moves; record = true; }
+    else if (!store.best || moves < store.best) { store.best = moves; record = true; }
+    saveStore();
+    document.getElementById('new-record').classList.toggle('hidden', !record);
+    refreshHud(); refreshOver(); refreshBest();
+    overOverlay.classList.remove('hidden');
+    sfx.win();
+    return true;
+  }
+
+  // ===== HUD =====
+  function refreshHud() {
+    document.getElementById('hud-level').textContent = level + '/' + LEVELS;
+    document.getElementById('hud-moves').textContent = String(moves);
+    document.getElementById('hud-par').textContent = String(par);
+  }
+  function refreshBest() {
+    var line = store.level > 0
+      ? t('rushHour.progress', { n: store.level })
+      : t('rushHour.first');
+    document.getElementById('start-best').textContent = line;
+    document.getElementById('over-best').textContent = store.best ? t('common.bestLabel', { n: store.best }) : '';
+  }
+  function refreshOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('final-line').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = t('rushHour.final', {
+      l: endStats.level, m: endStats.moves, p: endStats.par
+    });
+  }
+  function refreshAll() { refreshHud(); refreshBest(); refreshOver(); fit(); }
+  WG.onChange(refreshAll);
+
+  // ===== 尺寸 =====
+  function pf(v) { return parseFloat(v) || 0; }
+  function fit() {
+    var bcs = getComputedStyle(document.body), pcs = getComputedStyle(panel);
+    var bpadH = pf(bcs.paddingLeft) + pf(bcs.paddingRight);
+    var bpadV = pf(bcs.paddingTop) + pf(bcs.paddingBottom);
+    var ppadH = pf(pcs.paddingLeft) + pf(pcs.paddingRight);
+    var ppadV = pf(pcs.paddingTop) + pf(pcs.paddingBottom);
+    var footerH = footerEl ? footerEl.offsetHeight + pf(getComputedStyle(footerEl).marginTop) : 90;
+    var land = mqLand.matches;
+    var availW, availH;
+    if (land) {
+      availW = window.innerWidth - bpadH - ppadH - 2 - 164 - 16;
+      availH = window.innerHeight - bpadV - ppadV - 2 - footerH - 10;
+    } else {
+      availW = window.innerWidth - bpadH - ppadH - 2 - 8;
+      availH = window.innerHeight - bpadV - ppadV - 2 - footerH -
+        topbarEl.offsetHeight - 48 - 26;
+    }
+    var cs = Math.floor(Math.min(72, availW / N, availH / N));
+    if (!(cs > 0)) cs = 44;
+    cs = Math.max(44, Math.min(72, cs));
+    CS = cs;
+    panel.style.setProperty('--cs', cs + 'px');
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+
+  // ===== 输入：指针拖拽 =====
+  function carIndexFromEvent(e) {
+    var el = e.target;
+    while (el && el !== boardEl) {
+      if (el.dataset && el.dataset.id) {
+        for (var i = 0; i < cars.length; i++) if (cars[i].id === el.dataset.id) return i;
+      }
+      el = el.parentNode;
+    }
+    return -1;
+  }
+  boardEl.addEventListener('pointerdown', function (e) {
+    if (solved) return;
+    var i = carIndexFromEvent(e);
+    if (i < 0) return;
+    e.preventDefault();
+    begin();
+    selected = i;
+    paintSelection();
+    var c = cars[i], range = rangeFor(i);
+    drag = {
+      i: i, sx: e.clientX, sy: e.clientY, cells: 0,
+      back: range.back, fwd: range.fwd, moved: false
+    };
+    c.el.classList.add('drag');
+    sfx.pick();
+    try { boardEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  boardEl.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    e.preventDefault();
+    var c = cars[drag.i];
+    var delta = c.dir === 'h' ? (e.clientX - drag.sx) : (e.clientY - drag.sy);
+    var maxBack = drag.back * CS, maxFwd = drag.fwd * CS;
+    if (delta < maxBack) delta = maxBack;
+    if (delta > maxFwd) delta = maxFwd;
+    drag.px = delta;
+    drag.cells = Math.round(delta / CS);
+    var baseX = c.x * CS, baseY = c.y * CS;
+    if (c.dir === 'h') c.el.style.left = (baseX + delta) + 'px';
+    else c.el.style.top = (baseY + delta) + 'px';
+  });
+  function endDrag(e) {
+    if (!drag) return;
+    var c = cars[drag.i];
+    c.el.classList.remove('drag');
+    var cells = drag.cells;
+    var i = drag.i;
+    drag = null;
+    if (!cells) { paintCar(i); return; }
+    applyMove(i, cells);      // 吸附：状态提交后按 --cs 重画
+  }
+  boardEl.addEventListener('click', function (e) {
+    if (solved) return;
+    var i = carIndexFromEvent(e);
+    if (i < 0) return;
+    selected = i;
+    paintSelection();
+    sfx.pick();
+  });
+  boardEl.addEventListener('pointerup', endDrag);
+  boardEl.addEventListener('pointercancel', function () {
+    if (!drag) return;
+    var c = cars[drag.i];
+    c.el.classList.remove('drag');
+    paintCar(drag.i);
+    drag = null;
+  });
+
+  // ===== 输入：键盘 =====
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '');
+    if (k === 'Tab') {
+      e.preventDefault();
+      if (!cars.length) return;
+      selected = (selected + 1) % cars.length;
+      paintSelection();
+      sfx.pick();
+      return;
+    }
+    if (k === 'r' || k === 'R') { restartLevel(); e.preventDefault(); return; }
+    if (selected < 0) return;
+    var c = cars[selected], d = 0;
+    if (c.dir === 'h') {
+      if (k === 'ArrowLeft') d = -1;
+      else if (k === 'ArrowRight') d = 1;
+    } else {
+      if (k === 'ArrowUp') d = -1;
+      else if (k === 'ArrowDown') d = 1;
+    }
+    if (!d) return;
+    e.preventDefault();
+    var range = rangeFor(selected);
+    if (d < 0 && range.back < 0) applyMove(selected, -1);
+    else if (d > 0 && range.fwd > 0) applyMove(selected, 1);
+    else sfx.bad();
+  });
+
+  // ===== 按钮 / 分享 =====
+  function begin() {
+    started = true;
+    startOverlay.classList.add('hidden');
+  }
+  document.getElementById('btn-start').addEventListener('click', begin);
+  document.getElementById('btn-restart').addEventListener('click', function () { begin(); restartLevel(); });
+  document.getElementById('btn-again').addEventListener('click', function () {
+    begin();
+    loadLevel(level >= LEVELS ? 1 : level + 1);
+  });
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var btn = document.getElementById('btn-share');
+    var txt = t('rushHour.share', {
+      l: endStats ? endStats.level : level,
+      m: endStats ? endStats.moves : moves,
+      url: location.href
+    });
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    function fb() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb);
+    else fb();
+  });
+
+  // ===== 探针钩子 =====
+  window.__st = function () {
+    var X = null, list = [];
+    for (var i = 0; i < cars.length; i++) {
+      var c = cars[i];
+      list.push({ id: c.id, x: c.x, y: c.y, len: c.len, dir: c.dir, target: !!c.target });
+      if (c.target) X = c;
+    }
+    return {
+      level: level, solved: solved, moves: moves, par: par, cars: list,
+      targetX: X ? X.x : -1, targetY: X ? X.y : -1,
+      solLen: sol.length, endKey: endKey
+    };
+  };
+  window.__lv = function (n) {
+    startOverlay.classList.add('hidden');
+    loadLevel(n | 0);
+    return window.__st();
+  };
+  window.__sol = function () {
+    return sol.map(function (m) { return [m[0], m[1], m[2]]; });
+  };
+
+  // ===== 启动 =====
+  var startAt = Math.min(LEVELS, Math.max(1, (store.level || 0) + 1));
+  loadLevel(startAt);
+  startOverlay.classList.remove('hidden');
+})();
+</script>
+</body>
+</html>

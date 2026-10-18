@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="checkers.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Checkers — Free Online Draughts Board Game</title>
+<meta name="description" content="Play Checkers (draughts) free in your browser. Forced captures, multi-jumps and kings, against a computer in three difficulties. Tap or use the keyboard. No install, works on mobile and desktop.">
+<meta name="keywords" content="checkers,draughts,checkers online,english draughts,board game,vs computer,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Checkers — Free Online Draughts Board Game">
+<meta property="og:description" content="Force captures, chain jumps, crown kings. Three difficulty levels with a real alpha-beta opponent.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔵</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #2a1c12 0%, #3d2a19 55%, #1e1a2c 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 6px 4px 2px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    --cs: 44px;            /* 格子边长，由 JS 的 fit() 覆写 */
+    --gap: 2px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 16px; padding: 6px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .side { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+
+  .topbar { display: flex; align-items: center; gap: 5px; width: 100%; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 9px;
+    padding: 2px 4px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: .8px; opacity: .55; white-space: nowrap; }
+  .stat span { display: block; font-size: 15px; font-weight: 800; line-height: 1.25; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 9px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+
+  .modes { display: flex; gap: 5px; width: 100%; }
+  .mode {
+    flex: 1 1 0; min-width: 0; min-height: 44px; border: none; border-radius: 9px;
+    background: rgba(255,255,255,.10); color: rgba(255,255,255,.78);
+    font-family: inherit; font-size: 11px; font-weight: 800; letter-spacing: .4px;
+    cursor: pointer; transition: background .15s, color .15s;
+  }
+  .mode:hover { background: rgba(255,255,255,.18); }
+  .mode.active { background: #f0a500; color: #2a1d00; }
+
+  .status { min-height: 16px; width: 100%; font-size: 12px; font-weight: 800;
+    letter-spacing: .4px; color: #ffd76e; text-align: center; line-height: 1.35; }
+
+  .actions { display: flex; gap: 6px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 44px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; letter-spacing: .6px; font-family: inherit;
+    transition: transform .12s ease;
+  }
+  .actions button:active { transform: scale(.96); }
+  .btn-primary { background: #d98324; color: #fff; box-shadow: 0 4px 0 #8f5514; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+
+  .board-area { display: flex; justify-content: center; align-items: flex-start; max-width: 100%; overflow: auto; }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--cs));
+    grid-template-rows: repeat(8, var(--cs));
+    gap: var(--gap);
+    padding: 2px;
+    background: #3b2415;
+    border-radius: 10px;
+    box-shadow: inset 0 3px 12px rgba(0,0,0,.5);
+    touch-action: manipulation;
+  }
+  /* 格子是最小触控目标：≥44px（窄屏时高度兜底，宽高各差 1~3px 属可接受取舍） */
+  .sq {
+    position: relative; width: var(--cs); height: var(--cs); min-height: 44px;
+    border-radius: 3px; cursor: pointer;
+  }
+  .sq.dark { background: #7a4b2a; }
+  .sq.light { background: #e8d3ae; }
+  .sq.dark:hover { background: #8b5833; }
+  /* 合法落点：小圆点 */
+  .sq.legal::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 30%; height: 30%;
+    margin: -15% 0 0 -15%; border-radius: 50%;
+    background: rgba(120,255,170,.85); box-shadow: 0 0 6px rgba(120,255,170,.55);
+  }
+  .sq.cursor { box-shadow: inset 0 0 0 3px #ffd76e; }
+  .sq.sel-sq { box-shadow: inset 0 0 0 3px rgba(255,215,110,.55); }
+  .sq.nope { animation: nope .28s ease; }
+  @keyframes nope { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-3px)} 70%{transform:translateX(3px)} }
+
+  /* 棋子：<span> 必须 display:block，否则行内元素忽略百分比尺寸 → 塌成 0×0 */
+  .piece {
+    display: block; position: absolute; inset: 11%; border-radius: 50%;
+    pointer-events: none; transition: transform .1s ease;
+  }
+  .piece.p { background: radial-gradient(circle at 34% 28%, #ffffff, #e7ebf0 55%, #a8b4c2); box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.10); }
+  .piece.c { background: radial-gradient(circle at 34% 28%, #77828f, #2b333c 55%, #10151b); box-shadow: 0 2px 3px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.08); }
+  .piece.king::after {
+    content: '♛'; position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    font-size: calc(var(--cs) * .48); line-height: 1; color: #ffcf4d;
+    text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  }
+  .piece.sel { box-shadow: 0 0 0 3px #ffd76e, 0 0 0 6px rgba(255,215,110,.35); }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 16px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; text-align: center; padding: 16px;
+    background: rgba(20, 12, 8, .88); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 21px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 12.5px; opacity: .82; line-height: 1.55; }
+  .icon-big { font-size: 38px; }
+  .final-line { font-size: 14px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 3px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 6px; margin-top: 4px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 4px; padding: 11px 26px; }
+
+  .footer {
+    margin-top: 6px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.75; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  /* 横屏 / 矮窗口：棋盘靠左、HUD 靠右、页脚当右栏 —— 纵向整条让给棋盘。
+     页脚必须够宽让 🔊→🏠→🌐 保持一排（home-probe 硬断言），所以这里把注入式
+     按钮的内边距压紧，而不是让它们折行。 */
+  @media (orientation: landscape) and (max-height: 620px) {
+    body { flex-direction: row; align-items: center; justify-content: center; padding: 2px 4px; }
+    .panel { flex-direction: row; align-items: center; padding: 6px; gap: 6px; }
+    .board-area { order: -1; }
+    .side { width: 146px; flex: 0 0 auto; gap: 4px; }
+    .stat { padding: 2px 3px; }
+    .stat small { font-size: 8px; letter-spacing: 0; }
+    .stat span { font-size: 14px; }
+    .modes { gap: 3px; }
+    .mode { font-size: 9.5px; letter-spacing: 0; min-height: 44px; }
+    .actions button { font-size: 12px; min-height: 44px; }
+    .status { font-size: 11px; min-height: 14px; }
+    .footer {
+      width: 286px; flex: 0 0 auto; max-width: none; margin: 0 0 0 6px;
+      font-size: 10.5px; line-height: 1.3;
+    }
+    .footer .wg-tools { display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 6px; }
+    .footer .wg-tools #mute-btn,
+    .footer .wg-tools a.wg-home-btn,
+    .footer .wg-tools .wg-lang-btn { padding: 0 6px; font-size: 11px; gap: 4px; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 17px; }
+    .over-sub, .final-line { font-size: 11.5px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { font-size: 12px; }
+  }
+  @media (orientation: landscape) and (max-height: 620px) {
+    .sq { min-height: 0; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side">
+    <div class="topbar">
+      <div class="stat"><small data-i18n="checkers.hudYou">YOU</small><span id="hud-you">12</span></div>
+      <div class="stat"><small data-i18n="checkers.hudCpu">CPU</small><span id="hud-cpu">12</span></div>
+      <div class="stat"><small data-i18n="checkers.hudWins">WINS</small><span id="hud-wins">0</span></div>
+      <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+    </div>
+    <div class="modes" id="modes"></div>
+    <div class="status" id="status"></div>
+    <div class="actions">
+      <button class="btn-ghost" id="btn-restart" data-i18n="common.newGame">NEW GAME</button>
+    </div>
+  </div>
+
+  <div class="board-area" id="board-area">
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🔵</div>
+    <div class="over-title" data-i18n="game.checkers">Checkers</div>
+    <div class="over-sub" data-i18n-html="checkers.tip">You play the <b>light pieces</b> at the bottom and move first.<br>Pieces move diagonally forward; a <b>jump</b> captures and is <b>forced</b> whenever one is available.<br>Reach the far row to be crowned a <b>king</b>. Tap a piece, then a highlighted square.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var HUMAN = 1, AI = -1;
+  var SCORE_KEY = 'checkers_best_v1';
+  var DRAW_PLIES = 80;                 // 双方各 40 步无吃子 → 和棋
+  var MODES = ['easy', 'medium', 'hard'];
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var sideEl = document.querySelector('.side');
+  var footerEl = document.querySelector('.footer');
+  var statusEl = document.getElementById('status');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    move:  function () { beep(360, 0.05, 'sine', 0.06); },
+    cap:   function () { beep(220, 0.07, 'square', 0.07); setTimeout(function () { beep(320, 0.06, 'square', 0.05); }, 60); },
+    king:  function () { beep(720, 0.1, 'triangle', 0.08); setTimeout(function () { beep(980, 0.12, 'triangle', 0.07); }, 90); },
+    bad:   function () { beep(140, 0.1, 'sawtooth', 0.05); },
+    win:   function () { [0, 110, 220, 340].forEach(function (d, i) { setTimeout(function () { beep(540 + i * 150, 0.16, 'triangle', 0.09); }, d); }); },
+    lose:  function () { beep(300, 0.2, 'sawtooth', 0.09); setTimeout(function () { beep(180, 0.28, 'sawtooth', 0.09); }, 160); },
+    draw:  function () { beep(420, 0.16, 'sine', 0.07); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var board = new Int8Array(64);       // 0 空 / 1 人兵 / 2 人王 / -1 机兵 / -2 机王
+  var turn = HUMAN;
+  var selected = -1;
+  var legal = [];
+  var chain = false;                   // 正在连跳（当前走子方继续走同一枚）
+  var movesNoCapture = 0;
+  var over = false, winner = 0;
+  var difficulty = 'medium';
+  var endKey = null, endStats = null;
+  var cpuTimer = null;
+  var cursor = 40;
+  var best = loadBest();
+
+  function loadBest() {
+    try { var n = parseInt(localStorage.getItem(SCORE_KEY) || '0', 10); return isFinite(n) && n > 0 ? n : 0; }
+    catch (e) { return 0; }
+  }
+  function saveBest() {
+    try { localStorage.setItem(SCORE_KEY, String(best)); } catch (e) {}
+  }
+
+  // ===== 规则（legalMoves 是唯一合法走法来源）=====
+  function dirsFor(v) {
+    var out = [], king = (v === 2 || v === -2);
+    if (king || v > 0) { out.push([-1, -1]); out.push([-1, 1]); }   // 人方（下方）向上走
+    if (king || v < 0) { out.push([1, -1]); out.push([1, 1]); }     // 机方（上方）向下走
+    return out;
+  }
+  function mine(v, side) { return v !== 0 && (v > 0) === (side > 0); }
+
+  // 单枚棋子的全部跳吃（王可四向，兵只向前）
+  function jumpsFor(b, i, side) {
+    var out = [], v = b[i];
+    if (!v) return out;
+    var r0 = (i / 8) | 0, c0 = i % 8, dirs = dirsFor(v);
+    for (var d = 0; d < dirs.length; d++) {
+      var dr = dirs[d][0], dc = dirs[d][1];
+      var r1 = r0 + dr, c1 = c0 + dc, r2 = r0 + dr * 2, c2 = c0 + dc * 2;
+      if (r2 < 0 || r2 > 7 || c2 < 0 || c2 > 7) continue;
+      var mid = r1 * 8 + c1, to = r2 * 8 + c2;
+      if (b[mid] * side < 0 && b[to] === 0) out.push({ from: i, to: to, cap: mid });
+    }
+    return out;
+  }
+  function stepsFor(b, i, side) {
+    var out = [], v = b[i];
+    if (!v) return out;
+    var r0 = (i / 8) | 0, c0 = i % 8, dirs = dirsFor(v);
+    for (var d = 0; d < dirs.length; d++) {
+      var r1 = r0 + dirs[d][0], c1 = c0 + dirs[d][1];
+      if (r1 < 0 || r1 > 7 || c1 < 0 || c1 > 7) continue;
+      var to = r1 * 8 + c1;
+      if (b[to] === 0) out.push({ from: i, to: to, cap: -1 });
+    }
+    return out;
+  }
+  /* ★ 全局唯一合法走法来源：任何一方有跳吃时只返回跳吃（强制吃），否则返回普通斜走 */
+  function legalMoves(b, side) {
+    var jumps = [], i;
+    for (i = 0; i < 64; i++) {
+      if (!mine(b[i], side)) continue;
+      var j = jumpsFor(b, i, side);
+      if (j.length) jumps = jumps.concat(j);
+    }
+    if (jumps.length) return jumps;
+    var moves = [];
+    for (i = 0; i < 64; i++) {
+      if (!mine(b[i], side)) continue;
+      moves = moves.concat(stepsFor(b, i, side));
+    }
+    return moves;
+  }
+  function applyMove(b, m) {
+    var v = b[m.from];
+    b[m.from] = 0;
+    b[m.to] = v;
+    if (m.cap >= 0) b[m.cap] = 0;
+    var r = (m.to / 8) | 0, promoted = false;
+    if (v === 1 && r === 0) { b[m.to] = 2; promoted = true; }
+    else if (v === -1 && r === 7) { b[m.to] = -2; promoted = true; }
+    return promoted;
+  }
+  function countSide(b, side) {
+    var n = 0;
+    for (var i = 0; i < 64; i++) if (mine(b[i], side)) n++;
+    return n;
+  }
+  function countKings(b) {
+    var n = 0;
+    for (var i = 0; i < 64; i++) if (b[i] === 2 || b[i] === -2) n++;
+    return n;
+  }
+
+  // ===== AI =====
+  var nodes = 0, NODE_CAP = 90000;
+  function squareScore(i) {
+    var c = i % 8;
+    return 1 - Math.abs(3.5 - c) / 3.5;                 // 越靠中心越高
+  }
+  function advances(i, side) {
+    var r = (i / 8) | 0;
+    return side > 0 ? (7 - r) : r;                      // 离升王行还差几行
+  }
+  function evalBoard(b, side) {
+    var s = 0;
+    for (var i = 0; i < 64; i++) {
+      var v = b[i];
+      if (!v) continue;
+      var w = (v === 2 || v === -2) ? 175 : 100;
+      var val = w + advances(i, v > 0 ? 1 : -1) * 4 + squareScore(i);
+      s += v > 0 ? val : -val;
+    }
+    return s * side;
+  }
+  function orderMoves(lm) {
+    return lm.slice().sort(function (a, b) {
+      var ca = a.cap >= 0 ? 1 : 0, cb = b.cap >= 0 ? 1 : 0;
+      if (ca !== cb) return cb - ca;
+      return squareScore(b.to) - squareScore(a.to);
+    });
+  }
+  function search(b, side, depth, alpha, beta) {
+    if (++nodes > NODE_CAP) return evalBoard(b, side);
+    var lm = legalMoves(b, side);
+    if (!lm.length) return -90000 - depth * 100;        // 该方无合法走法 = 该方负
+    if (depth <= 0) return evalBoard(b, side);
+    var ordered = orderMoves(lm), bestS = -1e9;
+    for (var k = 0; k < ordered.length; k++) {
+      var nb = b.slice();
+      applyMove(nb, ordered[k]);
+      var s = -search(nb, -side, depth - 1, -beta, -alpha);
+      if (s > bestS) bestS = s;
+      if (bestS > alpha) alpha = bestS;
+      if (alpha >= beta) break;
+    }
+    return bestS;
+  }
+  function chooseMove(lm) {
+    if (!lm.length) return null;
+    var i, m;
+    if (difficulty === 'easy') return lm[(Math.random() * lm.length) | 0];
+
+    if (difficulty === 'medium') {
+      var bestS = -1e9, picks = [];
+      for (i = 0; i < lm.length; i++) {
+        m = lm[i];
+        var king = (m.cap >= 0) && ((board[m.from] === 1 && ((m.to / 8) | 0) === 0) ||
+                                    (board[m.from] === -1 && ((m.to / 8) | 0) === 7));
+        var s = (m.cap >= 0 ? 10 : 0) + (king ? 8 : 0) + squareScore(m.to);
+        if (s > bestS + 1e-9) { bestS = s; picks = [m]; }
+        else if (Math.abs(s - bestS) < 1e-9) picks.push(m);
+      }
+      return picks[(Math.random() * picks.length) | 0];
+    }
+
+    nodes = 0;
+    var ordered = orderMoves(lm), top = -1e9, best = [];
+    for (i = 0; i < ordered.length; i++) {
+      var nb = board.slice();
+      applyMove(nb, ordered[i]);
+      var sc = -search(nb, HUMAN, 3, -1e9, 1e9);
+      if (sc > top) { top = sc; best = [ordered[i]]; }
+      else if (sc === top) best.push(ordered[i]);
+      if (nodes > NODE_CAP) break;
+    }
+    return best[(Math.random() * best.length) | 0] || lm[0];
+  }
+
+  // ===== DOM =====
+  var sqEls = [];
+  for (var bi = 0; bi < 64; bi++) {
+    var sq = document.createElement('div');
+    var br = (bi / 8) | 0, bc = bi % 8;
+    sq.className = 'sq ' + (((br + bc) % 2) ? 'dark' : 'light');
+    sq.dataset.i = String(bi);
+    boardEl.appendChild(sq);
+    sqEls.push(sq);
+  }
+
+  function render() {
+    for (var i = 0; i < 64; i++) {
+      var el = sqEls[i];
+      var cls = 'sq ' + (((((i / 8) | 0) + i % 8) % 2) ? 'dark' : 'light');
+      if (i === cursor) cls += ' cursor';
+      if (i === selected) cls += ' sel-sq';
+      if (!over && legal.length && isLegalTarget(i)) cls += ' legal';
+      el.className = cls;
+      el.innerHTML = '';
+      var v = board[i];
+      if (v) {
+        var p = document.createElement('span');
+        p.className = 'piece ' + (v > 0 ? 'p' : 'c') + (Math.abs(v) === 2 ? ' king' : '') + (i === selected ? ' sel' : '');
+        el.appendChild(p);
+      }
+    }
+  }
+  function isLegalTarget(i) {
+    for (var k = 0; k < legal.length; k++) if (legal[k].to === i) return true;
+    return false;
+  }
+  function legalFrom(i) {
+    for (var k = 0; k < legal.length; k++) if (legal[k].from === i) return legal[k];
+    return null;
+  }
+
+  // ===== HUD / 文案 =====
+  function renderHud() {
+    document.getElementById('hud-you').textContent = countSide(board, HUMAN);
+    document.getElementById('hud-cpu').textContent = countSide(board, AI);
+    document.getElementById('hud-wins').textContent = best;
+  }
+  function renderModes() {
+    var box = document.getElementById('modes');
+    box.innerHTML = '';
+    MODES.forEach(function (m) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mode' + (m === difficulty ? ' active' : '');
+      b.dataset.mode = m;
+      b.textContent = t('checkers.' + m);
+      b.addEventListener('click', function () {
+        if (difficulty === m) return;
+        difficulty = m;
+        newGame();
+        startOverlay.classList.add('hidden');
+      });
+      box.appendChild(b);
+    });
+  }
+  function renderStatus() {
+    if (over) { statusEl.textContent = endKey ? t(endKey) : ''; return; }
+    statusEl.textContent = t(turn === HUMAN ? 'checkers.turnYou' : 'checkers.turnCpu');
+  }
+  function renderOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('final-line').textContent = '';
+      document.getElementById('over-best').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = endStats
+      ? t('checkers.final', { p: endStats.p, c: endStats.c }) : '';
+    document.getElementById('over-best').textContent = best > 0
+      ? t('common.bestScore', { n: best }) : t('checkers.first');
+    document.getElementById('new-record').classList.toggle('hidden', !(endStats && endStats.record));
+  }
+  function renderStartBest() {
+    document.getElementById('start-best').textContent = best > 0
+      ? t('common.bestScore', { n: best }) : t('checkers.first');
+  }
+  function refreshAll() {
+    render(); renderHud(); renderStatus(); renderOver(); renderStartBest(); fit();
+  }
+
+  // ===== 流程 =====
+  function startPosition() {
+    board.fill(0);
+    for (var r = 0; r < 3; r++) for (var c = 0; c < 8; c++) if ((r + c) % 2 === 1) board[r * 8 + c] = -1;
+    for (var r2 = 5; r2 < 8; r2++) for (var c2 = 0; c2 < 8; c2++) if ((r2 + c2) % 2 === 1) board[r2 * 8 + c2] = 1;
+  }
+  function newGame() {
+    if (cpuTimer) { clearTimeout(cpuTimer); cpuTimer = null; }
+    startPosition();
+    turn = HUMAN; selected = -1; chain = false; movesNoCapture = 0;
+    over = false; winner = 0; endKey = null; endStats = null;
+    legal = legalMoves(board, HUMAN);
+    cursor = legal.length ? legal[0].from : 40;
+    overOverlay.classList.add('hidden');
+    renderModes(); refreshAll();
+    startOverlay.classList.remove('hidden');
+  }
+  function endGame(w) {
+    if (cpuTimer) { clearTimeout(cpuTimer); cpuTimer = null; }
+    over = true; winner = w;
+    selected = -1; chain = false; legal = [];
+    var p = countSide(board, HUMAN), c = countSide(board, AI);
+    var record = false;
+    if (w === HUMAN) {
+      best++; record = true; saveBest();
+      endKey = 'checkers.overWin'; sfx.win();
+    } else if (w === AI) {
+      endKey = 'checkers.overLose'; sfx.lose();
+    } else {
+      endKey = 'checkers.overDraw'; sfx.draw();
+    }
+    endStats = { p: p, c: c, record: record };
+    render(); renderHud(); renderStatus(); renderOver(); renderStartBest();
+    overOverlay.classList.remove('hidden');
+  }
+  function scheduleCpu() {
+    if (cpuTimer) clearTimeout(cpuTimer);
+    cpuTimer = setTimeout(function () { cpuTimer = null; cpuMove(); }, 260);
+  }
+  // 走完一步之后：换手 + 判负 / 判和
+  function afterMove(mover) {
+    turn = -mover;
+    selected = -1; chain = false;
+    legal = legalMoves(board, turn);
+    render(); renderHud(); renderStatus();
+    if (!legal.length) { endGame(mover); return; }
+    if (movesNoCapture >= DRAW_PLIES) { endGame(0); return; }
+    if (turn === AI) scheduleCpu();
+  }
+  /* 同步执行一次完整 AI 回合（含连跳）。探针 __cpu() 和 setTimeout 都走这里。 */
+  function cpuMove() {
+    if (over || turn !== AI) return;
+    var guard = 0;
+    while (guard++ < 20 && !over && turn === AI) {
+      var lm = chain ? legal : legalMoves(board, AI);
+      if (!lm.length) { endGame(HUMAN); return; }
+      var m = chooseMove(lm);
+      if (!m) { endGame(HUMAN); return; }
+      var wasMan = board[m.from] === -1;
+      var promoted = applyMove(board, m);
+      if (m.cap >= 0) movesNoCapture = 0; else movesNoCapture++;
+      if (promoted || (wasMan && (m.to / 8 | 0) === 7)) sfx.king(); else if (m.cap >= 0) sfx.cap(); else sfx.move();
+      var cont = (m.cap >= 0 && !promoted) ? jumpsFor(board, m.to, AI) : [];
+      if (cont.length) { chain = true; selected = m.to; legal = cont; render(); continue; }
+      chain = false; selected = -1;
+      turn = HUMAN;
+      legal = legalMoves(board, HUMAN);
+      render(); renderHud(); renderStatus();
+      if (!legal.length) { endGame(AI); return; }
+      if (movesNoCapture >= DRAW_PLIES) { endGame(0); return; }
+      return;
+    }
+    render(); renderHud(); renderStatus();
+  }
+
+  // ===== 人类输入 =====
+  function humanMove(to) {
+    if (over || turn !== HUMAN) return false;
+    var m = null;
+    for (var k = 0; k < legal.length; k++) {
+      if (legal[k].to === to && (selected < 0 || legal[k].from === selected)) { m = legal[k]; break; }
+    }
+    if (!m && selected >= 0) {
+      for (var k2 = 0; k2 < legal.length; k2++) if (legal[k2].to === to) { m = legal[k2]; break; }
+    }
+    if (!m) { sfx.bad(); return false; }
+    var wasMan = board[m.from] === 1;
+    var promoted = applyMove(board, m);
+    selected = -1;
+    if (m.cap >= 0) movesNoCapture = 0; else movesNoCapture++;
+    if (promoted) sfx.king(); else if (m.cap >= 0) sfx.cap(); else sfx.move();
+    var cont = (m.cap >= 0 && !promoted) ? jumpsFor(board, m.to, HUMAN) : [];
+    if (cont.length) {                   // 连跳：同一枚继续走
+      chain = true; selected = m.to; legal = cont;
+      render(); renderHud(); renderStatus();
+      return true;
+    }
+    afterMove(HUMAN);
+    return true;
+  }
+  function tapSquare(i) {
+    cursor = i;
+    if (over || turn !== HUMAN) return;
+    if (board[i] && mine(board[i], HUMAN) && !chain) {
+      if (selected === i) { render(); return; }
+      selected = i;
+      legal = legalMoves(board, HUMAN);
+      var own = legal.filter(function (m) { return m.from === i; });
+      if (own.length) { legal = own; render(); return; }
+      render();
+      return;
+    }
+    if (selected >= 0 || legal.length) {
+      if (humanMove(i)) return;
+    }
+    render();
+  }
+
+  boardEl.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== boardEl && el.dataset.i === undefined) el = el.parentNode;
+    if (!el || el === boardEl || el.dataset.i === undefined) return;
+    tapSquare(parseInt(el.dataset.i, 10));
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '').toLowerCase();
+    var r = (cursor / 8) | 0, c = cursor % 8;
+    if (k === 'arrowleft') { cursor = r * 8 + Math.max(0, c - 1); render(); e.preventDefault(); return; }
+    if (k === 'arrowright') { cursor = r * 8 + Math.min(7, c + 1); render(); e.preventDefault(); return; }
+    if (k === 'arrowup') { cursor = Math.max(0, r - 1) * 8 + c; render(); e.preventDefault(); return; }
+    if (k === 'arrowdown') { cursor = Math.min(7, r + 1) * 8 + c; render(); e.preventDefault(); return; }
+    if (k === 'enter' || k === ' ') { tapSquare(cursor); e.preventDefault(); return; }
+    if (k === 'escape') {
+      if (selected >= 0 && !chain) { selected = -1; legal = legalMoves(board, turn); render(); }
+      e.preventDefault(); return;
+    }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', function () {
+    startOverlay.classList.add('hidden');
+    render();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function () {
+    newGame();
+    startOverlay.classList.add('hidden');
+  });
+  document.getElementById('btn-again').addEventListener('click', function () {
+    newGame();
+    startOverlay.classList.add('hidden');
+  });
+
+  // ===== 分享 =====
+  function shareText() {
+    var s = endStats || { p: countSide(board, HUMAN), c: countSide(board, AI) };
+    return t('checkers.share', { p: s.p, c: s.c, url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 尺寸自适应 =====
+  var mqLandscape = window.matchMedia('(orientation: landscape) and (max-height: 620px)');
+  function fit() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadV = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var bodyPadH = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var panelPadV = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var panelPadH = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var footerH = 0;
+    if (footerEl) {
+      var fcs = getComputedStyle(footerEl);
+      footerH = footerEl.offsetHeight + parseFloat(fcs.marginTop || 0);
+    }
+    var land = mqLandscape.matches;
+    var BORDER = 2, BOARD_PAD = 4;
+    var availW, availH, GAP;
+    if (land) {
+      GAP = 1;
+      availH = window.innerHeight - bodyPadV - panelPadV - BORDER - BOARD_PAD - 4;
+      availW = window.innerWidth - bodyPadH - panelPadH - BORDER - BOARD_PAD -
+               sideEl.offsetWidth - (footerEl ? footerEl.offsetWidth + 8 : 0) - 16;
+    } else {
+      GAP = 2;
+      availH = window.innerHeight - bodyPadV - panelPadV - BORDER - BOARD_PAD - footerH - sideEl.offsetHeight - 14;
+      availW = Math.min(window.innerWidth, 584) - bodyPadH - panelPadH - BORDER - BOARD_PAD - 4;
+    }
+    var cs = Math.floor(Math.min((availW - 7 * GAP) / 8, (availH - 7 * GAP) / 8));
+    if (!(cs > 0)) cs = 38;
+    cs = Math.max(38, Math.min(56, cs));
+    panel.style.setProperty('--cs', cs + 'px');
+    panel.style.setProperty('--gap', GAP + 'px');
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  WG.onChange(function () { refreshAll(); });
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      turn: turn, selected: selected, legalCount: legal.length,
+      piecesP: countSide(board, HUMAN), piecesC: countSide(board, AI),
+      kings: countKings(board), movesNoCapture: movesNoCapture,
+      over: over, winner: winner, endKey: endKey, best: best,
+      chain: chain, difficulty: difficulty
+    };
+  };
+  window.__legal = function () {
+    return legal.map(function (m) { return { from: m.from, to: m.to, cap: m.cap }; });
+  };
+  window.__cpu = function () { cpuMove(); return window.__st(); };
+  window.__reset = function (d) {
+    if (d !== undefined && d !== null) {
+      if (typeof d === 'number') difficulty = MODES[Math.max(0, Math.min(2, d | 0))];
+      else if (MODES.indexOf(String(d)) >= 0) difficulty = String(d);
+    }
+    newGame();
+    startOverlay.classList.add('hidden');
+    turn = HUMAN; legal = legalMoves(board, HUMAN);
+    render(); renderHud(); renderStatus();
+    return window.__st();
+  };
+
+  // ===== 启动 =====
+  newGame();
+  fit();
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>

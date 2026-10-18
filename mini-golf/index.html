@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="miniGolf.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mini Golf — Free Online 9-Hole Putting Game</title>
+<meta name="description" content="Play Mini Golf free in your browser: nine hand-built holes, drag back to aim, release to putt. Sand, water and walls, par for every hole and a best-round record. Works on mobile and desktop.">
+<meta name="keywords" content="mini golf,putting game,golf game,9 holes,physics game,free online game,html5 game,browser game,mobile game,no install">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Mini Golf — Free Online 9-Hole Putting Game">
+<meta property="og:description" content="Nine hand-built holes. Drag back, release, sink it. Par, water hazards and a best-round record.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #12251a 0%, #1b3324 55%, #102a20 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 10px 12px 4px; user-select: none;
+  }
+  .panel {
+    position: relative;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .side { display: contents; }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; order: 0; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 5px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: .8px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  /* 画布 480×640：宽度同时受可用高度反推约束，否则矮视口下画布被裁。
+     必须两行（svh + vh），只写 svh 会让旧浏览器整条 calc 作废。 */
+  .wrap {
+    width: min(480px, 100%, max(200px, calc((100svh - 200px) * 0.75)));
+    width: min(480px, 100%, max(200px, calc((100vh  - 200px) * 0.75)));
+    margin: 0 auto; border-radius: 12px; overflow: hidden;
+    line-height: 0; touch-action: none;
+  }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(10, 22, 15, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+  .over-sub { font-size: 13px; opacity: .8; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .final-line { font-size: 15px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button, #btn-hole-next {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit; padding: 0 10px;
+  }
+  #btn-hole-next { flex: 0 0 auto; min-width: 170px; margin-top: 4px; }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .start-btn { margin-top: 6px; padding: 12px 28px; }
+
+  .actions { display: flex; gap: 8px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px; font-family: inherit;
+  }
+  .actions button:active { transform: scale(.96); }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (max-width: 430px) {
+    body { padding: 6px 6px 2px; }
+    .panel { padding: 6px; border-radius: 14px; }
+    .overlay { border-radius: 14px; }
+    .stat { padding: 2px 3px; }
+    .stat small { font-size: 8px; letter-spacing: .3px; }
+    .stat span { font-size: 13px; }
+  }
+  /* 矮竖屏(SE 667)：页脚 + 顶栏 + 按钮行占掉约 250px，画布必须按剩余高度反推，
+     否则整页纵溢 47px（viewport-probe 只报「纵溢有」，玩家看到的是页脚被裁）。 */
+  @media (max-height: 720px) and (orientation: portrait) {
+    .wrap { width: min(480px, 100%, max(180px, calc((100svh - 262px) * 0.75))); }
+    .wrap { width: min(480px, 100%, max(180px, calc((100vh  - 262px) * 0.75))); }
+    .footer { margin-top: 6px; line-height: 1.5; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin: 0 8px 0 0; }
+  }
+  /* 横屏 / 矮窗口：HUD 收到画布右侧，纵向全给球场 */
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 2px 6px 2px; }
+    .panel { flex-direction: row; align-items: center; padding: 6px; gap: 8px; }
+    .side { display: flex; flex-direction: column; width: 132px; flex: 0 0 auto; gap: 6px; order: 2; }
+    .wrap { flex: 0 0 auto; margin: 0; width: min(480px, 100%, max(150px, calc((100svh - 96px) * 0.75))); }
+    .wrap { width: min(480px, 100%, max(150px, calc((100vh  - 96px) * 0.75))); }
+    .topbar { flex-direction: column; width: 132px; gap: 4px; }
+    .stat { width: 100%; padding: 1px 3px; }
+    .stat small { font-size: 8px; letter-spacing: .2px; }
+    .stat span { font-size: 12px; }
+    .actions { flex-direction: column; width: 132px; }
+    .actions { justify-content: flex-start; }
+    .actions button { width: 132px; height: 44px; min-height: 44px; font-size: 12px; flex: 0 0 auto; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin-right: 8px; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 17px; }
+    .over-sub, .final-line { font-size: 11px; }
+    .icon-big { font-size: 22px; }
+    .over-btns button, #btn-hole-next { min-height: 44px; font-size: 11px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="side">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="miniGolf.hudHole">HOLE</small><span id="hud-hole">1/9</span></div>
+    <div class="stat"><small data-i18n="miniGolf.hudStrokes">STROKES</small><span id="hud-strokes">0</span></div>
+    <div class="stat"><small data-i18n="miniGolf.hudPar">PAR</small><span id="hud-par">3</span></div>
+    <div class="stat"><small data-i18n="miniGolf.hudTotal">TOTAL</small><span id="hud-total">0</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="actions">
+    <button class="btn-ghost" id="btn-restart" data-i18n="miniGolf.restart">RESTART ROUND</button>
+  </div>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <canvas id="game" width="480" height="640"></canvas>
+  </div>
+
+  <div class="overlay hidden" id="hole-overlay">
+    <div class="icon-big">⛳</div>
+    <div class="over-title" id="hole-title"></div>
+    <div class="final-line" id="hole-line"></div>
+    <button class="btn-primary" id="btn-hole-next" data-i18n="miniGolf.next">NEXT HOLE</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">🏆</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">⛳</div>
+    <div class="over-title" data-i18n="miniGolf.title">MINI GOLF</div>
+    <div class="over-sub" data-i18n-html="miniGolf.tip">Drag <b>back</b> from the ball and release to putt — the longer the pull, the harder the shot.<br>Nine holes with <b>sand</b>, <b>water</b> and walls. Water costs a stroke.<br>Keys <b>← →</b> aim, <b>↑ ↓</b> set power, <b>Space</b> putts.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var W = 480, H = 640;
+  var BALL_R = 7, CUP_R = 11;
+  var FIELD = { x: 16, y: 16, w: 448, h: 608 };
+  var MAXSPEED = 900;          // px/s
+  var MAXPULL = 80;            // 满力拖拽距离(px)
+  var DRAG = 1.15;             // 每秒速度衰减系数 → 行程 ≈ v0 / DRAG
+  var REST = 0.62;             // 撞墙恢复系数
+  var STEP = 1 / 120;          // 固定步进
+  var TOTAL_HOLES = 9;
+  var STORE_KEY = 'mini_golf_best_v1';
+
+  /* ---- 9 洞手工常量 ----
+     每洞保证 tee→cup 的直线不穿过任何墙体（validateHoles 逐洞复算，
+     墙体按球半径 7 膨胀），par 由距离分档：≤160→2，≤300→3，其余 4。 */
+  var HOLES = [
+    { tee: [110, 540], cup: [370, 540],
+      walls: [[200, 440, 40, 70], [250, 580, 120, 30]],
+      sand: [[60, 420, 90, 60]], water: [] },
+    { tee: [240, 560], cup: [240, 180],
+      walls: [[80, 300, 120, 40], [300, 300, 110, 40]],
+      sand: [[60, 430, 100, 60]], water: [] },
+    { tee: [90, 160], cup: [390, 160],
+      walls: [[180, 60, 50, 60], [280, 220, 60, 60], [400, 60, 50, 60]],
+      sand: [[200, 260, 120, 50]], water: [[60, 300, 100, 70]] },
+    { tee: [240, 540], cup: [110, 300],
+      walls: [[300, 380, 90, 30], [180, 180, 80, 40]],
+      sand: [[40, 430, 80, 80]], water: [[330, 480, 100, 70]] },
+    { tee: [400, 560], cup: [110, 420],
+      walls: [[150, 560, 80, 50], [250, 330, 90, 50]],
+      sand: [[60, 250, 90, 60]], water: [[60, 520, 120, 60]] },
+    { tee: [240, 570], cup: [240, 450],
+      walls: [[120, 400, 70, 50], [300, 400, 70, 50]],
+      sand: [[60, 470, 90, 60]], water: [[320, 200, 100, 70]] },
+    { tee: [110, 110], cup: [380, 260],
+      walls: [[200, 60, 60, 60], [280, 300, 90, 60]],
+      sand: [[60, 300, 90, 90]], water: [[340, 480, 100, 80]] },
+    { tee: [380, 130], cup: [120, 430],
+      walls: [[250, 300, 70, 50], [60, 130, 60, 60]],
+      sand: [[300, 520, 120, 60]], water: [[40, 520, 100, 70]] },
+    { tee: [240, 560], cup: [240, 140],
+      walls: [[150, 340, 80, 50], [270, 240, 80, 50]],
+      sand: [[90, 200, 80, 70]], water: [[320, 420, 100, 70]] }
+  ];
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var panel = document.getElementById('panel');
+  var footerEl = document.querySelector('.footer');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var holeOverlay = document.getElementById('hole-overlay');
+
+  // roundRect polyfill（老 Safari 没有）
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      var rr = Math.min(r || 0, Math.abs(w) / 2, Math.abs(h) / 2);
+      this.beginPath();
+      this.moveTo(x + rr, y);
+      this.arcTo(x + w, y, x + w, y + h, rr);
+      this.arcTo(x + w, y + h, x, y + h, rr);
+      this.arcTo(x, y + h, x, y, rr);
+      this.arcTo(x, y, x + w, y, rr);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    putt:  function () { beep(180, 0.07, 'square', 0.07); },
+    wall:  function () { beep(120, 0.05, 'square', 0.04); },
+    water: function () { beep(160, 0.2, 'sine', 0.07); setTimeout(function () { beep(110, 0.25, 'sine', 0.06); }, 120); },
+    hole:  function () { [0, 90, 180].forEach(function (d, i) { setTimeout(function () { beep(600 + i * 180, 0.13, 'triangle', 0.09); }, d); }); },
+    win:   function () { [0, 110, 220, 340, 470].forEach(function (d, i) { setTimeout(function () { beep(520 + i * 140, 0.16, 'triangle', 0.09); }, d); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 关卡解析 =====
+  function parForDist(d) { return d <= 160 ? 2 : (d <= 300 ? 3 : 4); }
+
+  function parseHoles() {
+    var out = [];
+    for (var i = 0; i < HOLES.length; i++) {
+      var h = HOLES[i];
+      var w = [], s = [], wa = [];
+      for (var j = 0; j < h.walls.length; j++) {
+        var r = h.walls[j];
+        w.push({ x: r[0], y: r[1], w: r[2], h: r[3] });
+      }
+      for (var k = 0; k < h.sand.length; k++) {
+        var r2 = h.sand[k];
+        s.push({ x: r2[0], y: r2[1], w: r2[2], h: r2[3] });
+      }
+      for (var m = 0; m < h.water.length; m++) {
+        var r3 = h.water[m];
+        wa.push({ x: r3[0], y: r3[1], w: r3[2], h: r3[3] });
+      }
+      var dx = h.cup[0] - h.tee[0], dy = h.cup[1] - h.tee[1];
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      out.push({
+        tee: { x: h.tee[0], y: h.tee[1] },
+        cup: { x: h.cup[0], y: h.cup[1] },
+        walls: w, sand: s, water: wa,
+        dist: dist, par: parForDist(dist)
+      });
+    }
+    return out;
+  }
+  var COURSE = parseHoles();
+
+  // 线段 vs 矩形（Liang–Barsky，矩形按 pad 膨胀）
+  function segHitsRect(x0, y0, x1, y1, rc, pad) {
+    var minX = rc.x - pad, maxX = rc.x + rc.w + pad;
+    var minY = rc.y - pad, maxY = rc.y + rc.h + pad;
+    var dx = x1 - x0, dy = y1 - y0;
+    var p = [-dx, dx, -dy, dy];
+    var q = [x0 - minX, maxX - x0, y0 - minY, maxY - y0];
+    var t0 = 0, t1 = 1;
+    for (var i = 0; i < 4; i++) {
+      if (p[i] === 0) { if (q[i] < 0) return false; }
+      else {
+        var r = q[i] / p[i];
+        if (p[i] < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+        else { if (r < t0) return false; if (r < t1) t1 = r; }
+      }
+    }
+    return true;
+  }
+
+  function validateHoles() {
+    for (var i = 0; i < COURSE.length; i++) {
+      var h = COURSE[i];
+      if (h.dist > 420 || h.dist < 40) return false;
+      if (h.par < 2 || h.par > 4) return false;
+      for (var j = 0; j < h.walls.length; j++) {
+        if (segHitsRect(h.tee.x, h.tee.y, h.cup.x, h.cup.y, h.walls[j], BALL_R)) return false;
+      }
+      // tee / cup 必须在场地内、不在墙里、也不在水里（落水会直接重置 → 永远打不进）
+      var pts = [h.tee, h.cup];
+      for (var p = 0; p < 2; p++) {
+        var pt = pts[p];
+        if (pt.x < FIELD.x + 10 || pt.x > FIELD.x + FIELD.w - 10) return false;
+        if (pt.y < FIELD.y + 10 || pt.y > FIELD.y + FIELD.h - 10) return false;
+        for (var k = 0; k < h.walls.length; k++) {
+          var w2 = h.walls[k];
+          if (pt.x > w2.x - 8 && pt.x < w2.x + w2.w + 8 && pt.y > w2.y - 8 && pt.y < w2.y + w2.h + 8) return false;
+        }
+        for (var wi = 0; wi < h.water.length; wi++) {
+          if (inRect(h.water[wi], pt.x, pt.y)) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // ===== 状态 =====
+  var hole = 1;
+  var ball = { x: 0, y: 0, vx: 0, vy: 0 };
+  var strokes = 0, total = 0;
+  var par = 3;
+  var phase = 'aim';
+  var walls = [], sand = [], water = [];
+  var cup = { x: 0, y: 0, r: CUP_R };
+  var aim = { active: false, dx: 1, dy: 0, power: 0, px: 0, py: 0 };
+  var endKey = null, endStats = null;
+  var best = 0;
+  var pointerId = null;
+  var started = false;
+  var splashT = 0;
+
+  try {
+    var raw = localStorage.getItem(STORE_KEY);
+    var b = parseInt(raw || '0', 10);
+    if (b > 0 && b < 99999) best = b;      // loop-probe 会塞 99999 → 视为无记录
+  } catch (e) {}
+
+  function loadHole(n) {
+    hole = Math.max(1, Math.min(TOTAL_HOLES, n | 0));
+    var h = COURSE[hole - 1];
+    ball.x = h.tee.x; ball.y = h.tee.y; ball.vx = 0; ball.vy = 0;
+    strokes = 0;
+    par = h.par;
+    walls = h.walls; sand = h.sand; water = h.water;
+    cup = { x: h.cup.x, y: h.cup.y, r: CUP_R };
+    phase = 'aim';
+    aim.active = false; aim.power = 0;
+    aim.dx = (cup.x - ball.x) || 1;
+    aim.dy = (cup.y - ball.y) || 0;
+    var len = Math.sqrt(aim.dx * aim.dx + aim.dy * aim.dy) || 1;
+    aim.dx /= len; aim.dy /= len;
+    aim.power = 0.55;
+    endKey = null; endStats = null;
+    splashT = 0;
+    holeOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    updateHud();
+    draw();
+  }
+
+  function newRound(showStart) {
+    total = 0;
+    best = best || 0;
+    loadHole(1);
+    overOverlay.classList.add('hidden');
+    holeOverlay.classList.add('hidden');
+    if (showStart) { startOverlay.classList.remove('hidden'); started = false; }
+    else { startOverlay.classList.add('hidden'); started = true; }
+    renderStartBest();
+    updateHud();
+    draw();
+    fit();
+  }
+
+  function begin() {
+    if (started && phase !== 'over') return;
+    started = true;
+    startOverlay.classList.add('hidden');
+    if (phase === 'over') { newRound(false); }
+  }
+
+  // ===== 物理 =====
+  function collideRect(r) {
+    var cx = Math.max(r.x, Math.min(ball.x, r.x + r.w));
+    var cy = Math.max(r.y, Math.min(ball.y, r.y + r.h));
+    var dx = ball.x - cx, dy = ball.y - cy;
+    var d2 = dx * dx + dy * dy;
+    if (d2 > BALL_R * BALL_R) return false;
+    var d = Math.sqrt(d2), nx, ny;
+    if (d > 0.001) { nx = dx / d; ny = dy / d; }
+    else {
+      // 球心已进入矩形：沿最浅的一边推出去
+      var left = ball.x - r.x, right = r.x + r.w - ball.x;
+      var top = ball.y - r.y, bottom = r.y + r.h - ball.y;
+      var mn = Math.min(left, right, top, bottom);
+      if (mn === left) { nx = -1; ny = 0; ball.x = r.x - BALL_R; }
+      else if (mn === right) { nx = 1; ny = 0; ball.x = r.x + r.w + BALL_R; }
+      else if (mn === top) { nx = 0; ny = -1; ball.y = r.y - BALL_R; }
+      else { nx = 0; ny = 1; ball.y = r.y + r.h + BALL_R; }
+    }
+    var pen = BALL_R - d;
+    if (pen > 0) { ball.x += nx * pen; ball.y += ny * pen; }
+    var vn = ball.vx * nx + ball.vy * ny;
+    if (vn < 0) {
+      ball.vx -= (1 + REST) * vn * nx;
+      ball.vy -= (1 + REST) * vn * ny;
+      if (Math.abs(vn) > 40) sfx.wall();
+    }
+    return true;
+  }
+
+  function inRect(r, x, y) {
+    return x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h;
+  }
+
+  function resetAfterWater() {
+    strokes++;
+    total++;
+    ball.x = COURSE[hole - 1].tee.x;
+    ball.y = COURSE[hole - 1].tee.y;
+    ball.vx = 0; ball.vy = 0;
+    phase = 'aim';
+    splashT = 45;
+    aim.power = 0.55;
+    sfx.water();
+    updateHud();
+  }
+
+  function physics(h) {
+    if (phase !== 'rolling') return;
+    var sp = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+    if (sp < 5) { ball.vx = 0; ball.vy = 0; phase = 'aim'; aim.power = 0.55; return; }
+
+    var damp = Math.exp(-DRAG * h);
+    // 沙地额外阻力
+    for (var i = 0; i < sand.length; i++) {
+      if (inRect(sand[i], ball.x, ball.y)) { damp *= Math.exp(-4.2 * h); break; }
+    }
+    ball.vx *= damp;
+    ball.vy *= damp;
+
+    ball.x += ball.vx * h;
+    ball.y += ball.vy * h;
+
+    // 场地边界
+    var minX = FIELD.x + BALL_R, maxX = FIELD.x + FIELD.w - BALL_R;
+    var minY = FIELD.y + BALL_R, maxY = FIELD.y + FIELD.h - BALL_R;
+    if (ball.x < minX) { ball.x = minX; if (ball.vx < 0) ball.vx = -ball.vx * REST; }
+    if (ball.x > maxX) { ball.x = maxX; if (ball.vx > 0) ball.vx = -ball.vx * REST; }
+    if (ball.y < minY) { ball.y = minY; if (ball.vy < 0) ball.vy = -ball.vy * REST; }
+    if (ball.y > maxY) { ball.y = maxY; if (ball.vy > 0) ball.vy = -ball.vy * REST; }
+
+    for (var w = 0; w < walls.length; w++) collideRect(walls[w]);
+
+    // 水障碍
+    for (var wa = 0; wa < water.length; wa++) {
+      if (inRect(water[wa], ball.x, ball.y)) { resetAfterWater(); return; }
+    }
+
+    // 进洞
+    var ddx = ball.x - cup.x, ddy = ball.y - cup.y;
+    var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+    var sp2 = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+    if (dd < cup.r + 1 && sp2 < 330) { sink(); return; }
+    if (dd < cup.r - 3 && sp2 < 520) { sink(); return; }
+  }
+
+  function sink() {
+    ball.x = cup.x; ball.y = cup.y; ball.vx = 0; ball.vy = 0;
+    phase = 'holed';
+    aim.active = false;
+    sfx.hole();
+    updateHud();
+    // 每洞结算卡
+    document.getElementById('hole-title').textContent = t('miniGolf.holeTitle', { n: hole, p: par });
+    document.getElementById('hole-line').textContent = t('miniGolf.holeLine', { s: strokes });
+    var nb = document.getElementById('btn-hole-next');
+    nb.textContent = hole >= TOTAL_HOLES ? t('miniGolf.finish') : t('miniGolf.next');
+    holeOverlay.classList.remove('hidden');
+  }
+
+  function nextHole() {
+    if (hole >= TOTAL_HOLES) { finishRound(); return; }
+    loadHole(hole + 1);
+  }
+
+  function finishRound() {
+    phase = 'over';
+    endKey = 'miniGolf.over';
+    var rec = !best || total < best;
+    if (rec) { best = total; try { localStorage.setItem(STORE_KEY, String(best)); } catch (e) {} }
+    endStats = { total: total, best: best, record: rec };
+    holeOverlay.classList.add('hidden');
+    renderOver();
+    overOverlay.classList.remove('hidden');
+    sfx.win();
+    updateHud();
+  }
+
+  // ===== 输入 =====
+  function toCanvas(e) {
+    var r = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) / (r.width || 1) * W,
+      y: (e.clientY - r.top) / (r.height || 1) * H
+    };
+  }
+
+  function applyAim(p) {
+    var dx = ball.x - p.x, dy = ball.y - p.y;
+    var len = Math.sqrt(dx * dx + dy * dy);
+    if (len > 2) { aim.dx = dx / len; aim.dy = dy / len; }
+    aim.power = Math.max(0, Math.min(1, len / MAXPULL));
+    aim.px = p.x; aim.py = p.y;
+  }
+
+  function shoot() {
+    if (phase !== 'aim' || aim.power < 0.04) return;
+    var p = Math.max(0.05, aim.power);
+    ball.vx = aim.dx * p * MAXSPEED;
+    ball.vy = aim.dy * p * MAXSPEED;
+    strokes++;
+    total++;
+    phase = 'rolling';
+    aim.active = false;
+    sfx.putt();
+    updateHud();
+  }
+
+  canvas.addEventListener('pointerdown', function (e) {
+    begin();
+    if (phase !== 'aim') return;
+    var p = toCanvas(e);
+    var d = Math.sqrt((p.x - ball.x) * (p.x - ball.x) + (p.y - ball.y) * (p.y - ball.y));
+    if (d > 90) return;
+    if (e.cancelable) e.preventDefault();
+    aim.active = true;
+    pointerId = (e.pointerId === undefined ? null : e.pointerId);
+    applyAim(p);
+    if (canvas.setPointerCapture) { try { canvas.setPointerCapture(e.pointerId); } catch (err) {} }
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (!aim.active) return;
+    if (pointerId !== null && e.pointerId !== undefined && e.pointerId !== pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    applyAim(toCanvas(e));
+  });
+  function endAim(e) {
+    if (!aim.active) return;
+    if (pointerId !== null && e && e.pointerId !== undefined && e.pointerId !== pointerId) return;
+    aim.active = false;
+    pointerId = null;
+    if (aim.power >= 0.04) shoot();
+  }
+  canvas.addEventListener('pointerup', endAim);
+  canvas.addEventListener('pointercancel', function () {
+    aim.active = false; pointerId = null; aim.power = 0.55;
+  });
+  // click 兜底：某些环境只派发 click（也用于"点一下就开始"）
+  canvas.addEventListener('click', function (e) {
+    begin();
+    if (phase !== 'aim' || aim.active) return;
+    var p = toCanvas(e);
+    var d = Math.sqrt((p.x - ball.x) * (p.x - ball.x) + (p.y - ball.y) * (p.y - ball.y));
+    if (d > 90) return;
+    // 点球附近 = 朝洞口方向轻推一杆；真正的力度仍由拖拽决定
+    var dx = cup.x - ball.x, dy = cup.y - ball.y;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    aim.dx = dx / len; aim.dy = dy / len; aim.power = 0.5;
+    draw();
+  });
+
+  window.addEventListener('keydown', function (e) {
+    var k = e.key;
+    if (k === 'ArrowLeft' || k === 'ArrowRight') {
+      if (phase !== 'aim') return;
+      var a = Math.atan2(aim.dy, aim.dx) + (k === 'ArrowLeft' ? -2 : 2) * Math.PI / 180;
+      aim.dx = Math.cos(a); aim.dy = Math.sin(a);
+      e.preventDefault(); return;
+    }
+    if (k === 'ArrowUp' || k === 'ArrowDown') {
+      if (phase !== 'aim') return;
+      aim.power = Math.max(0.05, Math.min(1, aim.power + (k === 'ArrowUp' ? 0.05 : -0.05)));
+      e.preventDefault(); return;
+    }
+    if (k === ' ' || k === 'Enter') {
+      if (phase === 'holed') { nextHole(); e.preventDefault(); return; }
+      if (phase === 'aim') { shoot(); e.preventDefault(); return; }
+    }
+    if (k === 'r' || k === 'R') { newRound(true); e.preventDefault(); }
+  });
+
+  document.getElementById('btn-start').addEventListener('click', function () { begin(); });
+  document.getElementById('btn-restart').addEventListener('click', function () { newRound(true); });
+  document.getElementById('btn-hole-next').addEventListener('click', nextHole);
+  document.getElementById('btn-again').addEventListener('click', function () { newRound(false); });
+
+  // ===== HUD / 文案 =====
+  function updateHud() {
+    document.getElementById('hud-hole').textContent = hole + '/' + TOTAL_HOLES;
+    document.getElementById('hud-strokes').textContent = String(strokes);
+    document.getElementById('hud-par').textContent = String(par);
+    document.getElementById('hud-total').textContent = String(total);
+  }
+  function renderOver() {
+    if (!endKey || !endStats) return;
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent = t('miniGolf.final', { s: endStats.total, b: endStats.best });
+    document.getElementById('over-best').textContent = endStats.best > 0 ? t('common.bestLabel', { n: endStats.best }) : '';
+    document.getElementById('new-record').classList.toggle('hidden', !endStats.record);
+  }
+  function renderStartBest() {
+    document.getElementById('start-best').textContent = best > 0
+      ? t('common.bestLabel', { n: best })
+      : t('miniGolf.first');
+  }
+
+  // ===== 绘制 =====
+  function draw() {
+    // 背景
+    var bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#193b28');
+    bg.addColorStop(1, '#0e2419');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // 球道
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h, 16);
+    ctx.clip();
+    ctx.fillStyle = '#2f8a52';
+    ctx.fillRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h);
+    // 修剪条纹
+    ctx.fillStyle = 'rgba(255,255,255,.035)';
+    for (var sy = FIELD.y; sy < FIELD.y + FIELD.h; sy += 56) {
+      ctx.fillRect(FIELD.x, sy, FIELD.w, 28);
+    }
+    // 沙坑
+    for (var i = 0; i < sand.length; i++) {
+      var s = sand[i];
+      ctx.fillStyle = '#e2c98c';
+      ctx.beginPath();
+      ctx.roundRect(s.x, s.y, s.w, s.h, 14);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(150,118,58,.55)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    // 水障碍
+    for (var j = 0; j < water.length; j++) {
+      var wa = water[j];
+      ctx.fillStyle = '#2f7fd6';
+      ctx.beginPath();
+      ctx.roundRect(wa.x, wa.y, wa.w, wa.h, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(190,225,255,.5)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,.32)';
+      ctx.lineWidth = 2;
+      for (var k = 0; k < 3; k++) {
+        var wy = wa.y + 14 + k * 16;
+        ctx.beginPath();
+        ctx.moveTo(wa.x + 10, wy);
+        ctx.bezierCurveTo(wa.x + wa.w * 0.35, wy - 5, wa.x + wa.w * 0.65, wy + 5, wa.x + wa.w - 10, wy);
+        ctx.stroke();
+      }
+    }
+    // 墙体
+    for (var m = 0; m < walls.length; m++) {
+      var w = walls[m];
+      ctx.fillStyle = '#12392a';
+      ctx.beginPath();
+      ctx.roundRect(w.x, w.y, w.w, w.h, 7);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(120,200,140,.22)';
+      ctx.beginPath();
+      ctx.roundRect(w.x + 3, w.y + 3, w.w - 6, Math.min(7, w.h - 6), 4);
+      ctx.fill();
+    }
+    // 洞
+    ctx.beginPath();
+    ctx.ellipse(cup.x, cup.y, cup.r + 3, cup.r + 3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cup.x, cup.y, cup.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#08130d';
+    ctx.fill();
+    // 旗
+    ctx.strokeStyle = '#f2f2f2';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(cup.x, cup.y - 2);
+    ctx.lineTo(cup.x, cup.y - 34);
+    ctx.stroke();
+    ctx.fillStyle = '#e8524a';
+    ctx.beginPath();
+    ctx.moveTo(cup.x, cup.y - 34);
+    ctx.lineTo(cup.x + 20, cup.y - 28);
+    ctx.lineTo(cup.x, cup.y - 22);
+    ctx.closePath();
+    ctx.fill();
+
+    // 球
+    ctx.beginPath();
+    ctx.ellipse(ball.x + 2, ball.y + 3, BALL_R, BALL_R * 0.85, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,.32)';
+    ctx.fill();
+    var g2 = ctx.createRadialGradient(ball.x - 3, ball.y - 4, 1, ball.x, ball.y, BALL_R);
+    g2.addColorStop(0, '#ffffff');
+    g2.addColorStop(1, '#cfd8cf');
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI * 2);
+    ctx.fillStyle = g2;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(ball.x - 2, ball.y - 2.5, 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
+    ctx.fill();
+
+    // 瞄准线
+    if (phase === 'aim' && aim.power > 0.01) {
+      var L = 54 + aim.power * 110;
+      ctx.save();
+      ctx.setLineDash([7, 7]);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.45 + aim.power * 0.45).toFixed(2) + ')';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ball.x + aim.dx * (BALL_R + 3), ball.y + aim.dy * (BALL_R + 3));
+      ctx.lineTo(ball.x + aim.dx * L, ball.y + aim.dy * L);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 力度条（固定在球场左下角，不跟着洞口跑，免得压住墙/沙坑）
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.beginPath();
+      ctx.roundRect(FIELD.x + 12, FIELD.y + FIELD.h - 26, 88, 10, 5);
+      ctx.fill();
+      ctx.fillStyle = aim.power > 0.75 ? '#ff8a5c' : '#ffd76e';
+      ctx.beginPath();
+      ctx.roundRect(FIELD.x + 14, FIELD.y + FIELD.h - 24, Math.max(2, 84 * aim.power), 6, 3);
+      ctx.fill();
+      ctx.restore();
+    }
+    // 拖拽点
+    if (aim.active) {
+      ctx.beginPath();
+      ctx.arc(ball.x - aim.dx * aim.power * MAXPULL, ball.y - aim.dy * aim.power * MAXPULL, 9, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,215,110,.55)';
+      ctx.fill();
+    }
+    // 水花提示
+    if (splashT > 0) {
+      splashT--;
+      ctx.fillStyle = 'rgba(255,255,255,' + (splashT / 60).toFixed(2) + ')';
+      ctx.font = 'bold 18px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💧', ball.x, ball.y - 18);
+    }
+    ctx.restore();
+
+    // 场地外框
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(FIELD.x, FIELD.y, FIELD.w, FIELD.h, 16);
+    ctx.stroke();
+  }
+
+  // ===== 主循环：rAF + 固定步进 1/120 =====
+  var last = performance.now(), acc = 0;
+  function loop(ts) {
+    requestAnimationFrame(loop);                 // ★ 必须先排下一帧
+    var dt = Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+    if (dt < 0) dt = 0;
+    acc += dt;
+    var guard = 0;
+    while (acc >= STEP && guard < 8) { acc -= STEP; physics(STEP); guard++; }
+    if (guard >= 8) acc = 0;
+    draw();
+  }
+  document.addEventListener('visibilitychange', function () {
+    last = performance.now(); acc = 0;
+  });
+  requestAnimationFrame(loop);
+
+  // ===== 尺寸 =====
+  function resizeCanvas() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    var bw = Math.round(W * dpr), bh = Math.round(H * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) {
+      canvas.width = bw;
+      canvas.height = bh;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function fit() {
+    resizeCanvas();
+    draw();
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+
+  // ===== 分享 =====
+  function shareText() {
+    var s = endStats || { total: total };
+    return t('miniGolf.share', { s: s.total, url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      hole: hole, strokes: strokes, total: total, phase: phase,
+      ball: { x: ball.x, y: ball.y, vx: ball.vx, vy: ball.vy },
+      cup: { x: cup.x, y: cup.y, r: cup.r }, par: par,
+      aimPower: aim.power, endKey: endKey, best: best
+    };
+  };
+  window.__lv = function (n) { loadHole(n | 0); return window.__st(); };
+  window.__drive = function (steps) {
+    for (var i = 0; i < steps; i++) {
+      var dtFrames = 1 / 60;
+      acc += dtFrames;
+      var guard = 0;
+      while (acc >= STEP && guard < 8) { acc -= STEP; physics(STEP); guard++; }
+      if (guard >= 8) acc = 0;
+    }
+    draw();
+  };
+  window.__aimFor = function () {
+    var dx = cup.x - ball.x, dy = cup.y - ball.y;
+    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    var ux = dx / dist, uy = dy / dist;
+    var v0 = Math.min(MAXSPEED * 0.96, dist * DRAG * 1.15);
+    var power = Math.max(0.05, Math.min(1, v0 / MAXSPEED));
+    var pull = power * MAXPULL;
+    return {
+      x0: ball.x / W, y0: ball.y / H,
+      x1: (ball.x - ux * pull) / W, y1: (ball.y - uy * pull) / H
+    };
+  };
+  window.__validate = function () { return validateHoles(); };
+
+  // ===== 启动 =====
+  WG.onChange(function () { updateHud(); renderOver(); renderStartBest(); fit(); });
+  newRound(true);
+  requestAnimationFrame(function () { fit(); });
+  if (location.hash === '#play') begin();
+})();
+</script>
+</body>
+</html>

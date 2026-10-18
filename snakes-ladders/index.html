@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="snakesLadders.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Snakes and Ladders — Free Online Dice Board Game</title>
+<meta name="description" content="Play Snakes and Ladders free in your browser. Roll the dice, climb the ladders and dodge the snakes — first to square 100 wins. Play against the CPU on desktop or mobile.">
+<meta name="keywords" content="snakes and ladders,snakes ladders,board game,dice game,free online game,html5 game,browser game,mobile game,no install">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Snakes and Ladders — Free Online Dice Board Game">
+<meta property="og:description" content="Roll the dice, climb the ladders and dodge the snakes. First to square 100 beats the CPU.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #16283d 0%, #22304f 55%, #352a44 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 8px 8px 4px;
+    user-select: none; touch-action: manipulation; color: #fff;
+  }
+  .panel {
+    position: relative;
+    --cs: 32px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1 1 0; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 6px; text-align: center; min-width: 0;
+  }
+  .stat small {
+    display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+
+  /* 棋盘不用 gap：SVG 连线要按格心精确对齐，10×10 必须正好 10*--cs 见方 */
+  .board-area { position: relative; }
+  .board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(10, var(--cs));
+    grid-auto-rows: var(--cs);
+    width: calc(var(--cs) * 10);
+    height: calc(var(--cs) * 10);
+    border-radius: 12px; overflow: hidden;
+    background: #26334a;
+    box-shadow: inset 0 4px 16px rgba(0,0,0,.5);
+    touch-action: none;
+  }
+  .cell {
+    position: relative; width: var(--cs); height: var(--cs);
+    display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 2px 3px 0 0; overflow: hidden;
+  }
+  .cell::before {
+    content: ''; position: absolute; inset: 1px; border-radius: 5px;
+    background: rgba(255,255,255,.055);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.25);
+  }
+  .cell.alt::before { background: rgba(255,255,255,.09); }
+  .cell.lad::before { background: rgba(255,215,110,.16); }
+  .cell.snk::before { background: rgba(95,216,138,.16); }
+  .cell .num {
+    display: block; position: relative; z-index: 1;
+    font-size: calc(var(--cs) * 0.3); font-weight: 700;
+    color: rgba(255,255,255,.42); line-height: 1.1;
+  }
+  .cell.lad .num { color: #ffd76e; }
+  .cell.snk .num { color: #7fe0a2; }
+
+  .links {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 2; overflow: visible;
+  }
+  .links line { stroke-linecap: round; }
+  .links .lad { stroke: #ffd76e; stroke-width: 1.15; opacity: .55; stroke-dasharray: 2.4 1.6; }
+  .links .snk { stroke: #5fd88a; stroke-width: 1.35; opacity: .5; }
+
+  /* <span> 当棋子：必须 display:block + position:absolute，否则行内元素塌成 0×0 */
+  .token {
+    display: block; position: absolute; z-index: 3;
+    width: calc(var(--cs) * 0.5); height: calc(var(--cs) * 0.5);
+    border-radius: 50%;
+    transition: left .18s ease, top .18s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.5);
+  }
+  .token::after {
+    content: ''; position: absolute; left: 50%; top: 50%; width: 34%; height: 34%;
+    margin: -17% 0 0 -17%; border-radius: 50%;
+    background: rgba(255,255,255,.75);
+  }
+  .token.p { background: radial-gradient(circle at 34% 30%, #9fd4ff, #3b82f6 62%, #1d4ed8); }
+  .token.cpu { background: radial-gradient(circle at 34% 30%, #ffb3a7, #ef5350 62%, #b71c1c); }
+
+  .controls { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+  #btn-roll {
+    width: 100%; height: 64px; min-height: 64px;
+    border: none; border-radius: 14px; cursor: pointer; font-family: inherit;
+    font-size: 17px; font-weight: 800; letter-spacing: 2px; color: #241a00;
+    background: linear-gradient(180deg, #ffd76e, #f0a500);
+    box-shadow: 0 4px 0 #a86f00;
+    transition: transform .1s ease, opacity .15s ease;
+  }
+  #btn-roll:active { transform: scale(.97); }
+  #btn-roll.dim { opacity: .5; }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(12, 18, 30, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .hidden { display: none !important; }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 13px; opacity: .82; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .final-line { font-size: 15px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #5a3e00; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .start-btn { margin-top: 6px; padding: 12px 28px; min-height: 48px; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 800; font-family: inherit; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  /* 横屏 / 矮窗口：左右分栏，棋盘靠左；页脚工具行并进文字行，省下折行高度 */
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 4px 6px 2px; }
+    .panel {
+      display: grid; grid-template-columns: auto 172px;
+      grid-template-areas: "board top" "board ctl";
+      align-items: start; padding: 8px; gap: 8px;
+    }
+    .topbar { grid-area: top; flex-direction: column; gap: 5px; margin: 0; }
+    .stat { width: 100%; padding: 2px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .4px; }
+    .stat span { font-size: 13px; }
+    .board-area { grid-area: board; }
+    .controls { grid-area: ctl; }
+    #btn-roll { height: 56px; min-height: 56px; }
+    .footer { max-width: none; margin-top: 4px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin: 0 8px 0 0; }
+    .footer a { line-height: 44px; }
+    .overlay { padding: 10px; gap: 5px; }
+    .over-title { font-size: 18px; }
+    .over-sub, .final-line { font-size: 12px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { min-height: 44px; font-size: 13px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="snakesLadders.hudTurn">TURN</small><span id="hud-turn">YOU</span></div>
+    <div class="stat"><small data-i18n="snakesLadders.hudDice">DICE</small><span id="hud-dice">–</span></div>
+    <div class="stat"><small data-i18n="snakesLadders.hudWins">WINS</small><span id="hud-wins">0</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="board-area">
+    <div class="board" id="board"></div>
+    <svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+    <span class="token p" id="tok-p"></span>
+    <span class="token cpu" id="tok-c"></span>
+  </div>
+
+  <div class="controls">
+    <button id="btn-roll" data-i18n="snakesLadders.roll">ROLL</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">🏁</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="final-line"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-again" data-i18n="common.newGame">NEW GAME</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🎲</div>
+    <div class="over-title" data-i18n="snakesLadders.title">SNAKES AND LADDERS</div>
+    <div class="over-sub" data-i18n-html="snakesLadders.tip">Roll the dice, climb the <b>ladders</b> and dodge the <b>snakes</b>.<br>First to square <b>100</b> wins — unlimited rolls, no exact finish needed.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var LADDERS = { 1: 38, 4: 14, 9: 31, 21: 42, 28: 84, 36: 44, 51: 67, 71: 91, 80: 100 };
+  var SNAKES = { 16: 6, 47: 26, 49: 11, 56: 53, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 78 };
+  var MAX_TURNS = 300;
+  var STEP_MS = 90;
+  var STORE_KEY = 'snakes_ladders_best_v1';
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var linksEl = document.getElementById('links');
+  var footerEl = document.querySelector('.footer');
+  var topbarEl = document.querySelector('.topbar');
+  var btnRoll = document.getElementById('btn-roll');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var tokP = document.getElementById('tok-p');
+  var tokC = document.getElementById('tok-c');
+  var mqLand = window.matchMedia('(orientation: landscape) and (max-height: 700px)');
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    roll: function () { beep(360, 0.05, 'square', 0.05); setTimeout(function () { beep(520, 0.05, 'square', 0.04); }, 55); },
+    hop:  function () { beep(620, 0.03, 'triangle', 0.05); },
+    slide: function () { beep(880, 0.12, 'sine', 0.06); setTimeout(function () { beep(660, 0.12, 'sine', 0.05); }, 80); },
+    win:  function () { [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) { setTimeout(function () { beep(f, 0.18, 'triangle', 0.09); }, i * 95); }); },
+    lose: function () { [392, 330, 262].forEach(function (f, i) { setTimeout(function () { beep(f, 0.22, 'sawtooth', 0.07); }, i * 140); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 状态 =====
+  var pos = { p: 0, cpu: 0 };
+  var turn = 'p', dice = 0, phase = 'idle', winner = null, turns = 0;
+  var forced = 0;              // __dice(n) 预设；>0 时每一掷都用它，直到 __dice(0)
+  var hops = [], moveAcc = 0, cpuWait = 0, mover = null;
+  var endKey = null, endStats = null, wins = 0, newRecord = false;
+  var CS = 32;
+
+  try { wins = parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0; } catch (e) { wins = 0; }
+  function saveWins() { try { localStorage.setItem(STORE_KEY, String(wins)); } catch (e) {} }
+
+  // ===== 棋盘 =====
+  function cellRC(n) {
+    var i = Math.max(1, Math.min(100, n));
+    var rb = Math.floor((i - 1) / 10), col = (i - 1) % 10;
+    if (rb % 2 === 1) col = 9 - col;          // 奇数行反向，蛇形编号
+    return { r: 9 - rb, c: col };
+  }
+  var cells = {};
+  function buildBoard() {
+    var frag = document.createDocumentFragment();
+    for (var n = 1; n <= 100; n++) {
+      var rc = cellRC(n);
+      var d = document.createElement('div');
+      d.className = 'cell' + (((rc.r + rc.c) % 2) ? ' alt' : '') +
+        (LADDERS[n] ? ' lad' : '') + (SNAKES[n] ? ' snk' : '');
+      d.dataset.n = String(n);
+      /* 显式定位到蛇形格位：DOM 顺序是 1..100，但棋盘要「1 在左下、100 在左上」 */
+      d.style.gridRow = String(rc.r + 1);
+      d.style.gridColumn = String(rc.c + 1);
+      var s = document.createElement('span');
+      s.className = 'num';
+      s.textContent = String(n);
+      d.appendChild(s);
+      frag.appendChild(d);
+      cells[n] = d;
+    }
+    boardEl.appendChild(frag);
+  }
+  function buildLinks() {
+    var NS = 'http://www.w3.org/2000/svg';
+    function line(a, b, cls) {
+      var A = cellRC(a), B = cellRC(b);
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', A.c * 10 + 5); ln.setAttribute('y1', A.r * 10 + 5);
+      ln.setAttribute('x2', B.c * 10 + 5); ln.setAttribute('y2', B.r * 10 + 5);
+      ln.setAttribute('class', cls);
+      linksEl.appendChild(ln);
+    }
+    Object.keys(LADDERS).forEach(function (k) { line(+k, LADDERS[k], 'lad'); });
+    Object.keys(SNAKES).forEach(function (k) { line(+k, SNAKES[k], 'snk'); });
+  }
+
+  // ===== 棋子 =====
+  function placeToken(el, n, dx, dy) {
+    var rc = cellRC(n);
+    el.style.left = (rc.c * CS + CS * dx) + 'px';
+    el.style.top = (rc.r * CS + CS * dy) + 'px';
+  }
+  function layoutTokens() {
+    placeToken(tokP, pos.p || 1, 0.03, 0.47);
+    placeToken(tokC, pos.cpu || 1, 0.47, 0.03);
+  }
+
+  // ===== HUD =====
+  function refreshHud() {
+    document.getElementById('hud-turn').textContent = turn === 'p' ? t('snakesLadders.you') : t('snakesLadders.cpu');
+    document.getElementById('hud-dice').textContent = dice ? String(dice) : '–';
+    document.getElementById('hud-wins').textContent = String(wins);
+    btnRoll.classList.toggle('dim', phase !== 'idle' || winner !== null);
+  }
+  function refreshBest() {
+    var line = wins > 0 ? t('common.bestLabel', { n: wins }) : t('snakesLadders.first');
+    document.getElementById('start-best').textContent = line;
+  }
+  function refreshOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('final-line').textContent = '';
+      document.getElementById('over-best').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('final-line').textContent =
+      t('snakesLadders.final', { p: endStats.p, t: endStats.turns });
+    document.getElementById('over-best').textContent =
+      wins > 0 ? t('common.bestLabel', { n: wins }) : '';
+    document.getElementById('new-record').classList.toggle('hidden', !newRecord);
+  }
+  function refreshAll() { refreshHud(); refreshBest(); refreshOver(); fit(); }
+  WG.onChange(refreshAll);
+
+  // ===== 流程 =====
+  function begin() {
+    startOverlay.classList.add('hidden');
+  }
+  function roll() {
+    if (phase !== 'idle' || winner) return;
+    begin();
+    var d = forced || (1 + ((Math.random() * 6) | 0));
+    dice = d;
+    turns++;
+    mover = turn;
+    phase = 'moving';
+    var from = pos[mover], target = Math.min(100, from + d);
+    hops = [];
+    for (var n = from + 1; n <= target; n++) hops.push(n);
+    var dest = LADDERS[target] || SNAKES[target];
+    if (dest && dest !== target) hops.push(dest);
+    moveAcc = 0;
+    sfx.roll();
+    refreshHud();
+  }
+  function endTurn() {
+    var reached = pos[mover];
+    if (reached >= 100) { finish(mover); return; }
+    if (turns >= MAX_TURNS) { finish(pos.p >= pos.cpu ? 'p' : 'cpu'); return; }
+    if (mover === 'p') { turn = 'cpu'; cpuWait = 8; }
+    else { turn = 'p'; }
+    mover = null;
+    phase = 'idle';
+    refreshHud();
+  }
+  function finish(w) {
+    winner = w;
+    phase = 'over';
+    endKey = w === 'p' ? 'snakesLadders.over' : 'snakesLadders.lose';
+    newRecord = false;
+    if (w === 'p') { wins++; newRecord = true; saveWins(); }
+    endStats = { p: pos.p, cpu: pos.cpu, turns: turns };
+    refreshHud(); refreshBest(); refreshOver();
+    overOverlay.classList.remove('hidden');
+    if (w === 'p') sfx.win(); else sfx.lose();
+  }
+  function resetGame() {
+    pos.p = 0; pos.cpu = 0; turn = 'p'; dice = 0; phase = 'idle'; winner = null;
+    turns = 0; hops = []; moveAcc = 0; cpuWait = 0; mover = null;
+    endKey = null; endStats = null; newRecord = false;
+    overOverlay.classList.add('hidden');
+    layoutTokens(); refreshHud(); refreshOver();
+  }
+
+  // ===== 主循环 =====
+  function stepHop() {
+    if (!hops.length) { endTurn(); return; }
+    pos[mover] = hops.shift();
+    layoutTokens();
+    if (hops.length > 1) sfx.hop();
+    else if (hops.length === 1) sfx.slide();
+    if (!hops.length) endTurn();
+  }
+  function update(dt) {
+    if (phase === 'over') return;
+    if (phase === 'moving') {
+      moveAcc += dt * 16.666;
+      var guard = 0;
+      while (phase === 'moving' && moveAcc >= STEP_MS && guard++ < 40) {
+        moveAcc -= STEP_MS;
+        stepHop();
+      }
+      return;
+    }
+    if (turn === 'cpu') {
+      cpuWait -= dt;
+      if (cpuWait <= 0) roll();
+    }
+  }
+  var last = performance.now();
+  function loop(now) {
+    requestAnimationFrame(loop);
+    var dt = Math.min((now - last) / 16.666, 2.5);
+    last = now;
+    update(dt);
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); });
+
+  // ===== 尺寸 =====
+  function pf(v) { return parseFloat(v) || 0; }
+  function fit() {
+    var bcs = getComputedStyle(document.body), pcs = getComputedStyle(panel);
+    var bpadH = pf(bcs.paddingLeft) + pf(bcs.paddingRight);
+    var bpadV = pf(bcs.paddingTop) + pf(bcs.paddingBottom);
+    var ppadH = pf(pcs.paddingLeft) + pf(pcs.paddingRight);
+    var ppadV = pf(pcs.paddingTop) + pf(pcs.paddingBottom);
+    var footerH = footerEl ? footerEl.offsetHeight + pf(getComputedStyle(footerEl).marginTop) : 90;
+    var land = mqLand.matches;
+    var availW, availH;
+    if (land) {
+      availW = window.innerWidth - bpadH - ppadH - 2 - 172 - 14;
+      availH = window.innerHeight - bpadV - ppadV - 2 - footerH - 8;
+    } else {
+      availW = window.innerWidth - bpadH - ppadH - 2 - 6;
+      availH = window.innerHeight - bpadV - ppadV - 2 - footerH - topbarEl.offsetHeight - btnRoll.offsetHeight - 26;
+    }
+    var cs = Math.floor(Math.min(44, availW / 10, availH / 10));
+    if (!(cs > 0)) cs = 28;
+    cs = Math.max(28, Math.min(44, cs));
+    CS = cs;
+    panel.style.setProperty('--cs', cs + 'px');
+    layoutTokens();
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+
+  // ===== 输入 =====
+  btnRoll.addEventListener('click', function (e) { e.preventDefault(); roll(); });
+  document.addEventListener('keydown', function (e) {
+    var k = String(e.key || '');
+    if (k === ' ' || k === 'Spacebar' || k === 'Enter') { roll(); e.preventDefault(); }
+  });
+  document.getElementById('btn-start').addEventListener('click', begin);
+  document.getElementById('btn-again').addEventListener('click', function () { resetGame(); begin(); });
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var btn = document.getElementById('btn-share');
+    var txt = t('snakesLadders.share', { t: endStats ? endStats.turns : turns, url: location.href });
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    function fb() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb);
+    else fb();
+  });
+
+  // ===== 探针钩子 =====
+  window.__st = function () {
+    return {
+      p: pos.p, cpu: pos.cpu, turn: turn, dice: dice, phase: phase,
+      winner: winner, turns: turns, endKey: endKey
+    };
+  };
+  window.__dice = function (n) {
+    var v = n | 0;
+    forced = v > 0 ? Math.max(1, Math.min(6, v)) : 0;
+    return forced;
+  };
+  window.__drive = function (n) { for (var i = 0; i < n; i++) update(1); };
+  window.__reset = function () { resetGame(); return window.__st(); };
+  window.__map = function () {
+    var l = {}, s = {};
+    Object.keys(LADDERS).forEach(function (k) { l[k] = LADDERS[k]; });
+    Object.keys(SNAKES).forEach(function (k) { s[k] = SNAKES[k]; });
+    return { ladders: l, snakes: s };
+  };
+
+  // ===== 启动 =====
+  buildBoard();
+  buildLinks();
+  layoutTokens();
+  refreshAll();
+  fit();
+  requestAnimationFrame(loop);
+  setTimeout(fit, 120);
+})();
+</script>
+</body>
+</html>
