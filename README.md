@@ -4,7 +4,7 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-32-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-44-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
 [![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
@@ -49,6 +49,18 @@
 | **Battleship** | 🚢 | Classic | Place your fleet, then hunt five hidden enemy ships. Three AI levels, one-tap random placement | [Play](https://mashukui.github.io/web-games/battleship/) |
 | **Sokoban** | 📦 | Puzzle | Push every crate onto a target. 30 levels, unlimited undo, stuck warning | [Play](https://mashukui.github.io/web-games/sokoban/) |
 | **Lights Out** | 💡 | Puzzle | Tap a light to flip it and its four neighbours — switch them all off. Every puzzle is solvable | [Play](https://mashukui.github.io/web-games/lights-out/) |
+| **Hanoi** | 🗼 | Puzzle | Move the whole tower to the last peg, one disk at a time — 5 levels, unlimited undo | [Play](https://mashukui.github.io/web-games/hanoi/) |
+| **Pipe Connect** | 🔧 | Puzzle | Rotate the pipes until water reaches the outlet — 12 levels, every board solvable | [Play](https://mashukui.github.io/web-games/pipe-connect/) |
+| **Rush Hour** | 🚗 | Puzzle | Slide the blocking cars aside and drive the red car out of the 6x6 traffic jam — 12 generated levels, every one solvable | [Play](https://mashukui.github.io/web-games/rush-hour/) |
+| **Mahjong Link** | 🀄 | Puzzle | Pair identical tiles with a path of at most two turns. Ten timed levels, and the board never dead-ends | [Play](https://mashukui.github.io/web-games/mahjong-link/) |
+| **Nonogram** | 🎨 | Puzzle | Use the number clues to fill the grid. 12 levels, every puzzle checked for a unique solution | [Play](https://mashukui.github.io/web-games/nonogram/) |
+| **Checkers** | 🔵 | Classic | Forced captures, chain jumps and crowned kings against a computer that really searches ahead | [Play](https://mashukui.github.io/web-games/checkers/) |
+| **Snakes and Ladders** | 🎲 | Classic | Roll the dice and race the CPU to square 100 — ladders lift you, snakes drag you back | [Play](https://mashukui.github.io/web-games/snakes-ladders/) |
+| **Hoop Shot** | 🏀 | Action | Drag back, release, and sink baskets through a moving hoop. 60 seconds, combo multipliers, no defence | [Play](https://mashukui.github.io/web-games/hoop-shot/) |
+| **Mini Golf** | ⛳ | Action | Nine hand-built holes — drag back, release and putt around sand, water and walls | [Play](https://mashukui.github.io/web-games/mini-golf/) |
+| **Helicopter** | 🚁 | Arcade | Hold to climb through an endless cave that keeps narrowing. One touch of rock ends the run | [Play](https://mashukui.github.io/web-games/helicopter/) |
+| **Balloon Pop** | 🎈 | Arcade | Burst every balloon, dodge the bombs and chain a combo in 60 seconds | [Play](https://mashukui.github.io/web-games/balloon-pop/) |
+| **Simon Says** | 🎵 | Arcade | Watch the four lights and repeat the pattern. One extra step every round | [Play](https://mashukui.github.io/web-games/simon-says/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -115,6 +127,18 @@ web-games/
 ├── battleship/index.html   # 🚢 hidden-fleet duel, 2 boards, hunting AI
 ├── sokoban/index.html      # 📦 crate pusher, 30 verified levels
 ├── lights-out/index.html   # 💡 flip-the-neighbours, always solvable
+├── hanoi/index.html        # 🗼 tower of hanoi, 5 levels, undo
+├── pipe-connect/index.html # 🔧 rotate-the-pipes, 12 solvable boards
+├── rush-hour/index.html    # 🚗 slide-the-cars escape puzzle
+├── mahjong-link/index.html # 🀄 tile matching, max two turns
+├── nonogram/index.html     # 🎨 number-clue grid, unique solutions
+├── checkers/index.html     # 🔵 draughts vs searching AI
+├── snakes-ladders/index.html # 🎲 dice race to square 100
+├── hoop-shot/index.html    # 🏀 60-second basketball flick
+├── mini-golf/index.html    # ⛳ nine-hole putting, drag to aim
+├── helicopter/index.html   # 🚁 one-button cave flyer
+├── balloon-pop/index.html  # 🎈 60-second balloon popper
+├── simon-says/index.html   # 🎵 repeat-the-sequence memory
 ├── README.md
 └── LICENSE                 # MIT
 ```
@@ -148,4 +172,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(32 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(44 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
