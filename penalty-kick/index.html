@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="penaltyKick.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Penalty Kick — Free Online Shootout Game</title>
+<meta name="description" content="Play a free five-round penalty shootout in your browser: pick a corner to shoot, then pick a corner to dive. Sudden death if it stays level. Works on phone and desktop.">
+<meta name="keywords" content="penalty kick,penalty shootout,soccer game,football game,free online game,html5 game,browser game,mobile game">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Penalty Kick — Free Online Shootout Game">
+<meta property="og:description" content="Shoot and save in a five-round shootout. Beat the keeper, then read the striker and dive.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #0b1a16 0%, #12302a 55%, #1d2b1c 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 8px 8px 4px;
+    user-select: none; touch-action: manipulation; color: #fff;
+  }
+  .panel {
+    position: relative;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1 1 0; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 5px; text-align: center; min-width: 0;
+  }
+  .stat small {
+    display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .5px; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+
+  /* 480×640 画布 */
+  .wrap {
+    width: min(480px, 100%, max(200px, calc((100svh - 312px) * 0.75)));
+    width: min(480px, 100%, max(200px, calc((100vh  - 312px) * 0.75)));
+    margin: 0 auto; border-radius: 14px; overflow: hidden; line-height: 0;
+    background: #071310; box-shadow: 0 10px 30px rgba(0,0,0,.45);
+    touch-action: none;
+  }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; }
+
+  .track {
+    width: 100%; background: rgba(255,255,255,.045); border-radius: 10px;
+    padding: 4px 8px 5px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .tr-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .6;
+  }
+  .tr-head span { font-size: 12px; font-weight: 800; letter-spacing: .5px; opacity: 1; color: #ffd76e; }
+  .tr-row { display: flex; align-items: center; gap: 6px; min-height: 15px; }
+  .trl {
+    font-size: 9px; font-weight: 800; letter-spacing: .8px; opacity: .55;
+    width: 30px; flex: 0 0 30px; white-space: nowrap; overflow: hidden;
+  }
+  .dots { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%; font-style: normal; font-size: 8px;
+    line-height: 10px; text-align: center; font-weight: 800;
+    border: 1.5px solid rgba(255,255,255,.24); background: transparent; display: block;
+  }
+  .dot.g { background: #ffd76e; border-color: #ffd76e; color: #4a3200; }
+  .dot.x { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.30); color: rgba(255,255,255,.62); }
+
+  #status {
+    width: 100%; min-height: 18px; font-size: 12px; font-weight: 800;
+    letter-spacing: .6px; color: #ffd76e; text-align: center; line-height: 1.3;
+  }
+  #status:empty { visibility: hidden; }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(6, 18, 14, .92); backdrop-filter: blur(3px); color: #fff;
+  }
+  .overlay.hidden { display: none; }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 1.5px; }
+  .over-sub { font-size: 13px; opacity: .82; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .final-line { font-size: 15px; font-weight: 700; }
+  .new-record {
+    background: #ffd76e; color: #4a3200; font-size: 12px; font-weight: 800;
+    padding: 4px 14px; border-radius: 999px; animation: pulse 1s ease-in-out infinite;
+  }
+  .new-record.hidden { display: none; }
+  @keyframes pulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.08) } }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 44px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+  .btn-primary { background: #22a06b; color: #fff; box-shadow: 0 4px 0 #14673f; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .start-btn { margin-top: 6px; padding: 12px 28px; min-height: 48px; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 800; font-family: inherit; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (orientation: landscape) and (max-height: 560px) {
+    body { padding: 4px 6px 2px; }
+    .panel {
+      display: grid; grid-template-columns: auto 170px;
+      grid-template-areas: "game top" "game track" "game status";
+      align-items: start; padding: 6px; gap: 6px 10px;
+    }
+    .wrap {
+      grid-area: game; align-self: center;
+      width: min(480px, calc((100svh - 84px) * 0.75));
+      width: min(480px, calc((100vh  - 84px) * 0.75));
+    }
+    .topbar { grid-area: top; flex-wrap: wrap; gap: 4px; }
+    .stat { flex: 1 1 40%; padding: 1px 3px; }
+    .stat small { font-size: 8px; letter-spacing: .3px; }
+    .stat span { font-size: 13px; }
+    .track { grid-area: track; padding: 3px 6px 4px; }
+    .trl { width: 26px; flex-basis: 26px; font-size: 8px; }
+    .dots { gap: 2px; }
+    .dot { width: 8px; height: 8px; font-size: 7px; line-height: 8px; }
+    #status { grid-area: status; font-size: 11px; }
+    .footer { max-width: none; margin-top: 3px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin: 0 8px 0 0; }
+    .footer a { line-height: 44px; }
+    .overlay { padding: 10px; gap: 5px; }
+    .over-title { font-size: 18px; }
+    .over-sub, .final-line { font-size: 12px; }
+    .icon-big { font-size: 26px; }
+    .over-btns button { min-height: 44px; font-size: 13px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="penaltyKick.you">YOU</small><span id="you-score">0</span></div>
+    <div class="stat"><small data-i18n="penaltyKick.round">ROUND</small><span id="hud-round">1</span></div>
+    <div class="stat"><small data-i18n="penaltyKick.cpu">CPU</small><span id="cpu-score">0</span></div>
+    <div class="stat"><small data-i18n="penaltyKick.hudBest">BEST</small><span id="best">0</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div class="wrap" id="wrap">
+    <canvas id="game" width="480" height="640"></canvas>
+  </div>
+
+  <div class="track">
+    <div class="tr-head"><small data-i18n="penaltyKick.kicks">KICKS</small><span id="kicks">0–0</span></div>
+    <div class="tr-row"><span class="trl" data-i18n="penaltyKick.you">YOU</span><span class="dots" id="tr-you"></span></div>
+    <div class="tr-row"><span class="trl" data-i18n="penaltyKick.cpu">CPU</span><span class="dots" id="tr-cpu"></span></div>
+  </div>
+  <div id="status"></div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">⚽</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="final-line" id="over-sub"></div>
+    <div class="new-record hidden" id="new-record" data-i18n="common.newRecord">🏆 NEW RECORD!</div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-restart" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">⚽</div>
+    <div class="over-title" data-i18n="penaltyKick.title">PENALTY KICK</div>
+    <div class="over-sub" data-i18n-html="penaltyKick.tip">Tap a corner to shoot, then tap a corner to dive.<br><b>Five rounds each</b>; a draw goes to sudden death.<br>The striker leans before the kick — read it.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var W = 480, H = 640;
+  var STORE_KEY = 'penalty_kick_best_v1';
+  var GX0 = 66, GX1 = 414, GY0 = 118, GY1 = 358;
+  var MISS_MARGIN = 20;              // 偏出球门 20px 内算射偏；更远视为误触
+  var COLW = (GX1 - GX0) / 3, ROWH = (GY1 - GY0) / 2;
+  var ZONES = ['HIGH_L', 'HIGH_C', 'HIGH_R', 'LOW_L', 'LOW_C', 'LOW_R'];
+  var ZC = {};
+  for (var zr = 0; zr < 2; zr++) {
+    for (var zc = 0; zc < 3; zc++) {
+      ZC[ZONES[zr * 3 + zc]] = {
+        x: GX0 + COLW * (zc + 0.5),
+        y: GY0 + ROWH * (zr + 0.5),
+        col: zc, row: zr
+      };
+    }
+  }
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+  var statusEl = document.getElementById('status');
+
+  /* ===== 音效 ===== */
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    kick:  function () { beep(180, 0.09, 'square', 0.06); },
+    goal:  function () { [523, 659, 784].forEach(function (f, i) { setTimeout(function () { beep(f, 0.15, 'triangle', 0.08); }, i * 90); }); },
+    save:  function () { beep(300, 0.14, 'sawtooth', 0.05); setTimeout(function () { beep(420, 0.1, 'triangle', 0.05); }, 90); },
+    miss:  function () { beep(140, 0.16, 'sawtooth', 0.04); },
+    over:  function () { [523.25, 440, 349.23].forEach(function (f, i) { setTimeout(function () { beep(f, 0.22, 'triangle', 0.08); }, i * 140); }); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  /* ===== 状态 ===== */
+  var phase = 'ready';          // ready | shoot | flight | resolve | keep | dive | over
+  var started = false, endKey = null;
+  var round = 1, you = 0, ai = 0;
+  var youKicks = 0, aiKicks = 0;
+  var sudden = false;
+  var keeperZone = null;        // AI 门将本轮的扑救区（射门前已定）
+  var aiZone = null;            // AI 射手本轮射门区
+  var playerDive = null;
+  var shotZone = null, shotMiss = false, shotTarget = { x: 240, y: 300 };
+  var lastResult = null, resultT = 0, resolveNext = 'keep';
+  var flightT = 0, diveT = 0;
+  var hintDir = 1, hintT = 0;
+  var keeperFrom = { x: 240, y: 300 }, keeperTo = { x: 240, y: 300 }, keeperT = 1;
+  var best = 0, newRecord = false;
+  var statusKey = 'penaltyKick.shoot', statusN = 0;
+  var lastPlayerZone = null;
+  var sideHistory = { l: 0, r: 0 };
+  var history = [];             // 每轮 {you, ai}
+  var tap = null;
+  var DPR = 1;
+
+  try { best = parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0; } catch (e) { best = 0; }
+  function saveBest() { try { localStorage.setItem(STORE_KEY, String(best)); } catch (e) {} }
+
+  function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+  function randZone() { return ZONES[Math.floor(Math.random() * ZONES.length)]; }
+  function sideOf(z) { return (z === 'HIGH_L' || z === 'LOW_L') ? 'l' : (z === 'HIGH_R' || z === 'LOW_R') ? 'r' : 'c'; }
+  function isLow(z) { return z === 'LOW_L' || z === 'LOW_C' || z === 'LOW_R'; }
+  function adjacent(a, b) {
+    if (!a || !b) return false;
+    var A = ZC[a], B = ZC[b];
+    var dc = Math.abs(A.col - B.col), dr = Math.abs(A.row - B.row);
+    return (dc + dr) === 1;
+  }
+  function savedBy(dive, shot) {
+    if (!dive || !shot) return false;
+    if (dive === shot) return true;
+    if (adjacent(dive, shot) && isLow(shot) && Math.random() < 0.35) return true;
+    return false;
+  }
+
+  /* ===== AI ===== */
+  function aiKeeperZone() {
+    var r = Math.random();
+    if (r < 0.55) return randZone();
+    if (r < 0.80 && lastPlayerZone) return lastPlayerZone;      // 25% 重复玩家上一球
+    if (sideHistory.l === 0 && sideHistory.r === 0) return randZone();
+    var side = sideHistory.l >= sideHistory.r ? 'L' : 'R';
+    var pick = Math.random() < 0.5 ? 'HIGH_' : 'LOW_';
+    return pick + side;
+  }
+  function aiShooterZone() {
+    var r = Math.random();
+    if (r < 0.60) return Math.random() < 0.5 ? 'HIGH_L' : 'HIGH_R';   // 60% 上角
+    if (r < 0.80) return 'LOW_C';                                     // 20% 中路低球
+    return randZone();                                                // 20% 随机
+  }
+
+  /* ===== 流程 ===== */
+  function setStatus(key, n) { statusKey = key; statusN = n || 0; renderStatus(); }
+  function renderStatus() {
+    if (!statusKey) { statusEl.textContent = ''; return; }
+    statusEl.textContent = statusN ? t(statusKey, { n: statusN }) : t(statusKey);
+  }
+
+  function ensureResult() { while (history.length < round) history.push({ you: null, ai: null }); }
+
+  function begin() {
+    if (started) return;
+    started = true;
+    startOverlay.classList.add('hidden');
+    refreshAll();
+  }
+  function newGame(showStart) {
+    phase = 'ready'; started = !showStart; endKey = null;
+    round = 1; you = 0; ai = 0; youKicks = 0; aiKicks = 0; sudden = false;
+    history = []; lastPlayerZone = null;
+    sideHistory = { l: 0, r: 0 };
+    keeperZone = null; aiZone = null; playerDive = null;
+    shotZone = null; shotMiss = false; lastResult = null; newRecord = false;
+    flightT = 0; diveT = 0; resultT = 0; hintDir = 1; hintT = 0;
+    keeperFrom = { x: 240, y: 300 }; keeperTo = { x: 240, y: 300 }; keeperT = 1;
+    overOverlay.classList.add('hidden');
+    document.getElementById('new-record').classList.add('hidden');
+    startOverlay.classList.toggle('hidden', !showStart);
+    setStatus('penaltyKick.shoot');
+    refreshAll();
+  }
+
+  function startRound() {
+    ensureResult();
+    if (checkEnd()) return;
+    keeperZone = aiKeeperZone();
+    shotZone = null; shotMiss = false; lastResult = null; playerDive = null;
+    keeperFrom = { x: 240, y: 300 }; keeperTo = { x: 240, y: 300 }; keeperT = 1;
+    hintT = 0;
+    phase = 'shoot';
+    setStatus('penaltyKick.shoot');
+    refreshAll();
+  }
+
+  function takeShot(zone, miss, target) {
+    if (phase !== 'shoot') return false;
+    shotZone = zone; shotMiss = miss; shotTarget = target;
+    if (zone) {
+      lastPlayerZone = zone;
+      var sd = sideOf(zone);
+      if (sd === 'l') sideHistory.l++; else if (sd === 'r') sideHistory.r++;
+    }
+    youKicks++;
+    phase = 'flight'; flightT = 0; lastResult = null;
+    keeperT = 0; keeperFrom = { x: 240, y: 300 };
+    keeperTo = ZC[keeperZone] || { x: 240, y: 300 };
+    sfx.kick();
+    refreshAll();
+    return true;
+  }
+
+  function resolveShot() {
+    if (phase !== 'flight') return;
+    phase = 'resolve'; resultT = 0; resolveNext = 'keep';
+    var saved = !shotMiss && savedBy(keeperZone, shotZone);
+    if (shotMiss) { lastResult = 'miss'; sfx.miss(); }
+    else if (saved) { lastResult = 'saved'; sfx.save(); }
+    else { you++; lastResult = 'goal'; sfx.goal(); history[round - 1].you = 'goal'; }
+    if (!shotMiss && saved) history[round - 1].you = 'saved';
+    if (shotMiss) history[round - 1].you = 'miss';
+    setStatus('penaltyKick.' + lastResult);
+    refreshAll();
+    checkEnd();
+  }
+
+  function enterKeep() {
+    if (phase === 'over') return;
+    aiZone = aiShooterZone();
+    playerDive = null;
+    phase = 'keep';
+    hintT = 0;
+    lastResult = null;
+    var real = sideOf(aiZone);
+    if (real === 'c') hintDir = Math.random() < 0.5 ? -1 : 1;
+    else hintDir = (real === 'l') ? -1 : 1;
+    if (Math.random() >= 0.60) hintDir = -hintDir;   // 40% 提示指错方向
+    keeperFrom = { x: 240, y: 300 }; keeperTo = { x: 240, y: 300 }; keeperT = 1;
+    setStatus('penaltyKick.keep');
+    refreshAll();
+  }
+
+  function takeDive(zone) {
+    if (phase !== 'keep' || !zone) return false;
+    playerDive = zone;
+    aiKicks++;
+    phase = 'dive'; diveT = 0; lastResult = null;
+    keeperT = 0; keeperFrom = { x: 240, y: 300 };
+    keeperTo = ZC[zone] || { x: 240, y: 300 };
+    shotTarget = ZC[aiZone] || { x: 240, y: 300 };
+    sfx.kick();
+    refreshAll();
+    return true;
+  }
+
+  function resolveKeep() {
+    if (phase !== 'dive') return;
+    phase = 'resolve'; resultT = 0; resolveNext = 'next';
+    var saved = savedBy(playerDive, aiZone);
+    if (saved) { lastResult = 'saved'; sfx.save(); history[round - 1].ai = 'saved'; }
+    else { ai++; lastResult = 'conceded'; sfx.goal(); history[round - 1].ai = 'goal'; }
+    setStatus('penaltyKick.' + lastResult);
+    refreshAll();
+    checkEnd();
+  }
+
+  function finish(kind) {
+    if (phase === 'over') return true;
+    phase = 'over';
+    endKey = 'penaltyKick.' + kind;
+    newRecord = false;
+    if (you > best) { best = you; newRecord = true; saveBest(); }
+    refreshAll();
+    overOverlay.classList.remove('hidden');
+    document.getElementById('new-record').classList.toggle('hidden', !newRecord);
+    sfx.over();
+    return true;
+  }
+
+  function checkEnd() {
+    if (phase === 'over') return true;
+    if (!sudden) {
+      var youLeft = Math.max(0, 5 - youKicks);
+      var aiLeft = Math.max(0, 5 - aiKicks);
+      if (you > ai + aiLeft) return finish('win');
+      if (ai > you + youLeft) return finish('lose');
+    } else if (youKicks === aiKicks) {
+      if (you !== ai) return finish(you > ai ? 'win' : 'lose');
+      if (round >= 20) return finish('draw');
+    }
+    return false;
+  }
+
+  function nextRound() {
+    if (phase === 'over') return;
+    if (checkEnd()) return;
+    round++;
+    if (round > 5) sudden = true;
+    ensureResult();
+    startRound();
+  }
+
+  /* ===== 更新 ===== */
+  function update(frames) {
+    var dt = Math.min(frames, 2.5) / 60;
+    if (phase === 'flight') {
+      flightT += dt;
+      keeperT = Math.min(1, keeperT + dt / 0.38);
+      if (flightT >= 0.55) resolveShot();
+    } else if (phase === 'dive') {
+      diveT += dt;
+      keeperT = Math.min(1, keeperT + dt / 0.38);
+      if (diveT >= 0.55) resolveKeep();
+    } else if (phase === 'resolve') {
+      resultT += dt;
+      if (resultT >= 0.95) {
+        if (resolveNext === 'keep') enterKeep();
+        else nextRound();
+      }
+    } else if (phase === 'keep') {
+      hintT += dt;
+    }
+  }
+
+  /* ===== 渲染 ===== */
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+  function lerp(a, b, p) { return a + (b - a) * p; }
+
+  function drawStadium() {
+    var sky = ctx.createLinearGradient(0, 0, 0, 400);
+    sky.addColorStop(0, '#071a2e'); sky.addColorStop(1, '#0d2a22');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, 400);
+    /* 看台 */
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillRect(0, 0, W, 74);
+    for (var i = 0; i < 90; i++) {
+      var x = (i * 53) % W, y = 12 + ((i * 37) % 52);
+      ctx.fillStyle = ['rgba(255,215,110,.30)', 'rgba(120,200,255,.22)', 'rgba(255,255,255,.16)'][i % 3];
+      ctx.beginPath(); ctx.arc(x, y, 2.2, 0, 6.283); ctx.fill();
+    }
+    /* 草坪 */
+    var g = ctx.createLinearGradient(0, 380, 0, H);
+    g.addColorStop(0, '#1f7a44'); g.addColorStop(1, '#0d3d22');
+    ctx.fillStyle = g; ctx.fillRect(0, 380, W, H - 380);
+    for (var s = 0; s < 6; s++) {
+      ctx.fillStyle = s % 2 ? 'rgba(255,255,255,.035)' : 'rgba(0,0,0,.05)';
+      ctx.fillRect(0, 380 + s * 44, W, 22);
+    }
+    /* 点球点与弧线 */
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.ellipse(240, 520, 5, 2.5, 0, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(240, 520, 92, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
+  }
+
+  function drawGoal() {
+    /* 网 */
+    ctx.fillStyle = 'rgba(10, 38, 30, .42)';
+    ctx.fillRect(GX0, GY0, GX1 - GX0, GY1 - GY0);
+    ctx.strokeStyle = 'rgba(255,255,255,.17)'; ctx.lineWidth = 1;
+    for (var x = GX0 + 18; x < GX1; x += 18) {
+      ctx.beginPath(); ctx.moveTo(x, GY0); ctx.lineTo(x, GY1); ctx.stroke();
+    }
+    for (var y = GY0 + 18; y < GY1; y += 18) {
+      ctx.beginPath(); ctx.moveTo(GX0, y); ctx.lineTo(GX1, y); ctx.stroke();
+    }
+    /* 门柱 */
+    ctx.strokeStyle = '#f4f7f5'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(GX0, GY1 + 4); ctx.lineTo(GX0, GY0); ctx.lineTo(GX1, GY0); ctx.lineTo(GX1, GY1 + 4); ctx.stroke();
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1;
+    ctx.strokeRect(GX0 - 4, GY0 - 4, GX1 - GX0 + 8, GY1 - GY0 + 8);
+  }
+
+  /* 6 个可点区域的可视化（只做提示，判定仍只认 zone 状态） */
+  function drawZones() {
+    if (phase !== 'shoot' && phase !== 'keep') return;
+    var hot = phase === 'keep';
+    ctx.save();
+    for (var i = 0; i < ZONES.length; i++) {
+      var c = ZC[ZONES[i]];
+      var x = GX0 + c.col * COLW + 5, y = GY0 + c.row * ROWH + 5;
+      var w = COLW - 10, h = ROWH - 10;
+      ctx.fillStyle = hot ? 'rgba(255,215,110,.05)' : 'rgba(255,255,255,.045)';
+      roundRect(x, y, w, h, 9); ctx.fill();
+      ctx.strokeStyle = hot ? 'rgba(255,215,110,.22)' : 'rgba(255,255,255,.20)';
+      ctx.lineWidth = 1.5;
+      roundRect(x, y, w, h, 9); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawKeeper() {
+    var p = Math.min(1, keeperT);
+    var kx = lerp(keeperFrom.x, keeperTo.x, p);
+    var ky = lerp(keeperFrom.y, keeperTo.y, p) - Math.sin(p * Math.PI) * 14;
+    var tilt = (kx - 240) / 140;
+    ctx.save();
+    ctx.translate(kx, ky);
+    ctx.rotate(tilt * 0.32);
+    ctx.scale(1.38, 1.38);
+    /* 影子 */
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(0, 44, 18, 5, 0, 0, 6.283); ctx.fill();
+    /* 身体 */
+    var jg = ctx.createLinearGradient(0, -40, 0, 40);
+    jg.addColorStop(0, '#ffd76e'); jg.addColorStop(1, '#d99a12');
+    ctx.fillStyle = jg;
+    roundRect(-11, -12, 22, 46, 8); ctx.fill();
+    /* 头 */
+    ctx.fillStyle = '#f0c9a0';
+    ctx.beginPath(); ctx.arc(0, -22, 9, 0, 6.283); ctx.fill();
+    /* 手套 */
+    ctx.fillStyle = '#f4f7f5';
+    ctx.beginPath(); ctx.arc(-16, -16, 6, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(16, -16, 6, 0, 6.283); ctx.fill();
+    /* 短裤 */
+    ctx.fillStyle = '#14332b';
+    roundRect(-11, 26, 22, 14, 4); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawShooter() {
+    var lean = hintDir * (phase === 'keep' ? Math.min(1, hintT / 0.35) : 1);
+    var x = 240, y = 500;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(lean * 0.10);
+    ctx.fillStyle = 'rgba(0,0,0,.30)';
+    ctx.beginPath(); ctx.ellipse(0, 46, 20, 6, 0, 0, 6.283); ctx.fill();
+    /* 腿 */
+    ctx.strokeStyle = '#1c2a3a'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-5, 26); ctx.lineTo(-11, 44); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5, 26); ctx.lineTo(13, 43); ctx.stroke();
+    /* 身体 */
+    var sg = ctx.createLinearGradient(0, -26, 0, 30);
+    sg.addColorStop(0, '#3f7bd6'); sg.addColorStop(1, '#1f4d94');
+    ctx.fillStyle = sg;
+    roundRect(-11, -24, 22, 50, 7); ctx.fill();
+    /* 手臂 */
+    ctx.strokeStyle = '#f0c9a0'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(-11, -18); ctx.lineTo(-24, -2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(11, -18); ctx.lineTo(24, -4); ctx.stroke();
+    /* 头 */
+    ctx.fillStyle = '#f0c9a0';
+    ctx.beginPath(); ctx.arc(0, -34, 9, 0, 6.283); ctx.fill();
+    ctx.fillStyle = '#20304a';
+    ctx.beginPath(); ctx.arc(0, -37, 9.5, Math.PI, 0); ctx.fill();
+    ctx.restore();
+    /* 提示箭头 */
+    if (phase === 'keep' && Math.min(1, hintT / 0.35) > 0.2) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (hintT - 0.07) * 4) * 0.7;
+      ctx.fillStyle = '#ffd76e';
+      ctx.beginPath();
+      ctx.moveTo(240 + lean * 46, 462);
+      ctx.lineTo(240 + lean * 58, 470);
+      ctx.lineTo(240 + lean * 46, 478);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawBall() {
+    var bx = 240, by = 520, sc = 1;
+    if (phase === 'flight') {
+      var p = Math.min(1, flightT / 0.55);
+      bx = lerp(240, shotTarget.x, p);
+      by = lerp(520, shotTarget.y, p) - Math.sin(p * Math.PI) * 26;
+      sc = 1 - 0.55 * p;
+    } else if (phase === 'dive') {
+      var q = Math.min(1, diveT / 0.55);
+      bx = lerp(240, shotTarget.x, q);
+      by = lerp(500, shotTarget.y, q) - Math.sin(q * Math.PI) * 26;
+      sc = 1 - 0.55 * q;
+    } else if (phase === 'resolve') {
+      bx = shotTarget.x; by = shotTarget.y; sc = 0.45;
+    }
+    var r = 11 * sc;
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath(); ctx.ellipse(bx + 2, by + 5, r * 1.05, r * 0.5, 0, 0, 6.283); ctx.fill();
+    var bg = ctx.createRadialGradient(bx - r * 0.4, by - r * 0.45, r * 0.15, bx, by, r);
+    bg.addColorStop(0, '#ffffff'); bg.addColorStop(0.5, '#e9edf0'); bg.addColorStop(1, '#9aa4ad');
+    ctx.fillStyle = bg;
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, 6.283); ctx.stroke();
+    ctx.fillStyle = '#22303c';
+    for (var i = 0; i < 5; i++) {
+      var a = i / 5 * 6.283;
+      ctx.beginPath(); ctx.arc(bx + Math.cos(a) * r * 0.42, by + Math.sin(a) * r * 0.42, r * 0.15, 0, 6.283); ctx.fill();
+    }
+  }
+
+  function drawResult() {
+    if (!lastResult || phase === 'over') return;
+    var txt = t('penaltyKick.' + lastResult);
+    var col = lastResult === 'goal' ? '#7ee6a8' : lastResult === 'conceded' ? '#ff8a7a' : '#ffd76e';
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 38px sans-serif';
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.fillText(txt, 242, 92);
+    ctx.fillStyle = col;
+    ctx.fillText(txt, 240, 90);
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    drawStadium();
+    drawGoal();
+    drawZones();
+    drawKeeper();
+    if (phase === 'keep' || phase === 'dive') drawShooter();
+    drawBall();
+    drawResult();
+  }
+
+  /* ===== 主循环 ===== */
+  var last = performance.now();
+  function loop(now) {
+    requestAnimationFrame(loop);
+    var dt = Math.min((now - last) / 16.666, 2.5);
+    last = now;
+    update(dt);
+    draw();
+  }
+  document.addEventListener('visibilitychange', function () { last = performance.now(); });
+
+  /* ===== 尺寸 ===== */
+  function fit() {
+    DPR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    var cw = Math.round(W * DPR), ch = Math.round(H * DPR);
+    if (canvas.width !== cw || canvas.height !== ch) {
+      canvas.width = cw; canvas.height = ch;
+    }
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+
+  /* ===== HUD ===== */
+  function refreshTrack() {
+    function build(n, row) {
+      ensureResult();
+      var out = '';
+      var max = Math.max(5, history.length);
+      for (var i = 0; i < max; i++) {
+        var r = history[i] || {};
+        var v = r[row];
+        var cls = v ? (v === 'goal' ? 'g' : 'x') : '';
+        out += '<i class="dot ' + cls + '">' + (v === 'goal' ? '' : (v ? '×' : '')) + '</i>';
+      }
+      return out;
+    }
+    document.getElementById('tr-you').innerHTML = build(0, 'you');
+    document.getElementById('tr-cpu').innerHTML = build(0, 'ai');
+    document.getElementById('kicks').textContent = youKicks + '–' + aiKicks;
+  }
+  function refreshHud() {
+    document.getElementById('you-score').textContent = String(you);
+    document.getElementById('cpu-score').textContent = String(ai);
+    document.getElementById('hud-round').textContent = sudden ? t('penaltyKick.sdShort') : String(round);
+    document.getElementById('best').textContent = String(best);
+  }
+  function refreshBest() {
+    document.getElementById('start-best').textContent =
+      best > 0 ? t('common.bestScore', { n: best }) : t('penaltyKick.first');
+    document.getElementById('over-best').textContent =
+      best > 0 ? t('common.bestScore', { n: best }) : '';
+  }
+  function refreshOver() {
+    if (!endKey) {
+      document.getElementById('over-title').textContent = '';
+      document.getElementById('over-sub').textContent = '';
+      return;
+    }
+    document.getElementById('over-title').textContent = t(endKey);
+    document.getElementById('over-sub').textContent = t('penaltyKick.final', { y: you, a: ai, n: round });
+  }
+  function refreshAll() {
+    refreshHud(); refreshTrack(); refreshBest(); refreshOver();
+    renderStatus(); fit();
+  }
+  WG.onChange(refreshAll);
+
+  /* ===== 输入：点按（触摸/鼠标同路径） ===== */
+  function toCanvas(e) {
+    var r = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) / (r.width || 1) * W,
+      y: (e.clientY - r.top) / (r.height || 1) * H
+    };
+  }
+  function zoneAt(x, y) {
+    if (x < GX0 || x >= GX1 || y < GY0 || y >= GY1) return null;
+    var col = Math.min(2, Math.floor((x - GX0) / COLW));
+    var row = Math.min(1, Math.floor((y - GY0) / ROWH));
+    return ZONES[row * 3 + col];
+  }
+  /* 球门外扩 20px：框内的空点 = 打偏（miss），更远 = 误触不消耗球 */
+  function nearGoal(x, y) {
+    return x >= GX0 - MISS_MARGIN && x <= GX1 + MISS_MARGIN &&
+           y >= GY0 - MISS_MARGIN && y <= GY1 + MISS_MARGIN;
+  }
+  function handleTap(w) {
+    if (!started || phase === 'over') return;
+    if (phase === 'shoot') {
+      var z = zoneAt(w.x, w.y);
+      if (z) { takeShot(z, false, { x: w.x, y: w.y }); return; }
+      if (nearGoal(w.x, w.y)) takeShot(null, true, { x: w.x, y: w.y });
+    } else if (phase === 'keep') {
+      var dz = zoneAt(w.x, w.y);
+      if (dz) takeDive(dz);
+    }
+  }
+  canvas.addEventListener('pointerdown', function (e) {
+    if (phase === 'over') return;
+    e.preventDefault();
+    begin();
+    tap = { x: e.clientX, y: e.clientY };
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  canvas.addEventListener('pointerup', function (e) {
+    if (!tap) return;
+    var moved = Math.hypot(e.clientX - tap.x, e.clientY - tap.y);
+    tap = null;
+    if (moved > 16) return;
+    handleTap(toCanvas(e));
+  });
+  canvas.addEventListener('pointercancel', function () { tap = null; });
+  canvas.addEventListener('lostpointercapture', function () { tap = null; });
+  canvas.addEventListener('click', function () { begin(); });
+
+  /* ===== 按钮 / 分享 ===== */
+  document.getElementById('btn-start').addEventListener('click', function () {
+    begin();
+    if (phase === 'ready') startRound();
+  });
+  document.getElementById('btn-restart').addEventListener('click', function () { newGame(false); startRound(); });
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var btn = document.getElementById('btn-share');
+    var txt = t('penaltyKick.share', { y: you, a: ai, url: location.href });
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    function fb() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fb);
+    else fb();
+  });
+
+  /* ===== 探针钩子 ===== */
+  window.__st = function () {
+    return {
+      phase: phase, round: round, you: you, ai: ai, sudden: sudden,
+      youKicks: youKicks, aiKicks: aiKicks, keeperZone: keeperZone, aiZone: aiZone,
+      dive: playerDive, shotZone: shotZone, shotMiss: shotMiss, lastResult: lastResult,
+      statusKey: statusKey, endKey: endKey, best: best, started: started
+    };
+  };
+  window.__drive = function (n) { for (var i = 0; i < n; i++) update(1); };
+  window.__draw = function () { draw(); };
+  window.__reset = function () { newGame(false); startRound(); return window.__st(); };
+  window.__forceScore = function (y, a, r) {
+    you = Math.max(0, y | 0); ai = Math.max(0, a | 0);
+    round = Math.max(1, r | 0);
+    youKicks = round - 1; aiKicks = round - 1;
+    sudden = round > 5;
+    history = [];
+    ensureResult();
+    for (var i = 0; i < round - 1; i++) history[i] = { you: 'goal', ai: 'goal' };
+    playerDive = null; aiZone = null; lastResult = null;
+    keeperZone = aiKeeperZone();
+    keeperFrom = { x: 240, y: 300 }; keeperTo = { x: 240, y: 300 }; keeperT = 1;
+    phase = 'shoot';
+    endKey = null;
+    overOverlay.classList.add('hidden');
+    startOverlay.classList.add('hidden');
+    started = true;
+    setStatus('penaltyKick.shoot');
+    refreshAll();
+    checkEnd();
+    return window.__st();
+  };
+  window.__zoneXY = function (z) {
+    var c = ZC[z];
+    return { fx: (c.x / W), fy: (c.y / H) };
+  };
+  window.__zones = function () {
+    var o = {};
+    for (var z in ZC) { if (Object.prototype.hasOwnProperty.call(ZC, z)) o[z] = { col: ZC[z].col, row: ZC[z].row }; }
+    return o;
+  };
+  window.__outs = function () {
+    return { fx: (GX1 + 12) / W, fy: 250 / H };
+  };
+  window.__outsFar = function () {
+    return { fx: (GX1 + 60) / W, fy: 250 / H };
+  };
+
+  /* ===== 启动 ===== */
+  newGame(true);
+  fit();
+  draw();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

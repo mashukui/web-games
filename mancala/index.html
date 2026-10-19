@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en" data-title-key="mancala.docTitle">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Mancala — Free Online Seed Sowing Board Game</title>
+<meta name="description" content="Play Mancala free in your browser: sow seeds around the board, capture from empty pits and earn extra turns. Classic Kalah rules against a smart computer.">
+<meta name="keywords" content="mancala,kalah,seed sowing,board game,strategy game,free online game,html5 game,browser game,mobile game,no install">
+<meta name="author" content="mashukui">
+<meta property="og:title" content="Mancala — Free Online Seed Sowing Board Game">
+<meta property="og:description" content="Sow, capture and earn extra turns in this classic Mancala board. Play against a smart computer on desktop or phone.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫘</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #1b2233 0%, #2c2438 55%, #1a2b38 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    justify-content: safe center;
+    min-height: 100vh; min-height: 100svh; padding: 10px 8px 4px;
+    user-select: none; touch-action: manipulation;
+  }
+  .panel {
+    position: relative;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px; padding: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    max-width: 100%;
+  }
+  .topbar { display: flex; align-items: center; gap: 6px; width: 100%; }
+  .stat {
+    flex: 1; background: rgba(255,255,255,.07); border-radius: 10px;
+    padding: 3px 6px; text-align: center; color: #fff; min-width: 0;
+  }
+  .stat small { display: block; font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat span { font-size: 15px; font-weight: 800; letter-spacing: .4px; white-space: nowrap; }
+  #mute-btn {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 10px; padding: 0;
+    background: rgba(255,255,255,.07); border: none; color: #fff;
+    font-size: 17px; cursor: pointer; font-family: inherit;
+  }
+  #status {
+    width: 100%; min-height: 18px; font-size: 12px; font-weight: 800;
+    letter-spacing: .5px; color: #ffd76e; text-align: center; line-height: 1.35;
+  }
+  .board-area { display: flex; justify-content: center; width: 100%; max-width: 100%; }
+  .board { display: grid; gap: var(--gap, 5px); }
+  .board.wide { grid-template-columns: var(--store, 56px) repeat(6, var(--pit, 56px)) var(--store, 56px); }
+  .board.narrow { grid-template-columns: repeat(6, var(--pit, 56px)); }
+  .row { display: grid; grid-template-columns: repeat(6, var(--pit, 56px)); gap: var(--gap, 5px); }
+  #row-ai, #row-you { align-items: stretch; }
+  .board.wide #store-13 { grid-column: 1; grid-row: 1 / 3; }
+  .board.wide #row-ai { grid-column: 2 / 8; grid-row: 1; }
+  .board.wide #row-you { grid-column: 2 / 8; grid-row: 2; }
+  .board.wide #store-6 { grid-column: 8; grid-row: 1 / 3; }
+  .board.narrow #store-13 { grid-column: 1 / 7; grid-row: 1; width: 100%; height: var(--store, 46px); flex-direction: row; }
+  .board.narrow #row-ai { grid-column: 1 / 7; grid-row: 2; }
+  .board.narrow #row-you { grid-column: 1 / 7; grid-row: 3; }
+  .board.narrow #store-6 { grid-column: 1 / 7; grid-row: 4; width: 100%; height: var(--store, 46px); flex-direction: row; }
+
+  .pit {
+    position: relative; width: var(--pit, 56px); height: var(--pit, 56px);
+    min-width: 44px; min-height: 44px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; border: 2px solid rgba(255,255,255,.14);
+    background: radial-gradient(circle at 38% 28%, #6f4b2c 0%, #4a301c 58%, #2e1d10 100%);
+    box-shadow: inset 0 5px 10px rgba(0,0,0,.45), inset 0 -2px 0 rgba(255,255,255,.08);
+    color: #ffe6b0; font-family: inherit; font-weight: 800;
+    font-size: calc(var(--pit, 56px) * .36); line-height: 1;
+    cursor: pointer; transition: box-shadow .15s ease, transform .1s ease;
+  }
+  .pit .n { pointer-events: none; }
+  .pit.live { box-shadow: inset 0 5px 10px rgba(0,0,0,.45), 0 0 0 2px rgba(255,215,110,.55), 0 0 16px rgba(255,215,110,.28); }
+  .pit.live:active { transform: scale(.96); }
+  .pit.dead { opacity: .72; cursor: default; }
+  .pit.just { animation: drop .26s ease; }
+  @keyframes drop { 0% { transform: scale(1.09); } 100% { transform: scale(1); } }
+
+  .store {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    min-width: 44px; min-height: 44px; padding: 2px;
+    border-radius: calc(var(--pit, 56px) * .26);
+    border: 2px solid rgba(255,255,255,.13);
+    background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.16));
+    box-shadow: inset 0 4px 12px rgba(0,0,0,.35);
+    color: #ffe6b0;
+  }
+  #store-6 { border-color: rgba(255,215,110,.38); }
+  #store-13 { border-color: rgba(120,170,255,.34); }
+  .store .slabel { font-size: 9px; font-weight: 700; letter-spacing: 1px; opacity: .62; white-space: nowrap; }
+  .store .n { font-size: calc(var(--pit, 56px) * .4); font-weight: 800; line-height: 1; }
+
+  .actions { display: flex; gap: 8px; width: 100%; }
+  .actions button {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; letter-spacing: 1px; font-family: inherit;
+    transition: transform .12s ease;
+  }
+  .actions button:active { transform: scale(.96); }
+  .btn-primary { background: #4a90ff; color: #fff; box-shadow: 0 4px 0 #2a63bd; }
+  .btn-ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+
+  .overlay {
+    position: absolute; inset: 0; border-radius: 18px; z-index: 6;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; text-align: center; padding: 18px;
+    background: rgba(14, 16, 26, .9); backdrop-filter: blur(3px); color: #fff;
+  }
+  .over-title { font-size: 22px; font-weight: 800; letter-spacing: 2px; }
+  .over-sub { font-size: 13px; opacity: .82; line-height: 1.6; }
+  .icon-big { font-size: 40px; }
+  .over-btns { display: flex; gap: 8px; margin-top: 6px; width: 100%; }
+  .over-btns button {
+    flex: 1; min-height: 46px; border-radius: 12px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 800; font-family: inherit;
+  }
+  .start-btn { margin-top: 6px; padding: 12px 28px; }
+  .hidden { display: none; }
+
+  .footer {
+    margin-top: 10px; color: rgba(255,255,255,.5); font-size: 12px;
+    text-align: center; line-height: 1.9; max-width: 470px;
+  }
+  .footer a {
+    color: rgba(255,255,255,.78); text-decoration: none; display: inline-block;
+    min-width: 44px; min-height: 44px; line-height: 44px;
+  }
+  .footer a:hover { color: #ffd76e; }
+
+  @media (max-width: 430px) {
+    body { padding: 6px 4px 2px; }
+    .panel { padding: 6px; border-radius: 14px; }
+    .overlay { border-radius: 14px; }
+  }
+  @media (orientation: landscape) and (max-height: 700px) {
+    body { padding: 2px 6px 2px; }
+    .panel { padding: 6px; gap: 6px; }
+    .stat { padding: 1px 4px; }
+    .stat small { font-size: 8px; letter-spacing: .3px; }
+    .stat span { font-size: 12px; }
+    #status { min-height: 16px; font-size: 11px; }
+    .actions button { min-height: 44px; font-size: 12px; }
+    .footer { max-width: none; margin-top: 4px; line-height: 1.4; font-size: 11px; }
+    .footer .wg-tools { display: inline-flex; vertical-align: middle; margin: 0 8px 0 0; }
+    .overlay { padding: 8px; gap: 4px; }
+    .over-title { font-size: 18px; }
+    .over-sub { font-size: 12px; }
+    .icon-big { font-size: 24px; }
+    .over-btns button { min-height: 44px; font-size: 12px; }
+  }
+</style>
+<script src="../i18n.js"></script>
+</head>
+<body data-wg-home>
+
+<div class="panel" id="panel">
+  <div class="topbar">
+    <div class="stat"><small data-i18n="mancala.hudYou">YOU</small><span id="hud-you">0</span></div>
+    <div class="stat"><small data-i18n="mancala.hudAI">CPU</small><span id="hud-ai">0</span></div>
+    <div class="stat"><small data-i18n="mancala.hudWins">WINS</small><span id="best">0</span></div>
+    <button id="mute-btn" data-i18n-title="common.toggleSound" title="Toggle sound">🔊</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="board-area" id="board-area">
+    <div class="board wide" id="board"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-ghost" id="btn-reset" data-i18n="mancala.restart">RESTART</button>
+  </div>
+
+  <div class="overlay hidden" id="over-overlay">
+    <div class="icon-big">🫘</div>
+    <div class="over-title" id="over-title"></div>
+    <div class="over-sub" id="over-sub"></div>
+    <div class="over-sub" id="over-best"></div>
+    <div class="over-btns">
+      <button class="btn-primary" id="btn-restart" data-i18n="common.playAgain">PLAY AGAIN</button>
+      <button class="btn-ghost" id="btn-share" data-i18n="common.shareScore">SHARE SCORE</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-overlay">
+    <div class="icon-big">🫘</div>
+    <div class="over-title" data-i18n="mancala.title">MANCALA</div>
+    <div class="over-sub" data-i18n-html="mancala.tip">Sow the seeds in your six pits, one per hole, <b>counter-clockwise</b>.<br>Land the last seed in your <b>store</b> for a free turn, or in an empty pit of yours to <b>capture</b> the opposite pit.<br>When one side is empty, the other side keeps the rest — the biggest store wins.</div>
+    <div class="over-sub" id="start-best"></div>
+    <button class="btn-primary start-btn" id="btn-start" data-i18n="common.start">START</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span data-i18n="common.madeBy">Made by</span> <a href="https://github.com/mashukui" target="_blank" rel="noopener">@mashukui</a> ·
+  <a href="../" data-i18n="common.moreGames">🎮 More games</a> ·
+  <a href="https://github.com/mashukui/web-games" target="_blank" rel="noopener">GitHub</a> ·
+  <a href="https://saveone.pro" target="_blank" rel="noopener">SaveOne</a> <span data-i18n="common.freeVideo">— free online video downloader</span>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'mancala_best_v1';
+  var START = [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0];
+
+  var panel = document.getElementById('panel');
+  var boardEl = document.getElementById('board');
+  var boardArea = document.getElementById('board-area');
+  var topbarEl = document.querySelector('.topbar');
+  var actionsEl = document.querySelector('.actions');
+  var footerEl = document.querySelector('.footer');
+  var statusEl = document.getElementById('status');
+  var startOverlay = document.getElementById('start-overlay');
+  var overOverlay = document.getElementById('over-overlay');
+
+  var pits = START.slice();
+  var view = pits.slice();
+  var turn = 0;                  // 0 = human, 1 = computer
+  var over = false;
+  var moves = 0;
+  var msg = null;                // {key, p}
+  var lastRes = null;
+  var anim = null, animTimer = null, aiTimer = null;
+  var aiChain = 0;
+  var endKey = null, endStats = null;
+  var store = { w: 0, p: 0 };
+  var pitEls = [], countEls = [], storeN = {};
+  var storeLabels = {};
+
+  // ===== 音效 =====
+  var audioCtx = null, muted = false;
+  function beep(freq, dur, type, vol) {
+    if (muted) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol || 0.12, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
+  var sfx = {
+    seed: function () { beep(660, 0.03, 'triangle', 0.04); },
+    move: function () { beep(300, 0.07, 'sine', 0.06); },
+    extra: function () { beep(780, 0.12, 'triangle', 0.06); },
+    capture: function () { beep(520, 0.1, 'square', 0.05); setTimeout(function () { beep(700, 0.12, 'triangle', 0.06); }, 90); },
+    bad: function () { beep(130, 0.08, 'sawtooth', 0.05); },
+    win: function () { [0, 110, 220, 340].forEach(function (d, i) { setTimeout(function () { beep(520 + i * 150, 0.16, 'triangle', 0.09); }, d); }); },
+    lose: function () { [0, 150, 300].forEach(function (d, i) { setTimeout(function () { beep(330 - i * 60, 0.18, 'sine', 0.08); }, d); }); },
+    draw: function () { beep(440, 0.2, 'sine', 0.07); }
+  };
+  var muteBtn = document.getElementById('mute-btn');
+  muteBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+  });
+
+  // ===== 最高战绩 =====
+  function loadStore() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+      if (raw && typeof raw === 'object') {
+        if (typeof raw.w === 'number' && isFinite(raw.w) && raw.w > 0) store.w = raw.w | 0;
+        if (typeof raw.p === 'number' && isFinite(raw.p) && raw.p > 0) store.p = raw.p | 0;
+      }
+    } catch (e) {}
+  }
+  function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+  loadStore();
+
+  // ===== 棋盘 =====
+  function el(tag, cls) { var e = document.createElement(tag); e.className = cls; return e; }
+  function makePit(i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pit';
+    b.dataset.i = String(i);
+    var n = el('span', 'n');
+    n.textContent = '0';
+    b.appendChild(n);
+    b.addEventListener('click', function () { onPit(i); });
+    pitEls[i] = b; countEls[i] = n;
+    return b;
+  }
+  function makeStore(i) {
+    var d = el('div', 'store');
+    d.id = 'store-' + i;
+    var lab = el('span', 'slabel');
+    var n = el('span', 'n');
+    n.textContent = '0';
+    d.appendChild(lab); d.appendChild(n);
+    storeN[i] = n; storeLabels[i] = lab;
+    return d;
+  }
+  function buildBoard() {
+    boardEl.innerHTML = '';
+    boardEl.appendChild(makeStore(13));
+    var top = el('div', 'row'); top.id = 'row-ai';
+    for (var i = 12; i >= 7; i--) top.appendChild(makePit(i));   // 顶部 12..7 反序
+    var bot = el('div', 'row'); bot.id = 'row-you';
+    for (var j = 0; j <= 5; j++) bot.appendChild(makePit(j));
+    boardEl.appendChild(top);
+    boardEl.appendChild(bot);
+    boardEl.appendChild(makeStore(6));
+  }
+
+  // ===== 规则：同步算最终状态 =====
+  function simulate(src, pit) {
+    var p = src.slice();
+    var side = pit < 6 ? 0 : 1;
+    var myStore = side === 0 ? 6 : 13;
+    var oppStore = side === 0 ? 13 : 6;
+    var hand = p[pit];
+    p[pit] = 0;
+    var trace = [], cur = pit, last = pit, guard = 0;
+    while (hand > 0 && guard++ < 400) {
+      cur = (cur + 1) % 14;
+      if (cur === oppStore) continue;
+      p[cur]++; hand--; trace.push(cur); last = cur;
+    }
+    var extra = last === myStore;
+    var capture = 0, capPit = -1;
+    var ownPit = side === 0 ? (last >= 0 && last <= 5) : (last >= 7 && last <= 12);
+    if (!extra && ownPit && p[last] === 1) {
+      var opp = 12 - last;
+      if (p[opp] > 0) {
+        capture = p[opp] + 1;
+        p[myStore] += capture;
+        p[last] = 0; p[opp] = 0;
+        capPit = last;
+      }
+    }
+    var hEmpty = true, aEmpty = true, i;
+    for (i = 0; i < 6; i++) if (p[i] > 0) { hEmpty = false; break; }
+    for (i = 7; i < 13; i++) if (p[i] > 0) { aEmpty = false; break; }
+    var sweep = 0, ended = hEmpty || aEmpty;
+    if (ended) {
+      if (hEmpty && !aEmpty) {
+        for (i = 7; i < 13; i++) { sweep += p[i]; p[13] += p[i]; p[i] = 0; }
+      } else if (aEmpty && !hEmpty) {
+        for (i = 0; i < 6; i++) { sweep += p[i]; p[6] += p[i]; p[i] = 0; }
+      }
+    }
+    return { pits: p, from: pit, side: side, trace: trace, last: last, extra: extra, capture: capture, capPit: capPit, sweep: sweep, over: ended };
+  }
+
+  function finish(res) {
+    over = true;
+    endStats = { h: res.pits[6], a: res.pits[13] };
+    if (endStats.h > endStats.a) store.w++;
+    store.p++;
+    saveStore();
+    endKey = endStats.h > endStats.a ? 'mancala.overWin' : endStats.h < endStats.a ? 'mancala.overLose' : 'mancala.overDraw';
+  }
+
+  function applyMove(pit) {
+    var before = pits.slice();
+    var res = simulate(pits, pit);
+    pits = res.pits;
+    lastRes = res;
+    moves++;
+    over = res.over;
+    if (!over) turn = res.extra ? res.side : 1 - res.side;
+    msg = res.over ? null
+      : res.capture ? { key: 'mancala.capture', p: { n: res.capture } }
+      : res.extra ? { key: 'mancala.extra' }
+      : null;
+    if (res.over) finish(res);
+    aiChain = res.side === 1 ? aiChain + 1 : 0;
+    if (res.capture) sfx.capture();
+    else if (res.extra) sfx.extra();
+    else sfx.move();
+    startAnim(before, res);
+    refreshHud(); refreshStatus(); renderStartBest();
+  }
+
+  function startAnim(before, res) {
+    if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    view = before.slice();
+    view[res.from] = 0;
+    anim = { trace: res.trace, k: 0 };
+    renderCounts();
+    if (!res.trace.length) { settle(); return; }
+    animTimer = setInterval(stepAnim, 80);
+  }
+  function stepAnim() {
+    if (!anim) { if (animTimer) { clearInterval(animTimer); animTimer = null; } return; }
+    if (anim.k >= anim.trace.length) { settle(); return; }
+    view[anim.trace[anim.k]]++;
+    anim.k++;
+    renderCounts();
+    sfx.seed();
+  }
+  function settle() {
+    if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    var was = !!anim;
+    anim = null;
+    view = pits.slice();
+    renderCounts();
+    if (over) {
+      refreshOver();
+      overOverlay.classList.remove('hidden');
+      if (endStats.h > endStats.a) sfx.win(); else if (endStats.h < endStats.a) sfx.lose(); else sfx.draw();
+    } else if (turn === 1 && was) {
+      scheduleAI(300);
+    }
+  }
+
+  function scheduleAI(ms) {
+    if (aiTimer) clearTimeout(aiTimer);
+    aiTimer = setTimeout(function () {
+      aiTimer = null;
+      if (over || turn !== 1 || anim) return;
+      aiMove();
+    }, ms);
+  }
+  function aiMove() {
+    if (over || turn !== 1) return;
+    if (aiChain >= 20) { turn = 0; refreshStatus(); return; }
+    var pit = pickAI();
+    if (pit < 0) { turn = 0; refreshStatus(); return; }
+    applyMove(pit);
+  }
+
+  // ===== AI =====
+  function evalMove(res) {
+    var gain = res.pits[13] - pits[13];
+    var diff = res.pits[13] - res.pits[6];
+    var oppMax = 0;
+    if (!res.over && !res.extra) {
+      for (var j = 0; j < 6; j++) {
+        if (res.pits[j] > 0) {
+          var r2 = simulate(res.pits, j);
+          if (r2.capture > oppMax) oppMax = r2.capture;
+        }
+      }
+    }
+    return 2.2 * res.capture + 0.8 * gain + 2.5 * (res.extra ? 1 : 0) + 0.25 * diff - 0.55 * oppMax;
+  }
+  function pickAI() {
+    var list = [], i;
+    for (i = 7; i < 13; i++) {
+      if (pits[i] > 0) list.push({ pit: i, s: evalMove(simulate(pits, i)) });
+    }
+    if (!list.length) return -1;
+    list.sort(function (a, b) { return b.s - a.s || a.pit - b.pit; });
+    if (Math.random() < 0.22) return list[Math.floor(Math.random() * list.length)].pit;
+    if (list.length > 1 && Math.random() < 0.15) return list[1].pit;
+    return list[0].pit;
+  }
+
+  // ===== 输入 =====
+  function onPit(i) {
+    if (over || anim || turn !== 0) return;
+    if (i < 0 || i > 5) return;
+    if (!pits[i]) { sfx.bad(); return; }
+    msg = null;
+    applyMove(i);
+  }
+
+  function clearTimers() {
+    if (animTimer) { clearInterval(animTimer); animTimer = null; }
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    anim = null;
+  }
+
+  function restart() {
+    clearTimers();
+    pits = START.slice();
+    view = pits.slice();
+    turn = 0; over = false; moves = 0;
+    msg = null; lastRes = null;
+    endKey = null; endStats = null;
+    aiChain = 0;
+    overOverlay.classList.add('hidden');
+    refreshAll();
+  }
+
+  // ===== 渲染 =====
+  function renderCounts() {
+    var i;
+    for (i = 0; i < 14; i++) {
+      if (!countEls[i]) continue;
+      countEls[i].textContent = String(view[i]);
+      if (i < 14) {
+        var live = !over && !anim && turn === 0 && i < 6 && view[i] > 0;
+        pitEls[i].classList.toggle('live', live);
+        pitEls[i].classList.toggle('dead', !over && turn === 0 && i < 6 && view[i] === 0);
+        pitEls[i].classList.toggle('just', !!(lastRes && lastRes.last === i && anim));
+      }
+    }
+    if (storeN[6]) storeN[6].textContent = String(view[6]);
+    if (storeN[13]) storeN[13].textContent = String(view[13]);
+    document.getElementById('hud-you').textContent = String(view[6]);
+    document.getElementById('hud-ai').textContent = String(view[13]);
+    document.getElementById('best').textContent = String(store.w);
+  }
+  function refreshTexts() {
+    if (storeLabels[13]) storeLabels[13].textContent = t('mancala.hudAI');
+    if (storeLabels[6]) storeLabels[6].textContent = t('mancala.hudYou');
+    for (var i = 0; i < 14; i++) {
+      if (pitEls[i]) pitEls[i].setAttribute('aria-label', t('mancala.pitLabel', { n: i + 1 }));
+    }
+  }
+  function refreshHud() {
+    document.getElementById('hud-you').textContent = String(view[6]);
+    document.getElementById('hud-ai').textContent = String(view[13]);
+    document.getElementById('best').textContent = String(store.w);
+  }
+  function refreshStatus() {
+    if (over) { statusEl.textContent = endKey ? t(endKey) : ''; return; }
+    if (msg) { statusEl.textContent = t(msg.key, msg.p || {}); return; }
+    statusEl.textContent = turn === 1 ? t('mancala.turnAI') : t('mancala.turnYou');
+  }
+  function refreshOver() {
+    if (!endKey || !endStats) return;
+    document.getElementById('over-title').textContent = t(endKey);
+    var key = endKey === 'mancala.overWin' ? 'mancala.finalWin' : endKey === 'mancala.overLose' ? 'mancala.finalLose' : 'mancala.finalDraw';
+    document.getElementById('over-sub').textContent = t(key, { a: endStats.h, b: endStats.a });
+    document.getElementById('over-best').textContent = t('mancala.record', { w: store.w, p: store.p });
+  }
+  function renderStartBest() {
+    document.getElementById('start-best').textContent =
+      store.p > 0 ? t('mancala.record', { w: store.w, p: store.p }) : t('mancala.first');
+  }
+  function refreshAll() {
+    refreshTexts();
+    refreshHud();
+    refreshStatus();
+    refreshOver();
+    renderStartBest();
+    renderCounts();
+    document.getElementById('btn-share').textContent = t('common.shareScore');
+  }
+
+  // ===== 尺寸 =====
+  function fit() {
+    var bcs = getComputedStyle(document.body);
+    var pcs = getComputedStyle(panel);
+    var bodyPadH = parseFloat(bcs.paddingLeft) + parseFloat(bcs.paddingRight);
+    var bodyPadV = parseFloat(bcs.paddingTop) + parseFloat(bcs.paddingBottom);
+    var panelPadH = parseFloat(pcs.paddingLeft) + parseFloat(pcs.paddingRight);
+    var panelPadV = parseFloat(pcs.paddingTop) + parseFloat(pcs.paddingBottom);
+    var footerH = footerEl ? footerEl.offsetHeight + 10 : 90;
+    var topH = topbarEl ? topbarEl.offsetHeight : 44;
+    var statusH = statusEl ? statusEl.offsetHeight : 20;
+    var actH = actionsEl ? actionsEl.offsetHeight : 46;
+
+    var availW = Math.min(window.innerWidth, 660) - bodyPadH - panelPadH - 2;
+    var availH = window.innerHeight - bodyPadV - panelPadV - 2 - footerH - 8 - topH - statusH - actH - 18;
+    availW = Math.max(160, availW);
+    availH = Math.max(120, availH);
+
+    var GAP = 5, SW = 56, SH = 46, COMFY = 96, MIN = 44;
+    var widePit = Math.floor(Math.min((availW - 2 * SW - 7 * GAP) / 6, (availH - GAP) / 2, COMFY));
+    var narrowPit = Math.floor(Math.min((availW - 5 * GAP) / 6, (availH - 2 * SH - 3 * GAP) / 2, COMFY));
+    var wideScore = widePit >= MIN ? widePit + 20 : widePit - 1000;
+    var narrowScore = narrowPit >= MIN ? narrowPit : narrowPit - 1000;
+    var mode, pit;
+    if (wideScore >= narrowScore) { mode = 'wide'; pit = widePit; }
+    else { mode = 'narrow'; pit = narrowPit; }
+    if (pit < MIN) pit = MIN;
+
+    panel.style.setProperty('--gap', GAP + 'px');
+    panel.style.setProperty('--pit', pit + 'px');
+    panel.style.setProperty('--store', (mode === 'wide' ? SW : SH) + 'px');
+    boardEl.className = 'board ' + mode;
+
+    var needW = mode === 'wide'
+      ? 2 * SW + 6 * pit + 7 * GAP
+      : 6 * pit + 5 * GAP;
+    boardArea.style.overflowX = needW > availW ? 'auto' : 'visible';
+  }
+
+  // ===== 探针接口 =====
+  window.__st = function () {
+    return {
+      pits: pits.slice(),
+      view: view.slice(),
+      turn: turn,
+      over: over,
+      moves: moves,
+      endKey: endKey,
+      best: store.w,
+      games: store.p,
+      anim: !!anim,
+      last: lastRes ? { pit: lastRes.from, side: lastRes.side, extra: lastRes.extra, capture: lastRes.capture, sweep: lastRes.sweep } : null
+    };
+  };
+  window.__set = function (arr, t) {
+    clearTimers();
+    pits = (arr || []).slice(0, 14);
+    while (pits.length < 14) pits.push(0);
+    view = pits.slice();
+    turn = (t | 0) ? 1 : 0;
+    over = false; moves = 0;
+    msg = null; lastRes = null;
+    endKey = null; endStats = null;
+    aiChain = 0;
+    overOverlay.classList.add('hidden');
+    startOverlay.classList.add('hidden');
+    refreshAll();
+    return window.__st();
+  };
+  window.__settle = function () {
+    if (anim || animTimer) settle();
+    view = pits.slice();
+    renderCounts();
+    return window.__st();
+  };
+  window.__ai = function () {
+    if (aiTimer) { clearTimeout(aiTimer); aiTimer = null; }
+    if (over || turn !== 1) return false;
+    aiMove();
+    window.__settle();
+    return true;
+  };
+  window.__drive = function (n) {
+    for (var k = 0; k < n; k++) {
+      if (over || turn !== 1) break;
+      window.__ai();
+    }
+    return window.__st();
+  };
+
+  // ===== 启动 =====
+  WG.onChange(function () {
+    refreshAll();
+    fit();
+  });
+  buildBoard();
+  refreshAll();
+  startOverlay.classList.remove('hidden');
+  fit();
+  setTimeout(fit, 120);
+
+  document.getElementById('btn-start').addEventListener('click', function () {
+    startOverlay.classList.add('hidden');
+    fit();
+  });
+  document.getElementById('btn-reset').addEventListener('click', restart);
+  document.getElementById('btn-restart').addEventListener('click', function () {
+    restart();
+    startOverlay.classList.add('hidden');
+  });
+
+  window.addEventListener('resize', function () {
+    if (window.__mancalaRT) clearTimeout(window.__mancalaRT);
+    window.__mancalaRT = setTimeout(fit, 80);
+  });
+  window.addEventListener('orientationchange', function () { setTimeout(fit, 200); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('load', function () { setTimeout(fit, 300); });
+
+  // ===== 分享 =====
+  function shareText() {
+    if (endStats) {
+      var w = endStats.h > endStats.a;
+      return t(w ? 'mancala.share' : 'mancala.shareLose', { a: endStats.h, b: endStats.a, url: location.href });
+    }
+    return t('mancala.shareLose', { a: pits[6], b: pits[13], url: location.href });
+  }
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btn-share').addEventListener('click', function () {
+    var full = shareText(), btn = document.getElementById('btn-share');
+    function done() {
+      btn.textContent = t('common.copied');
+      setTimeout(function () { btn.textContent = t('common.shareScore'); }, 1500);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(full).then(done, function () { fallbackCopy(full, done); });
+    } else fallbackCopy(full, done);
+  });
+
+  if (location.hash === '#play') startOverlay.classList.add('hidden');
+})();
+</script>
+</body>
+</html>
