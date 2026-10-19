@@ -4,7 +4,7 @@
 > Made by [@mashukui](https://github.com/mashukui)
 
 [![Play Online](https://img.shields.io/badge/%F0%9F%8E%AE_Play-GitHub_Pages-ff9f1c?style=flat-square)](https://mashukui.github.io/web-games/)
-[![Games](https://img.shields.io/badge/Games-44-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
+[![Games](https://img.shields.io/badge/Games-48-4db6ac?style=flat-square)](https://mashukui.github.io/web-games/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](./)
 [![Made with Vanilla JS](https://img.shields.io/badge/Made%20with%20Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)](./index.html)
@@ -61,6 +61,10 @@
 | **Helicopter** | 🚁 | Arcade | Hold to climb through an endless cave that keeps narrowing. One touch of rock ends the run | [Play](https://mashukui.github.io/web-games/helicopter/) |
 | **Balloon Pop** | 🎈 | Arcade | Burst every balloon, dodge the bombs and chain a combo in 60 seconds | [Play](https://mashukui.github.io/web-games/balloon-pop/) |
 | **Simon Says** | 🎵 | Arcade | Watch the four lights and repeat the pattern. One extra step every round | [Play](https://mashukui.github.io/web-games/simon-says/) |
+| **Gomoku** | ⚫ | Classic | Classic five in a row against a smart computer on a 15×15 board | [Play](https://mashukui.github.io/web-games/gomoku/) |
+| **Mancala** | 🫘 | Classic | Sow seeds, capture from empty pits and earn extra turns in this classic board game | [Play](https://mashukui.github.io/web-games/mancala/) |
+| **Bowling** | 🎳 | Action | Swipe up to bowl: aim the line, add spin and chase a perfect 300 | [Play](https://mashukui.github.io/web-games/bowling/) |
+| **Penalty Kick** | ⚽ | Action | Shoot and save in a five-round shootout — beat the keeper, then guess the right corner | [Play](https://mashukui.github.io/web-games/penalty-kick/) |
 
 Filter the collection by category on the [hub page](https://mashukui.github.io/web-games/) — e.g. [`?cat=puzzle`](https://mashukui.github.io/web-games/?cat=puzzle).
 
@@ -139,6 +143,10 @@ web-games/
 ├── helicopter/index.html   # 🚁 one-button cave flyer
 ├── balloon-pop/index.html  # 🎈 60-second balloon popper
 ├── simon-says/index.html   # 🎵 repeat-the-sequence memory
+├── gomoku/index.html       # ⚫ five in a row, 15x15, heuristic AI
+├── mancala/index.html      # 🫘 sow, capture and extra turns
+├── bowling/index.html      # 🎳 ten frames, spin and a perfect 300
+├── penalty-kick/index.html # ⚽ five-round shootout, shoot and save
 ├── README.md
 └── LICENSE                 # MIT
 ```
@@ -172,4 +180,4 @@ Quality over quantity — a polished game people replay beats ten rough ones.
 
 ---
 
-**中文说明**:本项目是一个纯前端网页小游戏合集(44 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
+**中文说明**:本项目是一个纯前端网页小游戏合集(48 款),每款游戏均为零依赖的单文件 HTML5 游戏,内置 8 语言界面,PC 与手机端均已适配,MIT 协议开源。作者:马哥python说(@mashukui)。在线试玩:https://mashukui.github.io/web-games/
